@@ -8,7 +8,7 @@ A comprehensive template for AI-driven Rust development with full CI/CD pipeline
 
 ## Features
 
-- **Multi-version Rust support**: Works with stable, beta, and nightly Rust
+- **Rust stable support**: Works with Rust stable version
 - **Cross-platform testing**: CI runs on Ubuntu, macOS, and Windows
 - **Comprehensive testing**: Unit tests, integration tests, and doc tests
 - **Code quality**: rustfmt + Clippy with pedantic lints
@@ -170,7 +170,7 @@ The GitHub Actions workflow provides:
 
 1. **Linting**: rustfmt and Clippy checks
 2. **Changelog check**: Warns if PRs are missing changelog fragments
-3. **Test matrix**: 3 OS (Ubuntu, macOS, Windows) × 3 Rust versions (stable, beta, nightly)
+3. **Test matrix**: 3 OS (Ubuntu, macOS, Windows) with Rust stable
 4. **Building**: Release build and package validation
 5. **Release**: Automated GitHub releases when version changes
 
