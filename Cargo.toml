@@ -1,0 +1,45 @@
+[package]
+name = "my-package"
+version = "0.1.0"
+edition = "2021"
+description = "A Rust package template for AI-driven development"
+readme = "README.md"
+license = "Unlicense"
+keywords = ["template", "rust", "ai-driven"]
+categories = ["development-tools"]
+repository = "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template"
+documentation = "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template"
+rust-version = "1.70"
+
+[lib]
+name = "my_package"
+path = "src/lib.rs"
+
+[[bin]]
+name = "my-package"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "time"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
+
+# Allow some common patterns
+module_name_repetitions = "allow"
+too_many_lines = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
