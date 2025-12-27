@@ -134,6 +134,19 @@ async function checkTagExists(version) {
 }
 
 /**
+ * Strip frontmatter from markdown content
+ * @param {string} content - Markdown content potentially with frontmatter
+ * @returns {string} - Content without frontmatter
+ */
+function stripFrontmatter(content) {
+  const frontmatterMatch = content.match(/^---\s*\n[\s\S]*?\n---\s*\n([\s\S]*)$/);
+  if (frontmatterMatch) {
+    return frontmatterMatch[1].trim();
+  }
+  return content.trim();
+}
+
+/**
  * Collect changelog fragments and update CHANGELOG.md
  * @param {string} version
  */
@@ -155,7 +168,11 @@ function collectChangelog(version) {
 
   const fragments = files
     .sort()
-    .map((f) => readFileSync(join(changelogDir, f), 'utf-8').trim())
+    .map((f) => {
+      const rawContent = readFileSync(join(changelogDir, f), 'utf-8');
+      // Strip frontmatter (which contains bump type metadata)
+      return stripFrontmatter(rawContent);
+    })
     .filter(Boolean)
     .join('\n\n');
 

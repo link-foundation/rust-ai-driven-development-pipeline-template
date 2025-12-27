@@ -39,6 +39,19 @@ function getVersionFromCargo() {
 }
 
 /**
+ * Strip frontmatter from markdown content
+ * @param {string} content - Markdown content potentially with frontmatter
+ * @returns {string} - Content without frontmatter
+ */
+function stripFrontmatter(content) {
+  const frontmatterMatch = content.match(/^---\s*\n[\s\S]*?\n---\s*\n([\s\S]*)$/);
+  if (frontmatterMatch) {
+    return frontmatterMatch[1].trim();
+  }
+  return content.trim();
+}
+
+/**
  * Collect all changelog fragments
  * @returns {string}
  */
@@ -53,7 +66,9 @@ function collectFragments() {
 
   const fragments = [];
   for (const file of files) {
-    const content = readFileSync(join(CHANGELOG_DIR, file), 'utf-8').trim();
+    const rawContent = readFileSync(join(CHANGELOG_DIR, file), 'utf-8');
+    // Strip frontmatter (which contains bump type metadata)
+    const content = stripFrontmatter(rawContent);
     if (content) {
       fragments.push(content);
     }
