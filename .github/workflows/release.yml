@@ -164,7 +164,8 @@ jobs:
 
           echo "Changelog check passed"
 
-  # Automatic release on push to main (if version changed)
+  # Automatic release on push to main using changelog fragments
+  # This job automatically bumps version based on fragments in changelog.d/
   auto-release:
     name: Auto Release
     needs: [lint, test, build]
@@ -176,6 +177,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -185,33 +187,61 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: Check if version changed
-        id: version_check
+      - name: Configure git
         run: |
-          # Get current version from Cargo.toml
-          CURRENT_VERSION=$(grep -Po '(?<=^version = ")[^"]*' Cargo.toml)
-          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Check if tag exists
-          if git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; then
-            echo "Tag v$CURRENT_VERSION already exists, skipping release"
-            echo "should_release=false" >> $GITHUB_OUTPUT
+      - name: Determine bump type from changelog fragments
+        id: bump_type
+        run: node scripts/get-bump-type.mjs
+
+      - name: Check if version already released or no fragments
+        id: check
+        run: |
+          # Check if there are changelog fragments
+          if [ "${{ steps.bump_type.outputs.has_fragments }}" != "true" ]; then
+            # No fragments - check if current version tag exists
+            CURRENT_VERSION=$(grep -Po '(?<=^version = ")[^"]*' Cargo.toml)
+            if git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; then
+              echo "No changelog fragments and v$CURRENT_VERSION already released"
+              echo "should_release=false" >> $GITHUB_OUTPUT
+            else
+              echo "No changelog fragments but v$CURRENT_VERSION not yet released"
+              echo "should_release=true" >> $GITHUB_OUTPUT
+              echo "skip_bump=true" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "New version detected: $CURRENT_VERSION"
+            echo "Found changelog fragments, proceeding with release"
             echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "skip_bump=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Collect changelog and bump version
+        id: version
+        if: steps.check.outputs.should_release == 'true' && steps.check.outputs.skip_bump != 'true'
+        run: |
+          node scripts/version-and-commit.mjs \
+            --bump-type "${{ steps.bump_type.outputs.bump_type }}"
+
+      - name: Get current version
+        id: current_version
+        if: steps.check.outputs.should_release == 'true'
+        run: |
+          CURRENT_VERSION=$(grep -Po '(?<=^version = ")[^"]*' Cargo.toml)
+          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
       - name: Build release
-        if: steps.version_check.outputs.should_release == 'true'
+        if: steps.check.outputs.should_release == 'true'
         run: cargo build --release
 
       - name: Create GitHub Release
-        if: steps.version_check.outputs.should_release == 'true'
+        if: steps.check.outputs.should_release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node scripts/create-github-release.mjs \
-            --release-version "${{ steps.version_check.outputs.current_version }}" \
+            --release-version "${{ steps.current_version.outputs.version }}" \
             --repository "${{ github.repository }}"
 
   # Manual release via workflow_dispatch - only after CI passes
