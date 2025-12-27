@@ -45,6 +45,11 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -63,7 +68,7 @@ jobs:
         run: cargo clippy --all-targets --all-features
 
       - name: Check file size limit
-        run: python3 scripts/check_file_size.py
+        run: node scripts/check-file-size.mjs
 
   # Test on multiple OS
   test:
@@ -175,6 +180,11 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
       - name: Check if version changed
         id: version_check
         run: |
@@ -200,8 +210,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 scripts/create_github_release.py \
-            --version "${{ steps.version_check.outputs.current_version }}" \
+          node scripts/create-github-release.mjs \
+            --release-version "${{ steps.version_check.outputs.current_version }}" \
             --repository "${{ github.repository }}"
 
   # Manual release via workflow_dispatch - only after CI passes
@@ -221,6 +231,11 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
@@ -232,7 +247,7 @@ jobs:
           FRAGMENTS=$(find changelog.d -name "*.md" ! -name "README.md" 2>/dev/null | wc -l)
           if [ "$FRAGMENTS" -gt 0 ]; then
             echo "Found $FRAGMENTS changelog fragment(s), collecting..."
-            python3 scripts/collect_changelog.py
+            node scripts/collect-changelog.mjs
           else
             echo "No changelog fragments found, skipping collection"
           fi
@@ -240,7 +255,7 @@ jobs:
       - name: Version and commit
         id: version
         run: |
-          python3 scripts/version_and_commit.py \
+          node scripts/version-and-commit.mjs \
             --bump-type "${{ github.event.inputs.bump_type }}" \
             --description "${{ github.event.inputs.description }}"
 
@@ -253,6 +268,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 scripts/create_github_release.py \
-            --version "${{ steps.version.outputs.new_version }}" \
+          node scripts/create-github-release.mjs \
+            --release-version "${{ steps.version.outputs.new_version }}" \
             --repository "${{ github.repository }}"

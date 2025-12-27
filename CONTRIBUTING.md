@@ -62,10 +62,10 @@ Thank you for your interest in contributing! This document provides guidelines a
    cargo clippy --all-targets --all-features
 
    # Check file sizes
-   python3 scripts/check_file_size.py
+   node scripts/check-file-size.mjs
 
    # Run all checks together
-   cargo fmt --check && cargo clippy --all-targets --all-features && python3 scripts/check_file_size.py
+   cargo fmt --check && cargo clippy --all-targets --all-features && node scripts/check-file-size.mjs
    ```
 
 4. **Run tests**
