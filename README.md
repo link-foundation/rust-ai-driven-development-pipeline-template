@@ -80,10 +80,10 @@ cargo fmt --check
 cargo clippy --all-targets --all-features
 
 # Check file size limits
-python3 scripts/check_file_size.py
+node scripts/check-file-size.mjs
 
 # Run all checks
-cargo fmt --check && cargo clippy --all-targets --all-features && python3 scripts/check_file_size.py
+cargo fmt --check && cargo clippy --all-targets --all-features && node scripts/check-file-size.mjs
 ```
 
 ## Project Structure
@@ -99,11 +99,13 @@ cargo fmt --check && cargo clippy --all-targets --all-features && python3 script
 ├── examples/
 │   └── basic_usage.rs          # Usage examples
 ├── scripts/
-│   ├── bump_version.py         # Version bumping utility
-│   ├── check_file_size.py      # File size validation script
-│   ├── collect_changelog.py    # Changelog collection script
-│   ├── create_github_release.py # GitHub release creation
-│   └── version_and_commit.py   # CI/CD version management
+│   ├── bump-version.mjs        # Version bumping utility
+│   ├── check-file-size.mjs     # File size validation script
+│   ├── collect-changelog.mjs   # Changelog collection script
+│   ├── create-github-release.mjs # GitHub release creation
+│   ├── detect-code-changes.mjs # Detects code changes for CI
+│   ├── get-bump-type.mjs       # Determines version bump type
+│   └── version-and-commit.mjs  # CI/CD version management
 ├── src/
 │   ├── lib.rs                  # Library entry point
 │   └── main.rs                 # Binary entry point
@@ -225,26 +227,24 @@ tab_spaces = 4
 | `cargo fmt`                         | Format code                    |
 | `cargo clippy`                      | Run lints                      |
 | `cargo run --example basic_usage`   | Run example                    |
-| `python3 scripts/check_file_size.py`| Check file size limits         |
-| `python3 scripts/bump_version.py`   | Bump version                   |
+| `node scripts/check-file-size.mjs`  | Check file size limits         |
+| `node scripts/bump-version.mjs`     | Bump version                   |
 
 ## Example Usage
 
 ```rust
 use my_package::{add, multiply, delay};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // Basic arithmetic
     let sum = add(2, 3);     // 5
     let product = multiply(2, 3);  // 6
 
     println!("2 + 3 = {sum}");
     println!("2 * 3 = {product}");
-}
 
-// Async operations
-#[tokio::main]
-async fn main() {
+    // Async operations
     delay(1.0).await;  // Wait for 1 second
 }
 ```
