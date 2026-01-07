@@ -35,10 +35,20 @@ const config = makeConfig({
         type: 'string',
         default: getenv('REPOSITORY', ''),
         describe: 'GitHub repository (e.g., owner/repo)',
+      })
+      .option('tag-prefix', {
+        type: 'string',
+        default: getenv('TAG_PREFIX', 'v'),
+        describe: 'Tag prefix (e.g., "v" or "rust-v")',
+      })
+      .option('crates-io-url', {
+        type: 'string',
+        default: getenv('CRATES_IO_URL', ''),
+        describe: 'Crates.io package URL to include in release notes',
       }),
 });
 
-const { releaseVersion: version, repository } = config;
+const { releaseVersion: version, repository, tagPrefix, cratesIoUrl } = config;
 
 if (!version || !repository) {
   console.error('Error: Missing required arguments');
@@ -48,7 +58,7 @@ if (!version || !repository) {
   process.exit(1);
 }
 
-const tag = `v${version}`;
+const tag = `${tagPrefix}${version}`;
 
 console.log(`Creating GitHub release for ${tag}...`);
 
@@ -81,13 +91,18 @@ function getChangelogForVersion(version) {
 }
 
 try {
-  const releaseNotes = getChangelogForVersion(version);
+  let releaseNotes = getChangelogForVersion(version);
+
+  // Add crates.io link if provided
+  if (cratesIoUrl) {
+    releaseNotes = `${cratesIoUrl}\n\n${releaseNotes}`;
+  }
 
   // Create release using GitHub API with JSON input
   // This avoids shell escaping issues
   const payload = JSON.stringify({
     tag_name: tag,
-    name: `v${version}`,
+    name: `${tagPrefix}${version}`,
     body: releaseNotes,
   });
 

@@ -60,8 +60,8 @@ function setOutput(key, value) {
   if (outputFile) {
     appendFileSync(outputFile, `${key}=${value}\n`);
   }
-  // Also log for visibility
-  console.log(`::set-output name=${key}::${value}`);
+  // Log for visibility (plain log, not deprecated ::set-output command)
+  console.log(`Output: ${key}=${value}`);
 }
 
 /**
