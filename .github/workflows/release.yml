@@ -81,28 +81,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
       - name: Check for changelog fragments
-        run: |
-          # Get list of fragment files (excluding README and template)
-          FRAGMENTS=$(find changelog.d -name "*.md" ! -name "README.md" 2>/dev/null | wc -l)
-
-          # Get changed files in PR
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
-
-          # Check if any source files changed (excluding docs and config)
-          SOURCE_CHANGED=$(echo "$CHANGED_FILES" | grep -E "^(src/|tests/|scripts/|Cargo\.toml)" | wc -l)
-
-          if [ "$SOURCE_CHANGED" -gt 0 ] && [ "$FRAGMENTS" -eq 0 ]; then
-            echo "::error::No changelog fragment found. Please add a changelog entry in changelog.d/"
-            echo ""
-            echo "To create a changelog fragment:"
-            echo "  Create a new .md file in changelog.d/ with your changes"
-            echo ""
-            echo "See changelog.d/README.md for more information."
-            exit 1
-          fi
-
-          echo "Changelog check passed"
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: node scripts/check-changelog-fragment.mjs
 
   # === VERSION CHECK - prevents manual version modification in PRs ===
   # This ensures versions are only modified by the automated release pipeline
@@ -275,9 +262,7 @@ jobs:
           node-version: '20.x'
 
       - name: Configure git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+        run: node scripts/git-config.mjs
 
       - name: Determine bump type from changelog fragments
         id: bump_type
@@ -285,24 +270,9 @@ jobs:
 
       - name: Check if version already released or no fragments
         id: check
-        run: |
-          # Check if there are changelog fragments
-          if [ "${{ steps.bump_type.outputs.has_fragments }}" != "true" ]; then
-            # No fragments - check if current version tag exists
-            CURRENT_VERSION=$(grep -Po '(?<=^version = ")[^"]*' Cargo.toml)
-            if git rev-parse "v$CURRENT_VERSION" >/dev/null 2>&1; then
-              echo "No changelog fragments and v$CURRENT_VERSION already released"
-              echo "should_release=false" >> $GITHUB_OUTPUT
-            else
-              echo "No changelog fragments but v$CURRENT_VERSION not yet released"
-              echo "should_release=true" >> $GITHUB_OUTPUT
-              echo "skip_bump=true" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "Found changelog fragments, proceeding with release"
-            echo "should_release=true" >> $GITHUB_OUTPUT
-            echo "skip_bump=false" >> $GITHUB_OUTPUT
-          fi
+        env:
+          HAS_FRAGMENTS: ${{ steps.bump_type.outputs.has_fragments }}
+        run: node scripts/check-release-needed.mjs
 
       - name: Collect changelog and bump version
         id: version
@@ -314,9 +284,7 @@ jobs:
       - name: Get current version
         id: current_version
         if: steps.check.outputs.should_release == 'true'
-        run: |
-          CURRENT_VERSION=$(grep -Po '(?<=^version = ")[^"]*' Cargo.toml)
-          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+        run: node scripts/get-version.mjs
 
       - name: Build release
         if: steps.check.outputs.should_release == 'true'
@@ -325,53 +293,15 @@ jobs:
       - name: Publish to Crates.io
         if: steps.check.outputs.should_release == 'true'
         id: publish-crate
-        run: |
-          PACKAGE_NAME=$(grep '^name = ' Cargo.toml | head -1 | sed 's/name = "\(.*\)"/\1/')
-          PACKAGE_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
-          echo "Package: $PACKAGE_NAME@$PACKAGE_VERSION"
-
-          echo "=== Attempting to publish to crates.io ==="
-
-          # Try to publish and capture the result
-          set +e  # Don't exit on error
-          cargo publish --token ${{ secrets.CARGO_TOKEN }} --allow-dirty 2>&1 | tee publish_output.txt
-          PUBLISH_EXIT_CODE=$?
-          set -e  # Re-enable exit on error
-
-          if [ $PUBLISH_EXIT_CODE -eq 0 ]; then
-            echo "Successfully published $PACKAGE_NAME@$PACKAGE_VERSION to crates.io"
-            echo "publish_result=success" >> $GITHUB_OUTPUT
-          elif grep -q "already uploaded" publish_output.txt || grep -q "already exists" publish_output.txt; then
-            echo "Version $PACKAGE_VERSION already exists on crates.io - this is OK"
-            echo "publish_result=already_exists" >> $GITHUB_OUTPUT
-          else
-            echo "Failed to publish for unknown reason"
-            cat publish_output.txt
-            echo "publish_result=failed" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
-      - name: Report crates.io publish status
-        if: steps.check.outputs.should_release == 'true'
-        run: |
-          if [ "${{ steps.publish-crate.outputs.publish_result }}" = "success" ]; then
-            echo "Package was successfully published to crates.io"
-          elif [ "${{ steps.publish-crate.outputs.publish_result }}" = "already_exists" ]; then
-            echo "Package version already exists on crates.io - no action needed"
-          else
-            echo "Publishing to crates.io failed - please check the logs"
-          fi
+        env:
+          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+        run: node scripts/publish-crate.mjs
 
       - name: Create GitHub Release
         if: steps.check.outputs.should_release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PACKAGE_NAME=$(grep '^name = ' Cargo.toml | head -1 | sed 's/name = "\(.*\)"/\1/')
-          node scripts/create-github-release.mjs \
-            --release-version "${{ steps.current_version.outputs.version }}" \
-            --repository "${{ github.repository }}" \
-            --crates-io-url "https://crates.io/crates/$PACKAGE_NAME"
+        run: node scripts/create-github-release.mjs --release-version "${{ steps.current_version.outputs.version }}" --repository "${{ github.repository }}"
 
   # === MANUAL INSTANT RELEASE ===
   # Manual release via workflow_dispatch - only after CI passes
@@ -403,27 +333,17 @@ jobs:
           node-version: '20.x'
 
       - name: Configure git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+        run: node scripts/git-config.mjs
 
       - name: Collect changelog fragments
-        run: |
-          # Check if there are any fragments to collect
-          FRAGMENTS=$(find changelog.d -name "*.md" ! -name "README.md" 2>/dev/null | wc -l)
-          if [ "$FRAGMENTS" -gt 0 ]; then
-            echo "Found $FRAGMENTS changelog fragment(s), collecting..."
-            node scripts/collect-changelog.mjs
-          else
-            echo "No changelog fragments found, skipping collection"
-          fi
+        run: node scripts/collect-changelog.mjs
 
       - name: Version and commit
         id: version
-        run: |
-          node scripts/version-and-commit.mjs \
-            --bump-type "${{ github.event.inputs.bump_type }}" \
-            --description "${{ github.event.inputs.description }}"
+        env:
+          BUMP_TYPE: ${{ github.event.inputs.bump_type }}
+          DESCRIPTION: ${{ github.event.inputs.description }}
+        run: node scripts/version-and-commit.mjs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
 
       - name: Build release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
@@ -432,53 +352,15 @@ jobs:
       - name: Publish to Crates.io
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         id: publish-crate
-        run: |
-          PACKAGE_NAME=$(grep '^name = ' Cargo.toml | head -1 | sed 's/name = "\(.*\)"/\1/')
-          PACKAGE_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
-          echo "Package: $PACKAGE_NAME@$PACKAGE_VERSION"
-
-          echo "=== Attempting to publish to crates.io ==="
-
-          # Try to publish and capture the result
-          set +e  # Don't exit on error
-          cargo publish --token ${{ secrets.CARGO_TOKEN }} --allow-dirty 2>&1 | tee publish_output.txt
-          PUBLISH_EXIT_CODE=$?
-          set -e  # Re-enable exit on error
-
-          if [ $PUBLISH_EXIT_CODE -eq 0 ]; then
-            echo "Successfully published $PACKAGE_NAME@$PACKAGE_VERSION to crates.io"
-            echo "publish_result=success" >> $GITHUB_OUTPUT
-          elif grep -q "already uploaded" publish_output.txt || grep -q "already exists" publish_output.txt; then
-            echo "Version $PACKAGE_VERSION already exists on crates.io - this is OK"
-            echo "publish_result=already_exists" >> $GITHUB_OUTPUT
-          else
-            echo "Failed to publish for unknown reason"
-            cat publish_output.txt
-            echo "publish_result=failed" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
-      - name: Report crates.io publish status
-        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
-        run: |
-          if [ "${{ steps.publish-crate.outputs.publish_result }}" = "success" ]; then
-            echo "Package was successfully published to crates.io"
-          elif [ "${{ steps.publish-crate.outputs.publish_result }}" = "already_exists" ]; then
-            echo "Package version already exists on crates.io - no action needed"
-          else
-            echo "Publishing to crates.io failed - please check the logs"
-          fi
+        env:
+          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+        run: node scripts/publish-crate.mjs
 
       - name: Create GitHub Release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PACKAGE_NAME=$(grep '^name = ' Cargo.toml | head -1 | sed 's/name = "\(.*\)"/\1/')
-          node scripts/create-github-release.mjs \
-            --release-version "${{ steps.version.outputs.new_version }}" \
-            --repository "${{ github.repository }}" \
-            --crates-io-url "https://crates.io/crates/$PACKAGE_NAME"
+        run: node scripts/create-github-release.mjs --release-version "${{ steps.version.outputs.new_version }}" --repository "${{ github.repository }}"
 
   # === MANUAL CHANGELOG PR ===
   changelog-pr:
@@ -499,44 +381,10 @@ jobs:
           node-version: '20.x'
 
       - name: Create changelog fragment
-        run: |
-          BUMP_TYPE="${{ github.event.inputs.bump_type }}"
-          DESCRIPTION="${{ github.event.inputs.description }}"
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
-          FRAGMENT_FILE="changelog.d/${TIMESTAMP}-manual-${BUMP_TYPE}.md"
-
-          # Determine changelog category based on bump type
-          case "$BUMP_TYPE" in
-            major)
-              CATEGORY="### Breaking Changes"
-              ;;
-            minor)
-              CATEGORY="### Added"
-              ;;
-            patch)
-              CATEGORY="### Fixed"
-              ;;
-          esac
-
-          # Create changelog fragment with frontmatter
-          mkdir -p changelog.d
-          cat > "$FRAGMENT_FILE" << EOF
-          ---
-          bump: $BUMP_TYPE
-          ---
-
-          $CATEGORY
-
-          EOF
-
-          if [ -n "$DESCRIPTION" ]; then
-            echo "- ${DESCRIPTION}" >> "$FRAGMENT_FILE"
-          else
-            echo "- Manual ${BUMP_TYPE} release" >> "$FRAGMENT_FILE"
-          fi
-
-          echo "Created changelog fragment: $FRAGMENT_FILE"
-          cat "$FRAGMENT_FILE"
+        env:
+          BUMP_TYPE: ${{ github.event.inputs.bump_type }}
+          DESCRIPTION: ${{ github.event.inputs.description }}
+        run: node scripts/create-changelog-fragment.mjs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
