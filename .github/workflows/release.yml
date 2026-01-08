@@ -104,6 +104,29 @@ jobs:
 
           echo "Changelog check passed"
 
+  # === VERSION CHECK - prevents manual version modification in PRs ===
+  # This ensures versions are only modified by the automated release pipeline
+  version-check:
+    name: Version Modification Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Check for manual version changes
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: node scripts/check-version-modification.mjs
+
   # === LINT AND FORMAT CHECK ===
   # Lint runs independently of changelog check - it's a fast check that should always run
   # See: https://github.com/link-assistant/hive-mind/pull/1024 for why this dependency was removed
