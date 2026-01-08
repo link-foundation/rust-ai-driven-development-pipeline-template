@@ -83,17 +83,18 @@ jobs:
 
       - name: Check for changelog fragments
         run: |
-          # Get list of fragment files (excluding README and template)
-          FRAGMENTS=$(find changelog.d -name "*.md" ! -name "README.md" 2>/dev/null | wc -l)
-
           # Get changed files in PR
           CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
 
           # Check if any source files changed (excluding docs and config)
           SOURCE_CHANGED=$(echo "$CHANGED_FILES" | grep -E "^(src/|tests/|scripts/|Cargo\.toml)" | wc -l)
 
-          if [ "$SOURCE_CHANGED" -gt 0 ] && [ "$FRAGMENTS" -eq 0 ]; then
-            echo "::error::No changelog fragment found. Please add a changelog entry in changelog.d/"
+          # Check if a changelog fragment was ADDED in this PR (not just existing)
+          # This prevents the check from passing due to leftover fragments from previous PRs
+          FRAGMENT_ADDED=$(echo "$CHANGED_FILES" | grep -E "^changelog\.d/.*\.md$" | grep -v "README.md" | wc -l)
+
+          if [ "$SOURCE_CHANGED" -gt 0 ] && [ "$FRAGMENT_ADDED" -eq 0 ]; then
+            echo "::error::No changelog fragment found in this PR. Please add a changelog entry in changelog.d/"
             echo ""
             echo "To create a changelog fragment:"
             echo "  Create a new .md file in changelog.d/ with your changes"
@@ -102,7 +103,7 @@ jobs:
             exit 1
           fi
 
-          echo "Changelog check passed"
+          echo "Changelog check passed (source files changed: $SOURCE_CHANGED, fragments added: $FRAGMENT_ADDED)"
 
   # === LINT AND FORMAT CHECK ===
   # Lint runs independently of changelog check - it's a fast check that should always run
