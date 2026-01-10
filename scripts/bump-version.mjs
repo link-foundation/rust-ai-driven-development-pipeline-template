@@ -2,7 +2,11 @@
 
 /**
  * Bump version in Cargo.toml
- * Usage: node scripts/bump-version.mjs --bump-type <major|minor|patch> [--dry-run]
+ * Usage: node scripts/bump-version.mjs --bump-type <major|minor|patch> [--dry-run] [--rust-root <path>]
+ *
+ * Supports both single-language and multi-language repository structures:
+ * - Single-language: Cargo.toml in repository root
+ * - Multi-language: Cargo.toml in rust/ subfolder
  *
  * Uses link-foundation libraries:
  * - use-m: Dynamic package loading without package.json dependencies
@@ -10,6 +14,11 @@
  */
 
 import { readFileSync, writeFileSync } from 'fs';
+import {
+  getRustRoot,
+  getCargoTomlPath,
+  parseRustRootConfig,
+} from './rust-paths.mjs';
 
 // Load use-m dynamically
 const { use } = eval(
@@ -33,28 +42,40 @@ const config = makeConfig({
         type: 'boolean',
         default: false,
         describe: 'Show what would be done without making changes',
+      })
+      .option('rust-root', {
+        type: 'string',
+        default: getenv('RUST_ROOT', ''),
+        describe: 'Rust package root directory (auto-detected if not specified)',
       }),
 });
 
-const { bumpType, dryRun } = config;
+const { bumpType, dryRun, rustRoot: rustRootArg } = config;
+
+// Get Rust package root (auto-detect or use explicit config)
+const rustRootConfig = rustRootArg || parseRustRootConfig();
+const rustRoot = getRustRoot({ rustRoot: rustRootConfig || undefined, verbose: true });
 
 if (!bumpType || !['major', 'minor', 'patch'].includes(bumpType)) {
   console.error(
-    'Usage: node scripts/bump-version.mjs --bump-type <major|minor|patch> [--dry-run]'
+    'Usage: node scripts/bump-version.mjs --bump-type <major|minor|patch> [--dry-run] [--rust-root <path>]'
   );
   process.exit(1);
 }
+
+// Get the Cargo.toml path based on detected rust root
+const CARGO_TOML = getCargoTomlPath({ rustRoot });
 
 /**
  * Get current version from Cargo.toml
  * @returns {{major: number, minor: number, patch: number}}
  */
 function getCurrentVersion() {
-  const cargoToml = readFileSync('Cargo.toml', 'utf-8');
+  const cargoToml = readFileSync(CARGO_TOML, 'utf-8');
   const match = cargoToml.match(/^version\s*=\s*"(\d+)\.(\d+)\.(\d+)"/m);
 
   if (!match) {
-    console.error('Error: Could not parse version from Cargo.toml');
+    console.error(`Error: Could not parse version from ${CARGO_TOML}`);
     process.exit(1);
   }
 
@@ -91,12 +112,12 @@ function calculateNewVersion(current, bumpType) {
  * @param {string} newVersion
  */
 function updateCargoToml(newVersion) {
-  let cargoToml = readFileSync('Cargo.toml', 'utf-8');
+  let cargoToml = readFileSync(CARGO_TOML, 'utf-8');
   cargoToml = cargoToml.replace(
     /^(version\s*=\s*")[^"]+(")/m,
     `$1${newVersion}$2`
   );
-  writeFileSync('Cargo.toml', cargoToml, 'utf-8');
+  writeFileSync(CARGO_TOML, cargoToml, 'utf-8');
 }
 
 try {
@@ -111,7 +132,7 @@ try {
     console.log('Dry run - no changes made');
   } else {
     updateCargoToml(newVersion);
-    console.log('Updated Cargo.toml');
+    console.log(`Updated ${CARGO_TOML}`);
   }
 } catch (error) {
   console.error('Error:', error.message);

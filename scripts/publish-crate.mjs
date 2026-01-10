@@ -6,7 +6,11 @@
  * This script publishes the Rust package to crates.io and handles
  * the case where the version already exists.
  *
- * Usage: node scripts/publish-crate.mjs [--token <token>]
+ * Supports both single-language and multi-language repository structures:
+ * - Single-language: Cargo.toml in repository root
+ * - Multi-language: Cargo.toml in rust/ subfolder
+ *
+ * Usage: node scripts/publish-crate.mjs [--token <token>] [--rust-root <path>]
  *
  * Environment variables (checked in order of priority):
  *   - CARGO_REGISTRY_TOKEN: Cargo's native crates.io token (preferred)
@@ -22,6 +26,12 @@
  */
 
 import { readFileSync, appendFileSync } from 'fs';
+import {
+  getRustRoot,
+  getCargoTomlPath,
+  needsCd,
+  parseRustRootConfig,
+} from './rust-paths.mjs';
 
 // Load use-m dynamically
 const { use } = eval(
@@ -36,14 +46,27 @@ const { makeConfig } = await use('lino-arguments');
 // Support both CARGO_REGISTRY_TOKEN (cargo's native env var) and CARGO_TOKEN (backwards compat)
 const config = makeConfig({
   yargs: ({ yargs, getenv }) =>
-    yargs.option('token', {
-      type: 'string',
-      default: getenv('CARGO_REGISTRY_TOKEN', '') || getenv('CARGO_TOKEN', ''),
-      describe: 'Crates.io API token (defaults to CARGO_REGISTRY_TOKEN or CARGO_TOKEN env var)',
-    }),
+    yargs
+      .option('token', {
+        type: 'string',
+        default: getenv('CARGO_REGISTRY_TOKEN', '') || getenv('CARGO_TOKEN', ''),
+        describe: 'Crates.io API token (defaults to CARGO_REGISTRY_TOKEN or CARGO_TOKEN env var)',
+      })
+      .option('rust-root', {
+        type: 'string',
+        default: getenv('RUST_ROOT', ''),
+        describe: 'Rust package root directory (auto-detected if not specified)',
+      }),
 });
 
-const { token } = config;
+const { token, rustRoot: rustRootArg } = config;
+
+// Get Rust package root (auto-detect or use explicit config)
+const rustRootConfig = rustRootArg || parseRustRootConfig();
+const rustRoot = getRustRoot({ rustRoot: rustRootConfig || undefined, verbose: true });
+
+// Get paths based on detected/configured rust root
+const CARGO_TOML = getCargoTomlPath({ rustRoot });
 
 /**
  * Append to GitHub Actions output file
@@ -63,13 +86,13 @@ function setOutput(key, value) {
  * @returns {{name: string, version: string}}
  */
 function getPackageInfo() {
-  const cargoToml = readFileSync('Cargo.toml', 'utf-8');
+  const cargoToml = readFileSync(CARGO_TOML, 'utf-8');
 
   const nameMatch = cargoToml.match(/^name\s*=\s*"([^"]+)"/m);
   const versionMatch = cargoToml.match(/^version\s*=\s*"([^"]+)"/m);
 
   if (!nameMatch || !versionMatch) {
-    console.error('Error: Could not parse package info from Cargo.toml');
+    console.error(`Error: Could not parse package info from ${CARGO_TOML}`);
     process.exit(1);
   }
 
@@ -80,6 +103,10 @@ function getPackageInfo() {
 }
 
 async function main() {
+  // Store the original working directory to restore after cd commands
+  // IMPORTANT: command-stream's cd is a virtual command that calls process.chdir()
+  const originalCwd = process.cwd();
+
   try {
     const { name, version } = getPackageInfo();
     console.log(`Package: ${name}@${version}`);
@@ -93,15 +120,31 @@ async function main() {
     }
 
     try {
-      if (token) {
-        await $`cargo publish --token ${token} --allow-dirty`;
+      // For multi-language repos, we need to cd into the rust directory
+      // IMPORTANT: cd is a virtual command that calls process.chdir(), so we restore after
+      if (needsCd({ rustRoot })) {
+        if (token) {
+          await $`cd ${rustRoot} && cargo publish --token ${token} --allow-dirty`;
+        } else {
+          await $`cd ${rustRoot} && cargo publish --allow-dirty`;
+        }
+        process.chdir(originalCwd);
       } else {
-        await $`cargo publish --allow-dirty`;
+        if (token) {
+          await $`cargo publish --token ${token} --allow-dirty`;
+        } else {
+          await $`cargo publish --allow-dirty`;
+        }
       }
 
       console.log(`Successfully published ${name}@${version} to crates.io`);
       setOutput('publish_result', 'success');
     } catch (error) {
+      // Restore cwd on error
+      if (needsCd({ rustRoot })) {
+        process.chdir(originalCwd);
+      }
+
       const errorMessage = error.message || '';
 
       if (
