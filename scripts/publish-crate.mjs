@@ -8,8 +8,9 @@
  *
  * Usage: node scripts/publish-crate.mjs [--token <token>]
  *
- * Environment variables:
- *   - CARGO_TOKEN: The crates.io API token
+ * Environment variables (checked in order of priority):
+ *   - CARGO_REGISTRY_TOKEN: Cargo's native crates.io token (preferred)
+ *   - CARGO_TOKEN: Alternative token name for backwards compatibility
  *
  * Outputs (written to GITHUB_OUTPUT):
  *   - publish_result: 'success', 'already_exists', or 'failed'
@@ -32,12 +33,13 @@ const { $ } = await use('command-stream');
 const { makeConfig } = await use('lino-arguments');
 
 // Parse CLI arguments
+// Support both CARGO_REGISTRY_TOKEN (cargo's native env var) and CARGO_TOKEN (backwards compat)
 const config = makeConfig({
   yargs: ({ yargs, getenv }) =>
     yargs.option('token', {
       type: 'string',
-      default: getenv('CARGO_TOKEN', ''),
-      describe: 'Crates.io API token',
+      default: getenv('CARGO_REGISTRY_TOKEN', '') || getenv('CARGO_TOKEN', ''),
+      describe: 'Crates.io API token (defaults to CARGO_REGISTRY_TOKEN or CARGO_TOKEN env var)',
     }),
 });
 
@@ -83,6 +85,12 @@ async function main() {
     console.log(`Package: ${name}@${version}`);
     console.log('');
     console.log('=== Attempting to publish to crates.io ===');
+
+    if (!token) {
+      console.log(
+        '::warning::Neither CARGO_REGISTRY_TOKEN nor CARGO_TOKEN is set, attempting publish without explicit token'
+      );
+    }
 
     try {
       if (token) {
