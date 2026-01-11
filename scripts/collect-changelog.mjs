@@ -5,6 +5,10 @@
  * This script collects all .md files from changelog.d/ (except README.md)
  * and prepends them to CHANGELOG.md, then removes the processed fragments.
  *
+ * Supports both single-language and multi-language repository structures:
+ * - Single-language: Cargo.toml and changelog.d/ in repository root
+ * - Multi-language: Cargo.toml and changelog.d/ in rust/ subfolder
+ *
  * Uses link-foundation libraries:
  * - use-m: Dynamic package loading without package.json dependencies
  */
@@ -17,9 +21,29 @@ import {
   existsSync,
 } from 'fs';
 import { join } from 'path';
+import {
+  getRustRoot,
+  getCargoTomlPath,
+  getChangelogDir,
+  getChangelogPath,
+  parseRustRootConfig,
+} from './rust-paths.mjs';
 
-const CHANGELOG_DIR = 'changelog.d';
-const CHANGELOG_FILE = 'CHANGELOG.md';
+// Simple CLI argument parsing
+const args = process.argv.slice(2);
+const getArg = (name, defaultValue) => {
+  const index = args.indexOf(`--${name}`);
+  return index >= 0 && args[index + 1] ? args[index + 1] : defaultValue;
+};
+
+// Get Rust package root (auto-detect or use explicit config)
+const rustRootConfig = getArg('rust-root', '') || parseRustRootConfig();
+const rustRoot = getRustRoot({ rustRoot: rustRootConfig || undefined, verbose: true });
+
+// Get paths based on detected/configured rust root
+const CARGO_TOML = getCargoTomlPath({ rustRoot });
+const CHANGELOG_DIR = getChangelogDir({ rustRoot });
+const CHANGELOG_FILE = getChangelogPath({ rustRoot });
 const INSERT_MARKER = '<!-- changelog-insert-here -->';
 
 /**
@@ -27,11 +51,11 @@ const INSERT_MARKER = '<!-- changelog-insert-here -->';
  * @returns {string}
  */
 function getVersionFromCargo() {
-  const cargoToml = readFileSync('Cargo.toml', 'utf-8');
+  const cargoToml = readFileSync(CARGO_TOML, 'utf-8');
   const match = cargoToml.match(/^version\s*=\s*"([^"]+)"/m);
 
   if (!match) {
-    console.error('Error: Could not find version in Cargo.toml');
+    console.error(`Error: Could not find version in ${CARGO_TOML}`);
     process.exit(1);
   }
 

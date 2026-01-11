@@ -4,7 +4,11 @@
  * Bump version in Cargo.toml and commit changes
  * Used by the CI/CD pipeline for releases
  *
- * Usage: node scripts/version-and-commit.mjs --bump-type <major|minor|patch> [--description <desc>]
+ * Supports both single-language and multi-language repository structures:
+ * - Single-language: Cargo.toml and changelog.d/ in repository root
+ * - Multi-language: Cargo.toml and changelog.d/ in rust/ subfolder
+ *
+ * Usage: node scripts/version-and-commit.mjs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>]
  *
  * Uses link-foundation libraries:
  * - use-m: Dynamic package loading without package.json dependencies
@@ -14,6 +18,13 @@
 
 import { readFileSync, writeFileSync, appendFileSync, readdirSync, existsSync } from 'fs';
 import { join } from 'path';
+import {
+  getRustRoot,
+  getCargoTomlPath,
+  getChangelogDir,
+  getChangelogPath,
+  parseRustRootConfig,
+} from './rust-paths.mjs';
 
 // Load use-m dynamically
 const { use } = eval(
@@ -38,14 +49,28 @@ const config = makeConfig({
         type: 'string',
         default: getenv('DESCRIPTION', ''),
         describe: 'Release description',
+      })
+      .option('rust-root', {
+        type: 'string',
+        default: getenv('RUST_ROOT', ''),
+        describe: 'Rust package root directory (auto-detected if not specified)',
       }),
 });
 
-const { bumpType, description } = config;
+const { bumpType, description, rustRoot: rustRootArg } = config;
+
+// Get Rust package root (auto-detect or use explicit config)
+const rustRootConfig = rustRootArg || parseRustRootConfig();
+const rustRoot = getRustRoot({ rustRoot: rustRootConfig || undefined, verbose: true });
+
+// Get paths based on detected/configured rust root
+const CARGO_TOML = getCargoTomlPath({ rustRoot });
+const CHANGELOG_DIR = getChangelogDir({ rustRoot });
+const CHANGELOG_FILE = getChangelogPath({ rustRoot });
 
 if (!bumpType || !['major', 'minor', 'patch'].includes(bumpType)) {
   console.error(
-    'Usage: node scripts/version-and-commit.mjs --bump-type <major|minor|patch> [--description <desc>]'
+    'Usage: node scripts/version-and-commit.mjs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>]'
   );
   process.exit(1);
 }
@@ -69,11 +94,11 @@ function setOutput(key, value) {
  * @returns {{major: number, minor: number, patch: number}}
  */
 function getCurrentVersion() {
-  const cargoToml = readFileSync('Cargo.toml', 'utf-8');
+  const cargoToml = readFileSync(CARGO_TOML, 'utf-8');
   const match = cargoToml.match(/^version\s*=\s*"(\d+)\.(\d+)\.(\d+)"/m);
 
   if (!match) {
-    console.error('Error: Could not parse version from Cargo.toml');
+    console.error(`Error: Could not parse version from ${CARGO_TOML}`);
     process.exit(1);
   }
 
@@ -110,13 +135,13 @@ function calculateNewVersion(current, bumpType) {
  * @param {string} newVersion
  */
 function updateCargoToml(newVersion) {
-  let cargoToml = readFileSync('Cargo.toml', 'utf-8');
+  let cargoToml = readFileSync(CARGO_TOML, 'utf-8');
   cargoToml = cargoToml.replace(
     /^(version\s*=\s*")[^"]+(")/m,
     `$1${newVersion}$2`
   );
-  writeFileSync('Cargo.toml', cargoToml, 'utf-8');
-  console.log(`Updated Cargo.toml to version ${newVersion}`);
+  writeFileSync(CARGO_TOML, cargoToml, 'utf-8');
+  console.log(`Updated ${CARGO_TOML} to version ${newVersion}`);
 }
 
 /**
@@ -151,14 +176,11 @@ function stripFrontmatter(content) {
  * @param {string} version
  */
 function collectChangelog(version) {
-  const changelogDir = 'changelog.d';
-  const changelogFile = 'CHANGELOG.md';
-
-  if (!existsSync(changelogDir)) {
+  if (!existsSync(CHANGELOG_DIR)) {
     return;
   }
 
-  const files = readdirSync(changelogDir).filter(
+  const files = readdirSync(CHANGELOG_DIR).filter(
     (f) => f.endsWith('.md') && f !== 'README.md'
   );
 
@@ -169,7 +191,7 @@ function collectChangelog(version) {
   const fragments = files
     .sort()
     .map((f) => {
-      const rawContent = readFileSync(join(changelogDir, f), 'utf-8');
+      const rawContent = readFileSync(join(CHANGELOG_DIR, f), 'utf-8');
       // Strip frontmatter (which contains bump type metadata)
       return stripFrontmatter(rawContent);
     })
@@ -183,8 +205,8 @@ function collectChangelog(version) {
   const dateStr = new Date().toISOString().split('T')[0];
   const newEntry = `\n## [${version}] - ${dateStr}\n\n${fragments}\n`;
 
-  if (existsSync(changelogFile)) {
-    let content = readFileSync(changelogFile, 'utf-8');
+  if (existsSync(CHANGELOG_FILE)) {
+    let content = readFileSync(CHANGELOG_FILE, 'utf-8');
     const lines = content.split('\n');
     let insertIndex = -1;
 
@@ -202,7 +224,7 @@ function collectChangelog(version) {
       content += newEntry;
     }
 
-    writeFileSync(changelogFile, content, 'utf-8');
+    writeFileSync(CHANGELOG_FILE, content, 'utf-8');
   }
 
   console.log(`Collected ${files.length} changelog fragment(s)`);
@@ -232,7 +254,8 @@ async function main() {
     collectChangelog(newVersion);
 
     // Stage Cargo.toml and CHANGELOG.md
-    await $`git add Cargo.toml CHANGELOG.md`;
+    // Use the paths determined by rust-root configuration
+    await $`git add ${CARGO_TOML} ${CHANGELOG_FILE}`;
 
     // Check if there are changes to commit
     try {

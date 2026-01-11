@@ -6,6 +6,10 @@
  * This script reads changeset fragments from changelog.d/ and determines
  * the version bump type based on the frontmatter in each fragment.
  *
+ * Supports both single-language and multi-language repository structures:
+ * - Single-language: changelog.d/ in repository root
+ * - Multi-language: changelog.d/ in rust/ subfolder
+ *
  * Fragment format:
  * ---
  * bump: patch|minor|major
@@ -14,7 +18,7 @@
  * ### Added
  * - Your changes here
  *
- * Usage: node scripts/get-bump-type.mjs [--default <patch|minor|major>]
+ * Usage: node scripts/get-bump-type.mjs [--default <patch|minor|major>] [--rust-root <path>]
  *
  * Uses link-foundation libraries:
  * - use-m: Dynamic package loading without package.json dependencies
@@ -23,6 +27,11 @@
 
 import { readFileSync, readdirSync, existsSync, appendFileSync } from 'fs';
 import { join } from 'path';
+import {
+  getRustRoot,
+  getChangelogDir,
+  parseRustRootConfig,
+} from './rust-paths.mjs';
 
 // Load use-m dynamically
 const { use } = eval(
@@ -41,12 +50,22 @@ const config = makeConfig({
         default: getenv('DEFAULT_BUMP', 'patch'),
         describe: 'Default bump type if no fragments specify one',
         choices: ['major', 'minor', 'patch'],
+      })
+      .option('rust-root', {
+        type: 'string',
+        default: getenv('RUST_ROOT', ''),
+        describe: 'Rust package root directory (auto-detected if not specified)',
       }),
 });
 
-const { default: defaultBump } = config;
+const { default: defaultBump, rustRoot: rustRootArg } = config;
 
-const CHANGELOG_DIR = 'changelog.d';
+// Get Rust package root (auto-detect or use explicit config)
+const rustRootConfig = rustRootArg || parseRustRootConfig();
+const rustRoot = getRustRoot({ rustRoot: rustRootConfig || undefined, verbose: true });
+
+// Get paths based on detected/configured rust root
+const CHANGELOG_DIR = getChangelogDir({ rustRoot });
 
 // Bump type priority (higher = more significant)
 const BUMP_PRIORITY = {

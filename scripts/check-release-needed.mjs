@@ -7,7 +7,11 @@
  * 1. If there are changelog fragments to process
  * 2. If the current version has already been released (tagged)
  *
- * Usage: node scripts/check-release-needed.mjs
+ * Supports both single-language and multi-language repository structures:
+ * - Single-language: Cargo.toml in repository root
+ * - Multi-language: Cargo.toml in rust/ subfolder
+ *
+ * Usage: node scripts/check-release-needed.mjs [--rust-root <path>]
  *
  * Environment variables:
  *   - HAS_FRAGMENTS: 'true' if changelog fragments exist (from get-bump-type.mjs)
@@ -23,6 +27,11 @@
  */
 
 import { readFileSync, appendFileSync } from 'fs';
+import {
+  getRustRoot,
+  getCargoTomlPath,
+  parseRustRootConfig,
+} from './rust-paths.mjs';
 
 // Load use-m dynamically
 const { use } = eval(
@@ -36,14 +45,27 @@ const { makeConfig } = await use('lino-arguments');
 // Parse CLI arguments and env vars
 const config = makeConfig({
   yargs: ({ yargs, getenv }) =>
-    yargs.option('has-fragments', {
-      type: 'string',
-      default: getenv('HAS_FRAGMENTS', 'false'),
-      describe: 'Whether changelog fragments exist',
-    }),
+    yargs
+      .option('has-fragments', {
+        type: 'string',
+        default: getenv('HAS_FRAGMENTS', 'false'),
+        describe: 'Whether changelog fragments exist',
+      })
+      .option('rust-root', {
+        type: 'string',
+        default: getenv('RUST_ROOT', ''),
+        describe: 'Rust package root directory (auto-detected if not specified)',
+      }),
 });
 
-const { hasFragments } = config;
+const { hasFragments, rustRoot: rustRootArg } = config;
+
+// Get Rust package root (auto-detect or use explicit config)
+const rustRootConfig = rustRootArg || parseRustRootConfig();
+const rustRoot = getRustRoot({ rustRoot: rustRootConfig || undefined, verbose: true });
+
+// Get paths based on detected/configured rust root
+const CARGO_TOML = getCargoTomlPath({ rustRoot });
 
 /**
  * Append to GitHub Actions output file
@@ -63,11 +85,11 @@ function setOutput(key, value) {
  * @returns {string}
  */
 function getCurrentVersion() {
-  const cargoToml = readFileSync('Cargo.toml', 'utf-8');
+  const cargoToml = readFileSync(CARGO_TOML, 'utf-8');
   const match = cargoToml.match(/^version\s*=\s*"([^"]+)"/m);
 
   if (!match) {
-    console.error('Error: Could not find version in Cargo.toml');
+    console.error(`Error: Could not find version in ${CARGO_TOML}`);
     process.exit(1);
   }
 
