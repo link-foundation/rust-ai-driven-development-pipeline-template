@@ -117,6 +117,18 @@ async function main() {
       console.log(
         '::warning::Neither CARGO_REGISTRY_TOKEN nor CARGO_TOKEN is set, attempting publish without explicit token'
       );
+      console.log('');
+      console.log('To fix this, ensure one of the following secrets is configured:');
+      console.log('  - CARGO_REGISTRY_TOKEN (Cargo\'s native env var, preferred)');
+      console.log('  - CARGO_TOKEN (alternative for backwards compatibility)');
+      console.log('');
+      console.log('For organization secrets, you may need to map the secret name in your workflow:');
+      console.log('  env:');
+      console.log('    CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}');
+      console.log('');
+    } else {
+      // Log that we have a token (masked in CI logs)
+      console.log('Using provided authentication token');
     }
 
     try {
@@ -155,6 +167,31 @@ async function main() {
           `Version ${version} already exists on crates.io - this is OK`
         );
         setOutput('publish_result', 'already_exists');
+      } else if (
+        errorMessage.includes('non-empty token') ||
+        errorMessage.includes('please provide a') ||
+        errorMessage.includes('unauthorized') ||
+        errorMessage.includes('authentication')
+      ) {
+        // Explicit authentication failure handling
+        console.error('');
+        console.error('=== AUTHENTICATION FAILURE ===');
+        console.error('');
+        console.error('Failed to publish due to missing or invalid authentication token.');
+        console.error('');
+        console.error('SOLUTION: Configure one of these secrets in your repository or organization:');
+        console.error('  1. CARGO_REGISTRY_TOKEN - Cargo\'s native environment variable (preferred)');
+        console.error('  2. CARGO_TOKEN - Alternative name for backwards compatibility');
+        console.error('');
+        console.error('If using organization secrets with a different name, map it in your workflow:');
+        console.error('  - name: Publish to Crates.io');
+        console.error('    env:');
+        console.error('      CARGO_REGISTRY_TOKEN: ${{ secrets.YOUR_SECRET_NAME }}');
+        console.error('');
+        console.error('See: https://doc.rust-lang.org/cargo/reference/publishing.html');
+        console.error('');
+        setOutput('publish_result', 'auth_failed');
+        process.exit(1);
       } else {
         console.error('Failed to publish for unknown reason');
         console.error(errorMessage);

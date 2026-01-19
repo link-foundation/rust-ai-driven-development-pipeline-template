@@ -5,7 +5,15 @@
  *
  * This script checks:
  * 1. If there are changelog fragments to process
- * 2. If the current version has already been released (tagged)
+ * 2. If the current version has already been published to crates.io
+ *
+ * IMPORTANT: This script checks crates.io (the source of truth for Rust packages),
+ * NOT git tags. This is critical because:
+ * - Git tags can exist without the package being published
+ * - GitHub releases create tags but don't publish to crates.io
+ * - Only crates.io publication means users can actually install the package
+ *
+ * See: https://github.com/link-foundation/browser-commander/issues/29
  *
  * Supports both single-language and multi-language repository structures:
  * - Single-language: Cargo.toml in repository root
@@ -97,15 +105,56 @@ function getCurrentVersion() {
 }
 
 /**
- * Check if a git tag exists for this version
- * @param {string} version
- * @returns {Promise<boolean>}
+ * Get crate name from Cargo.toml
+ * @returns {string}
  */
-async function checkTagExists(version) {
+function getCrateName() {
+  const cargoToml = readFileSync(CARGO_TOML, 'utf-8');
+  const match = cargoToml.match(/^name\s*=\s*"([^"]+)"/m);
+
+  if (!match) {
+    console.error(`Error: Could not find name in ${CARGO_TOML}`);
+    process.exit(1);
+  }
+
+  return match[1];
+}
+
+/**
+ * Check if a version is published on crates.io
+ *
+ * This is the source of truth for whether a Rust package version is released.
+ * Git tags can exist without the package being published (e.g., failed publish,
+ * GitHub-only releases), so we must check crates.io directly.
+ *
+ * @param {string} crateName - The crate name
+ * @param {string} version - The version to check
+ * @returns {Promise<boolean>} - True if the version exists on crates.io
+ */
+async function checkVersionOnCratesIo(crateName, version) {
   try {
-    await $`git rev-parse v${version}`.run({ capture: true });
-    return true;
-  } catch {
+    const response = await fetch(
+      `https://crates.io/api/v1/crates/${crateName}/${version}`
+    );
+
+    if (!response.ok) {
+      // 404 means version doesn't exist on crates.io
+      if (response.status === 404) {
+        return false;
+      }
+      console.log(
+        `Warning: crates.io API returned ${response.status} for ${crateName}@${version}`
+      );
+      return false;
+    }
+
+    const data = await response.json();
+    // If we got a valid response with a version field, it exists
+    return !!data.version;
+  } catch (error) {
+    console.log(`Warning: Could not check crates.io: ${error.message}`);
+    // On error, fall back to assuming it's not published
+    // This is safer than incorrectly skipping a release
     return false;
   }
 }
@@ -115,18 +164,23 @@ async function main() {
     const fragmentsExist = hasFragments === 'true';
 
     if (!fragmentsExist) {
-      // No fragments - check if current version tag exists
+      // No fragments - check if current version is published on crates.io
+      const crateName = getCrateName();
       const currentVersion = getCurrentVersion();
-      const tagExists = await checkTagExists(currentVersion);
+      const isPublished = await checkVersionOnCratesIo(crateName, currentVersion);
 
-      if (tagExists) {
+      console.log(
+        `Crate: ${crateName}, Version: ${currentVersion}, Published on crates.io: ${isPublished}`
+      );
+
+      if (isPublished) {
         console.log(
-          `No changelog fragments and v${currentVersion} already released`
+          `No changelog fragments and v${currentVersion} already published on crates.io`
         );
         setOutput('should_release', 'false');
       } else {
         console.log(
-          `No changelog fragments but v${currentVersion} not yet released`
+          `No changelog fragments but v${currentVersion} not yet published to crates.io`
         );
         setOutput('should_release', 'true');
         setOutput('skip_bump', 'true');
