@@ -88,7 +88,7 @@ fn has_version_change(diff: &str) -> bool {
 
     // Look for changes to the version line
     // Match lines that start with + or - followed by version = "..."
-    let version_change_pattern = Regex::new(r"(?m)^[+-]version\s*=\s*""").unwrap();
+    let version_change_pattern = Regex::new(r#"(?m)^[+-]version\s*=\s*""#).unwrap();
     version_change_pattern.is_match(diff)
 }
 
