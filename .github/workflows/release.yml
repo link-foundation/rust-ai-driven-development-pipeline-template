@@ -48,7 +48,6 @@ jobs:
     outputs:
       rs-changed: ${{ steps.changes.outputs.rs-changed }}
       toml-changed: ${{ steps.changes.outputs.toml-changed }}
-      mjs-changed: ${{ steps.changes.outputs.mjs-changed }}
       docs-changed: ${{ steps.changes.outputs.docs-changed }}
       workflow-changed: ${{ steps.changes.outputs.workflow-changed }}
       any-code-changed: ${{ steps.changes.outputs.any-code-changed }}
@@ -57,10 +56,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install rust-script
+        run: cargo install rust-script
 
       - name: Detect changes
         id: changes
@@ -68,7 +68,7 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: node scripts/detect-code-changes.mjs
+        run: rust-script scripts/detect-code-changes.rs
 
   # === CHANGELOG CHECK - only runs on PRs with code changes ===
   # Docs-only PRs (./docs folder, markdown files) don't require changelog fragments
@@ -82,15 +82,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install rust-script
+        run: cargo install rust-script
 
       - name: Check for changelog fragments
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
-        run: node scripts/check-changelog-fragment.mjs
+        run: rust-script scripts/check-changelog-fragment.rs
 
   # === VERSION CHECK - prevents manual version modification in PRs ===
   # This ensures versions are only modified by the automated release pipeline
@@ -103,17 +104,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install rust-script
+        run: cargo install rust-script
 
       - name: Check for manual version changes
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_HEAD_REF: ${{ github.head_ref }}
           GITHUB_BASE_REF: ${{ github.base_ref }}
-        run: node scripts/check-version-modification.mjs
+        run: rust-script scripts/check-version-modification.rs
 
   # === LINT AND FORMAT CHECK ===
   # Lint runs independently of changelog check - it's a fast check that should always run
@@ -131,7 +133,6 @@ jobs:
         github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.rs-changed == 'true' ||
         needs.detect-changes.outputs.toml-changed == 'true' ||
-        needs.detect-changes.outputs.mjs-changed == 'true' ||
         needs.detect-changes.outputs.docs-changed == 'true' ||
         needs.detect-changes.outputs.workflow-changed == 'true'
       )
@@ -143,10 +144,8 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
+      - name: Install rust-script
+        run: cargo install rust-script
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -166,7 +165,7 @@ jobs:
         run: cargo clippy --all-targets --all-features
 
       - name: Check file size limit
-        run: node scripts/check-file-size.mjs
+        run: rust-script scripts/check-file-size.rs
 
   # === TEST ===
   # Test runs independently of changelog check
@@ -257,35 +256,33 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
+      - name: Install rust-script
+        run: cargo install rust-script
 
       - name: Configure git
-        run: node scripts/git-config.mjs
+        run: rust-script scripts/git-config.rs
 
       - name: Determine bump type from changelog fragments
         id: bump_type
-        run: node scripts/get-bump-type.mjs
+        run: rust-script scripts/get-bump-type.rs
 
       - name: Check if version already released or no fragments
         id: check
         env:
           HAS_FRAGMENTS: ${{ steps.bump_type.outputs.has_fragments }}
-        run: node scripts/check-release-needed.mjs
+        run: rust-script scripts/check-release-needed.rs
 
       - name: Collect changelog and bump version
         id: version
         if: steps.check.outputs.should_release == 'true' && steps.check.outputs.skip_bump != 'true'
         run: |
-          node scripts/version-and-commit.mjs \
+          rust-script scripts/version-and-commit.rs \
             --bump-type "${{ steps.bump_type.outputs.bump_type }}"
 
       - name: Get current version
         id: current_version
         if: steps.check.outputs.should_release == 'true'
-        run: node scripts/get-version.mjs
+        run: rust-script scripts/get-version.rs
 
       - name: Build release
         if: steps.check.outputs.should_release == 'true'
@@ -296,13 +293,13 @@ jobs:
         id: publish-crate
         env:
           CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
-        run: node scripts/publish-crate.mjs
+        run: rust-script scripts/publish-crate.rs
 
       - name: Create GitHub Release
         if: steps.check.outputs.should_release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/create-github-release.mjs --release-version "${{ steps.current_version.outputs.version }}" --repository "${{ github.repository }}"
+        run: rust-script scripts/create-github-release.rs --release-version "${{ steps.current_version.outputs.version }}" --repository "${{ github.repository }}"
 
   # === MANUAL INSTANT RELEASE ===
   # Manual release via workflow_dispatch - only after CI passes
@@ -328,23 +325,21 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
+      - name: Install rust-script
+        run: cargo install rust-script
 
       - name: Configure git
-        run: node scripts/git-config.mjs
+        run: rust-script scripts/git-config.rs
 
       - name: Collect changelog fragments
-        run: node scripts/collect-changelog.mjs
+        run: rust-script scripts/collect-changelog.rs
 
       - name: Version and commit
         id: version
         env:
           BUMP_TYPE: ${{ github.event.inputs.bump_type }}
           DESCRIPTION: ${{ github.event.inputs.description }}
-        run: node scripts/version-and-commit.mjs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
+        run: rust-script scripts/version-and-commit.rs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
 
       - name: Build release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
@@ -355,13 +350,13 @@ jobs:
         id: publish-crate
         env:
           CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
-        run: node scripts/publish-crate.mjs
+        run: rust-script scripts/publish-crate.rs
 
       - name: Create GitHub Release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/create-github-release.mjs --release-version "${{ steps.version.outputs.new_version }}" --repository "${{ github.repository }}"
+        run: rust-script scripts/create-github-release.rs --release-version "${{ steps.version.outputs.new_version }}" --repository "${{ github.repository }}"
 
   # === MANUAL CHANGELOG PR ===
   changelog-pr:
@@ -376,16 +371,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install rust-script
+        run: cargo install rust-script
 
       - name: Create changelog fragment
         env:
           BUMP_TYPE: ${{ github.event.inputs.bump_type }}
           DESCRIPTION: ${{ github.event.inputs.description }}
-        run: node scripts/create-changelog-fragment.mjs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
+        run: rust-script scripts/create-changelog-fragment.rs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7

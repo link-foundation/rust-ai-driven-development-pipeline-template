@@ -23,6 +23,7 @@ Thank you for your interest in contributing! This document provides guidelines a
 
    ```bash
    rustup component add rustfmt clippy
+   cargo install rust-script
    ```
 
 4. **Install pre-commit hooks** (optional but recommended)
@@ -61,11 +62,11 @@ Thank you for your interest in contributing! This document provides guidelines a
    # Run Clippy lints
    cargo clippy --all-targets --all-features
 
-   # Check file sizes
-   node scripts/check-file-size.mjs
+   # Check file sizes (requires rust-script)
+   rust-script scripts/check-file-size.rs
 
    # Run all checks together
-   cargo fmt --check && cargo clippy --all-targets --all-features && node scripts/check-file-size.mjs
+   cargo fmt --check && cargo clippy --all-targets --all-features && rust-script scripts/check-file-size.rs
    ```
 
 4. **Run tests**
@@ -256,7 +257,7 @@ Fragments are automatically collected into CHANGELOG.md during the release proce
 │   ├── README.md         # Fragment instructions
 │   └── *.md              # Individual changelog fragments
 ├── examples/             # Usage examples
-├── scripts/              # Utility scripts
+├── scripts/              # Rust scripts (via rust-script)
 ├── src/
 │   ├── lib.rs            # Library entry point
 │   └── main.rs           # Binary entry point

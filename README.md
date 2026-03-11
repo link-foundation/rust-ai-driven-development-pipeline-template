@@ -79,11 +79,11 @@ cargo fmt --check
 # Run Clippy lints
 cargo clippy --all-targets --all-features
 
-# Check file size limits
-node scripts/check-file-size.mjs
+# Check file size limits (requires rust-script: cargo install rust-script)
+rust-script scripts/check-file-size.rs
 
 # Run all checks
-cargo fmt --check && cargo clippy --all-targets --all-features && node scripts/check-file-size.mjs
+cargo fmt --check && cargo clippy --all-targets --all-features && rust-script scripts/check-file-size.rs
 ```
 
 ## Project Structure
@@ -98,14 +98,14 @@ cargo fmt --check && cargo clippy --all-targets --all-features && node scripts/c
 │   └── *.md                    # Individual changelog entries
 ├── examples/
 │   └── basic_usage.rs          # Usage examples
-├── scripts/
-│   ├── bump-version.mjs        # Version bumping utility
-│   ├── check-file-size.mjs     # File size validation script
-│   ├── collect-changelog.mjs   # Changelog collection script
-│   ├── create-github-release.mjs # GitHub release creation
-│   ├── detect-code-changes.mjs # Detects code changes for CI
-│   ├── get-bump-type.mjs       # Determines version bump type
-│   └── version-and-commit.mjs  # CI/CD version management
+├── scripts/                    # Rust scripts (via rust-script)
+│   ├── bump-version.rs         # Version bumping utility
+│   ├── check-file-size.rs      # File size validation script
+│   ├── collect-changelog.rs    # Changelog collection script
+│   ├── create-github-release.rs # GitHub release creation
+│   ├── detect-code-changes.rs  # Detects code changes for CI
+│   ├── get-bump-type.rs        # Determines version bump type
+│   └── version-and-commit.rs   # CI/CD version management
 ├── src/
 │   ├── lib.rs                  # Library entry point
 │   └── main.rs                 # Binary entry point
@@ -221,14 +221,17 @@ tab_spaces = 4
 
 ## Scripts Reference
 
-| Script                              | Description                    |
-| ----------------------------------- | ------------------------------ |
-| `cargo test`                        | Run all tests                  |
-| `cargo fmt`                         | Format code                    |
-| `cargo clippy`                      | Run lints                      |
-| `cargo run --example basic_usage`   | Run example                    |
-| `node scripts/check-file-size.mjs`  | Check file size limits         |
-| `node scripts/bump-version.mjs`     | Bump version                   |
+All scripts in `scripts/` are Rust scripts that use [rust-script](https://github.com/fornwall/rust-script).
+Install rust-script with: `cargo install rust-script`
+
+| Script                                    | Description                    |
+| ----------------------------------------- | ------------------------------ |
+| `cargo test`                              | Run all tests                  |
+| `cargo fmt`                               | Format code                    |
+| `cargo clippy`                            | Run lints                      |
+| `cargo run --example basic_usage`         | Run example                    |
+| `rust-script scripts/check-file-size.rs`  | Check file size limits         |
+| `rust-script scripts/bump-version.rs`     | Bump version                   |
 
 ## Example Usage
 
