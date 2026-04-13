@@ -2,16 +2,25 @@
 //! Bump version in Cargo.toml and commit changes
 //! Used by the CI/CD pipeline for releases
 //!
+//! IMPORTANT: This script checks crates.io (the source of truth for Rust packages),
+//! NOT git tags. This is critical because:
+//! - Git tags can exist without the package being published
+//! - GitHub releases create tags but don't publish to crates.io
+//! - Only crates.io publication means users can actually install the package
+//!
 //! Supports both single-language and multi-language repository structures:
 //! - Single-language: Cargo.toml and changelog.d/ in repository root
 //! - Multi-language: Cargo.toml and changelog.d/ in rust/ subfolder
 //!
-//! Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>]
+//! Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>] [--tag-prefix <prefix>]
 //!
 //! ```cargo
 //! [dependencies]
 //! regex = "1"
 //! chrono = "0.4"
+//! ureq = "2"
+//! serde = { version = "1", features = ["derive"] }
+//! serde_json = "1"
 //! ```
 
 use std::env;
@@ -21,6 +30,7 @@ use std::path::Path;
 use std::process::{Command, exit};
 use regex::Regex;
 use chrono::Utc;
+use serde::Deserialize;
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -149,8 +159,53 @@ fn update_cargo_toml(cargo_toml_path: &str, new_version: &str) -> Result<(), Str
     Ok(())
 }
 
-fn check_tag_exists(version: &str) -> bool {
-    exec_check("git", &["rev-parse", &format!("v{}", version)])
+#[derive(Deserialize)]
+struct CratesIoVersion {
+    version: Option<CratesIoVersionInfo>,
+}
+
+#[derive(Deserialize)]
+struct CratesIoVersionInfo {
+    #[allow(dead_code)]
+    num: String,
+}
+
+fn get_crate_name(cargo_toml_path: &str) -> Result<String, String> {
+    let content = fs::read_to_string(cargo_toml_path)
+        .map_err(|e| format!("Failed to read {}: {}", cargo_toml_path, e))?;
+
+    let re = Regex::new(r#"(?m)^name\s*=\s*"([^"]+)""#).unwrap();
+
+    if let Some(caps) = re.captures(&content) {
+        Ok(caps.get(1).unwrap().as_str().to_string())
+    } else {
+        Err(format!("Could not find name in {}", cargo_toml_path))
+    }
+}
+
+fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
+    let url = format!("https://crates.io/api/v1/crates/{}/{}", crate_name, version);
+
+    match ureq::get(&url)
+        .set("User-Agent", "rust-script-version-and-commit")
+        .call()
+    {
+        Ok(response) => {
+            if response.status() == 200 {
+                if let Ok(body) = response.into_string() {
+                    if let Ok(data) = serde_json::from_str::<CratesIoVersion>(&body) {
+                        return data.version.is_some();
+                    }
+                }
+            }
+            false
+        }
+        Err(ureq::Error::Status(404, _)) => false,
+        Err(e) => {
+            eprintln!("Warning: Could not check crates.io: {}", e);
+            false
+        }
+    }
 }
 
 fn strip_frontmatter(content: &str) -> String {
@@ -242,6 +297,7 @@ fn main() {
     }
 
     let description = get_arg("description");
+    let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
     let rust_root = get_rust_root();
     let cargo_toml = get_cargo_toml_path(&rust_root);
     let changelog_dir = get_changelog_dir(&rust_root);
@@ -270,9 +326,17 @@ fn main() {
 
     let new_version = current.bump(&bump_type);
 
-    // Check if this version was already released
-    if check_tag_exists(&new_version) {
-        println!("Tag v{} already exists", new_version);
+    // Check if this version was already published to crates.io (the source of truth)
+    let crate_name = match get_crate_name(&cargo_toml) {
+        Ok(name) => name,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            exit(1);
+        }
+    };
+
+    if check_version_on_crates_io(&crate_name, &new_version) {
+        println!("Version {} already published on crates.io", new_version);
         set_output("already_released", "true");
         set_output("new_version", &new_version);
         return;
@@ -301,8 +365,8 @@ fn main() {
 
     // Commit changes
     let commit_msg = match &description {
-        Some(desc) => format!("chore: release v{}\n\n{}", new_version, desc),
-        None => format!("chore: release v{}", new_version),
+        Some(desc) => format!("chore: release {}{}\n\n{}", tag_prefix, new_version, desc),
+        None => format!("chore: release {}{}", tag_prefix, new_version),
     };
 
     if let Err(e) = exec("git", &["commit", "-m", &commit_msg]) {
@@ -312,16 +376,17 @@ fn main() {
     println!("Committed version {}", new_version);
 
     // Create tag
+    let tag_name = format!("{}{}", tag_prefix, new_version);
     let tag_msg = match &description {
-        Some(desc) => format!("Release v{}\n\n{}", new_version, desc),
-        None => format!("Release v{}", new_version),
+        Some(desc) => format!("Release {}\n\n{}", tag_name, desc),
+        None => format!("Release {}", tag_name),
     };
 
-    if let Err(e) = exec("git", &["tag", "-a", &format!("v{}", new_version), "-m", &tag_msg]) {
+    if let Err(e) = exec("git", &["tag", "-a", &tag_name, "-m", &tag_msg]) {
         eprintln!("Error creating tag: {}", e);
         exit(1);
     }
-    println!("Created tag v{}", new_version);
+    println!("Created tag {}", tag_name);
 
     // Push changes and tag
     if let Err(e) = exec("git", &["push"]) {

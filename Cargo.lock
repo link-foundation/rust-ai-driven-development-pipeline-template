@@ -38,7 +38,7 @@ checksum = "05f29059c0c2090612e8d742178b0580d2dc940c837851ad723096f87af6663e"
 
 [[package]]
 name = "my-package"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "tokio",
  "tokio-test",

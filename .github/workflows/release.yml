@@ -405,3 +405,33 @@ jobs:
             1. Review the changelog fragment in this PR
             2. Merge this PR to main
             3. The automated release workflow will publish to crates.io and create a GitHub release
+
+  # === DEPLOY DOCUMENTATION ===
+  # Deploy Rust API documentation to GitHub Pages after a successful release
+  deploy-docs:
+    name: Deploy Documentation
+    needs: [auto-release, manual-release]
+    if: |
+      always() && !cancelled() && (
+        needs.auto-release.result == 'success' ||
+        needs.manual-release.result == 'success'
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build documentation
+        run: cargo doc --no-deps --all-features
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: target/doc
