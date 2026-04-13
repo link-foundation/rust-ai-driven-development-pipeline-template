@@ -168,8 +168,15 @@ fn main() {
         let combined = format!("{}\n{}", stdout, stderr);
 
         if combined.contains("already uploaded") || combined.contains("already exists") {
-            println!("Version {} already exists on crates.io - this is OK", version);
+            eprintln!();
+            eprintln!("=== VERSION ALREADY PUBLISHED ===");
+            eprintln!();
+            eprintln!("Version {} already exists on crates.io.", version);
+            eprintln!("The release pipeline must always publish a version greater than what is already published.");
+            eprintln!("This indicates a bug in version bumping: the pipeline should have computed a new, unpublished version.");
+            eprintln!();
             set_output("publish_result", "already_exists");
+            exit(1);
         } else if combined.contains("non-empty token")
             || combined.contains("please provide a")
             || combined.contains("unauthorized")

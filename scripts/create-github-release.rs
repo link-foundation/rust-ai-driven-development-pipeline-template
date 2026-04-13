@@ -4,7 +4,7 @@
 //! Automatically includes crates.io and docs.rs badges in release notes
 //! when the crate name can be detected from Cargo.toml.
 //!
-//! Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository>
+//! Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository> [--tag-prefix <prefix>] [--release-label <label>]
 //!
 //! ```cargo
 //! [dependencies]
@@ -114,6 +114,7 @@ fn main() {
     };
 
     let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
+    let release_label = get_arg("release-label");
     let crates_io_url = get_arg("crates-io-url");
 
     let tag = format!("{}{}", tag_prefix, version);
@@ -137,10 +138,16 @@ fn main() {
         release_notes = format!("{}\n\n{}", url, release_notes);
     }
 
+    // Build release name with optional label for multi-language repos
+    let release_name = match &release_label {
+        Some(label) => format!("{}{} ({})", tag_prefix, version, label),
+        None => format!("{}{}", tag_prefix, version),
+    };
+
     // Create release using GitHub API with JSON input
     let payload = ReleasePayload {
         tag_name: tag.clone(),
-        name: format!("{}{}", tag_prefix, version),
+        name: release_name,
         body: release_notes,
     };
 
@@ -171,7 +178,11 @@ fn main() {
         println!("Created GitHub release: {}", tag);
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        if stderr.contains("already exists") {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let combined = format!("{}{}", stderr, stdout);
+        if combined.contains("already exists") || combined.contains("already_exists")
+            || combined.contains("Validation Failed")
+        {
             println!("Release {} already exists, skipping", tag);
         } else {
             eprintln!("Error creating release: {}", stderr);

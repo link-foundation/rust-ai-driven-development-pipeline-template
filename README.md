@@ -6,6 +6,7 @@ A comprehensive template for AI-driven Rust development with full CI/CD pipeline
 [![Crates.io](https://img.shields.io/crates/v/my-package?label=crates.io&style=flat)](https://crates.io/crates/my-package)
 [![Docs.rs](https://docs.rs/my-package/badge.svg)](https://docs.rs/my-package)
 [![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org/)
+[![Codecov](https://codecov.io/gh/link-foundation/rust-ai-driven-development-pipeline-template/branch/main/graph/badge.svg)](https://codecov.io/gh/link-foundation/rust-ai-driven-development-pipeline-template)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 
 ## Features
@@ -17,6 +18,7 @@ A comprehensive template for AI-driven Rust development with full CI/CD pipeline
 - **Pre-commit hooks**: Automated code quality checks before commits
 - **CI/CD pipeline**: GitHub Actions with multi-platform support
 - **Changelog management**: Fragment-based changelog (like Changesets/Scriv)
+- **Code coverage**: Automated coverage reports with cargo-llvm-cov and Codecov
 - **Release automation**: Automatic GitHub releases
 
 ## Quick Start
