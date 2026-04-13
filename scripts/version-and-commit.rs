@@ -2,6 +2,12 @@
 //! Bump version in Cargo.toml and commit changes
 //! Used by the CI/CD pipeline for releases
 //!
+//! IMPORTANT: This script checks crates.io (the source of truth for Rust packages),
+//! NOT git tags. This is critical because:
+//! - Git tags can exist without the package being published
+//! - GitHub releases create tags but don't publish to crates.io
+//! - Only crates.io publication means users can actually install the package
+//!
 //! Supports both single-language and multi-language repository structures:
 //! - Single-language: Cargo.toml and changelog.d/ in repository root
 //! - Multi-language: Cargo.toml and changelog.d/ in rust/ subfolder
@@ -12,6 +18,9 @@
 //! [dependencies]
 //! regex = "1"
 //! chrono = "0.4"
+//! ureq = "2"
+//! serde = { version = "1", features = ["derive"] }
+//! serde_json = "1"
 //! ```
 
 use std::env;
@@ -21,6 +30,7 @@ use std::path::Path;
 use std::process::{Command, exit};
 use regex::Regex;
 use chrono::Utc;
+use serde::Deserialize;
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -149,8 +159,53 @@ fn update_cargo_toml(cargo_toml_path: &str, new_version: &str) -> Result<(), Str
     Ok(())
 }
 
-fn check_tag_exists(version: &str) -> bool {
-    exec_check("git", &["rev-parse", &format!("v{}", version)])
+#[derive(Deserialize)]
+struct CratesIoVersion {
+    version: Option<CratesIoVersionInfo>,
+}
+
+#[derive(Deserialize)]
+struct CratesIoVersionInfo {
+    #[allow(dead_code)]
+    num: String,
+}
+
+fn get_crate_name(cargo_toml_path: &str) -> Result<String, String> {
+    let content = fs::read_to_string(cargo_toml_path)
+        .map_err(|e| format!("Failed to read {}: {}", cargo_toml_path, e))?;
+
+    let re = Regex::new(r#"(?m)^name\s*=\s*"([^"]+)""#).unwrap();
+
+    if let Some(caps) = re.captures(&content) {
+        Ok(caps.get(1).unwrap().as_str().to_string())
+    } else {
+        Err(format!("Could not find name in {}", cargo_toml_path))
+    }
+}
+
+fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
+    let url = format!("https://crates.io/api/v1/crates/{}/{}", crate_name, version);
+
+    match ureq::get(&url)
+        .set("User-Agent", "rust-script-version-and-commit")
+        .call()
+    {
+        Ok(response) => {
+            if response.status() == 200 {
+                if let Ok(body) = response.into_string() {
+                    if let Ok(data) = serde_json::from_str::<CratesIoVersion>(&body) {
+                        return data.version.is_some();
+                    }
+                }
+            }
+            false
+        }
+        Err(ureq::Error::Status(404, _)) => false,
+        Err(e) => {
+            eprintln!("Warning: Could not check crates.io: {}", e);
+            false
+        }
+    }
 }
 
 fn strip_frontmatter(content: &str) -> String {
@@ -270,9 +325,17 @@ fn main() {
 
     let new_version = current.bump(&bump_type);
 
-    // Check if this version was already released
-    if check_tag_exists(&new_version) {
-        println!("Tag v{} already exists", new_version);
+    // Check if this version was already published to crates.io (the source of truth)
+    let crate_name = match get_crate_name(&cargo_toml) {
+        Ok(name) => name,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            exit(1);
+        }
+    };
+
+    if check_version_on_crates_io(&crate_name, &new_version) {
+        println!("Version {} already published on crates.io", new_version);
         set_output("already_released", "true");
         set_output("new_version", &new_version);
         return;
