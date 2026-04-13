@@ -1,6 +1,6 @@
 [package]
 name = "my-package"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 description = "A Rust package template for AI-driven development"
 readme = "README.md"
