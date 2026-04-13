@@ -77,11 +77,27 @@ fn get_changelog_for_version(version: &str) -> String {
 
     // Find the section for this version
     let escaped_version = regex::escape(version);
-    let pattern = format!(r"(?s)## \[{}\].*?\n(.*?)(?=\n## \[|$)", escaped_version);
-    let re = Regex::new(&pattern).unwrap();
+    let header_pattern = format!(r"(?m)^## \[{}\]", escaped_version);
+    let header_re = Regex::new(&header_pattern).unwrap();
 
-    if let Some(caps) = re.captures(&content) {
-        caps.get(1).unwrap().as_str().trim().to_string()
+    if let Some(m) = header_re.find(&content) {
+        let after_header = &content[m.end()..];
+        let body_start = after_header.find('\n').map_or(after_header.len(), |i| i + 1);
+        let body = &after_header[body_start..];
+
+        let next_section_re = Regex::new(r"(?m)^## \[").unwrap();
+        let section_body = if let Some(next) = next_section_re.find(body) {
+            &body[..next.start()]
+        } else {
+            body
+        };
+
+        let trimmed = section_body.trim();
+        if trimmed.is_empty() {
+            format!("Release v{}", version)
+        } else {
+            trimmed.to_string()
+        }
     } else {
         format!("Release v{}", version)
     }
@@ -117,14 +133,21 @@ fn main() {
     let release_label = get_arg("release-label");
     let crates_io_url = get_arg("crates-io-url");
 
+    let rust_root = get_rust_root();
+    let cargo_toml = get_cargo_toml_path(&rust_root);
+
+    if let Some(ref crate_name) = get_crate_name_from_toml(&cargo_toml) {
+        if crate_name == "example-sum-package-name" {
+            println!("Skipping GitHub release: package name is the template default 'example-sum-package-name'");
+            println!("Rename the package in Cargo.toml before creating releases");
+            return;
+        }
+    }
+
     let tag = format!("{}{}", tag_prefix, version);
     println!("Creating GitHub release for {}...", tag);
 
     let mut release_notes = get_changelog_for_version(&version);
-
-    // Add crates.io and docs.rs badges
-    let rust_root = get_rust_root();
-    let cargo_toml = get_cargo_toml_path(&rust_root);
     if let Some(crate_name) = get_crate_name_from_toml(&cargo_toml) {
         let badges = format!(
             "[![Crates.io](https://img.shields.io/crates/v/{}?label=crates.io)](https://crates.io/crates/{}/{}) [![Docs.rs](https://docs.rs/{}/badge.svg)](https://docs.rs/{}/{})",
