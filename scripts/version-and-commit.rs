@@ -12,7 +12,7 @@
 //! - Single-language: Cargo.toml and changelog.d/ in repository root
 //! - Multi-language: Cargo.toml and changelog.d/ in rust/ subfolder
 //!
-//! Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>]
+//! Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>] [--tag-prefix <prefix>]
 //!
 //! ```cargo
 //! [dependencies]
@@ -297,6 +297,7 @@ fn main() {
     }
 
     let description = get_arg("description");
+    let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
     let rust_root = get_rust_root();
     let cargo_toml = get_cargo_toml_path(&rust_root);
     let changelog_dir = get_changelog_dir(&rust_root);
@@ -364,8 +365,8 @@ fn main() {
 
     // Commit changes
     let commit_msg = match &description {
-        Some(desc) => format!("chore: release v{}\n\n{}", new_version, desc),
-        None => format!("chore: release v{}", new_version),
+        Some(desc) => format!("chore: release {}{}\n\n{}", tag_prefix, new_version, desc),
+        None => format!("chore: release {}{}", tag_prefix, new_version),
     };
 
     if let Err(e) = exec("git", &["commit", "-m", &commit_msg]) {
@@ -375,16 +376,17 @@ fn main() {
     println!("Committed version {}", new_version);
 
     // Create tag
+    let tag_name = format!("{}{}", tag_prefix, new_version);
     let tag_msg = match &description {
-        Some(desc) => format!("Release v{}\n\n{}", new_version, desc),
-        None => format!("Release v{}", new_version),
+        Some(desc) => format!("Release {}\n\n{}", tag_name, desc),
+        None => format!("Release {}", tag_name),
     };
 
-    if let Err(e) = exec("git", &["tag", "-a", &format!("v{}", new_version), "-m", &tag_msg]) {
+    if let Err(e) = exec("git", &["tag", "-a", &tag_name, "-m", &tag_msg]) {
         eprintln!("Error creating tag: {}", e);
         exit(1);
     }
-    println!("Created tag v{}", new_version);
+    println!("Created tag {}", tag_name);
 
     // Push changes and tag
     if let Err(e) = exec("git", &["push"]) {
