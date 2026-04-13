@@ -274,7 +274,7 @@ jobs:
         run: cargo build --release --verbose
 
       - name: Check package
-        run: cargo package --list
+        run: cargo package --list --allow-dirty
 
   # === AUTO RELEASE ===
   # Automatic release on push to main using changelog fragments
