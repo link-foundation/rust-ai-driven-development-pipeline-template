@@ -3,6 +3,8 @@
 A comprehensive template for AI-driven Rust development with full CI/CD pipeline support.
 
 [![CI/CD Pipeline](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/actions)
+[![Crates.io](https://img.shields.io/crates/v/my-package?label=crates.io&style=flat)](https://crates.io/crates/my-package)
+[![Docs.rs](https://docs.rs/my-package/badge.svg)](https://docs.rs/my-package)
 [![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org/)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 

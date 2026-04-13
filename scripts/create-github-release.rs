@@ -1,6 +1,9 @@
 #!/usr/bin/env rust-script
 //! Create GitHub Release from CHANGELOG.md
 //!
+//! Automatically includes crates.io and docs.rs badges in release notes
+//! when the crate name can be detected from Cargo.toml.
+//!
 //! Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository>
 //!
 //! ```cargo
@@ -17,6 +20,36 @@ use std::path::Path;
 use std::process::{Command, Stdio, exit};
 use regex::Regex;
 use serde::Serialize;
+
+fn get_rust_root() -> String {
+    if let Some(root) = get_arg("rust-root") {
+        return root;
+    }
+
+    if Path::new("./Cargo.toml").exists() {
+        return ".".to_string();
+    }
+
+    if Path::new("./rust/Cargo.toml").exists() {
+        return "rust".to_string();
+    }
+
+    ".".to_string()
+}
+
+fn get_cargo_toml_path(rust_root: &str) -> String {
+    if rust_root == "." {
+        "./Cargo.toml".to_string()
+    } else {
+        format!("{}/Cargo.toml", rust_root)
+    }
+}
+
+fn get_crate_name_from_toml(cargo_toml_path: &str) -> Option<String> {
+    let content = fs::read_to_string(cargo_toml_path).ok()?;
+    let re = Regex::new(r#"(?m)^name\s*=\s*"([^"]+)""#).ok()?;
+    re.captures(&content).map(|c| c.get(1).unwrap().as_str().to_string())
+}
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -88,7 +121,18 @@ fn main() {
 
     let mut release_notes = get_changelog_for_version(&version);
 
-    // Add crates.io link if provided
+    // Add crates.io and docs.rs badges
+    let rust_root = get_rust_root();
+    let cargo_toml = get_cargo_toml_path(&rust_root);
+    if let Some(crate_name) = get_crate_name_from_toml(&cargo_toml) {
+        let badges = format!(
+            "[![Crates.io](https://img.shields.io/crates/v/{}?label=crates.io)](https://crates.io/crates/{}/{}) [![Docs.rs](https://docs.rs/{}/badge.svg)](https://docs.rs/{}/{})",
+            crate_name, crate_name, version, crate_name, crate_name, version
+        );
+        release_notes = format!("{}\n\n{}", badges, release_notes);
+    }
+
+    // Add explicit crates.io link if provided (overrides auto-detected)
     if let Some(url) = crates_io_url {
         release_notes = format!("{}\n\n{}", url, release_notes);
     }
