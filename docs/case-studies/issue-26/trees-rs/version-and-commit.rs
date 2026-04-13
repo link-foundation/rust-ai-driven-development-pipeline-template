@@ -2,17 +2,11 @@
 //! Bump version in Cargo.toml and commit changes
 //! Used by the CI/CD pipeline for releases
 //!
-//! IMPORTANT: This script checks crates.io (the source of truth for Rust packages),
-//! NOT git tags. This is critical because:
-//! - Git tags can exist without the package being published
-//! - GitHub releases create tags but don't publish to crates.io
-//! - Only crates.io publication means users can actually install the package
-//!
 //! Supports both single-language and multi-language repository structures:
 //! - Single-language: Cargo.toml and changelog.d/ in repository root
 //! - Multi-language: Cargo.toml and changelog.d/ in rust/ subfolder
 //!
-//! Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>] [--tag-prefix <prefix>] [--release-label <label>]
+//! Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>]
 //!
 //! ```cargo
 //! [dependencies]
@@ -90,13 +84,8 @@ fn get_changelog_path(rust_root: &str) -> String {
 
 fn set_output(key: &str, value: &str) {
     if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Err(e) = fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&output_file)
-            .and_then(|mut f| writeln!(f, "{}={}", key, value))
-        {
-            eprintln!("Warning: Could not write to GITHUB_OUTPUT: {}", e);
+        if let Ok(mut file) = fs::OpenOptions::new().create(true).append(true).open(&output_file) {
+            let _ = writeln!(file, "{}={}", key, value);
         }
     }
     println!("Output: {}={}", key, value);
@@ -134,6 +123,7 @@ struct Version {
 
 impl Version {
     fn parse(content: &str) -> Option<Version> {
+        // Support semver pre-release versions like "0.1.0-beta.1"
         let re = Regex::new(r#"(?m)^version\s*=\s*"(\d+)\.(\d+)\.(\d+)(?:-([^"]+))?""#).ok()?;
         let caps = re.captures(content)?;
         Some(Version {
@@ -145,6 +135,9 @@ impl Version {
     }
 
     fn bump(&self, bump_type: &str) -> String {
+        // If version has a pre-release suffix (e.g. 0.1.0-beta.1),
+        // a bump removes the suffix and bumps the core version.
+        // This follows semver convention: bumping a pre-release produces the next release.
         match bump_type {
             "major" => format!("{}.0.0", self.major + 1),
             "minor" => format!("{}.{}.0", self.major, self.minor + 1),
@@ -178,23 +171,11 @@ struct CratesIoVersionEntry {
     yanked: bool,
 }
 
-fn get_crate_name(cargo_toml_path: &str) -> Result<String, String> {
-    let content = fs::read_to_string(cargo_toml_path)
-        .map_err(|e| format!("Failed to read {}: {}", cargo_toml_path, e))?;
-
-    let re = Regex::new(r#"(?m)^name\s*=\s*"([^"]+)""#).unwrap();
-
-    if let Some(caps) = re.captures(&content) {
-        Ok(caps.get(1).unwrap().as_str().to_string())
-    } else {
-        Err(format!("Could not find name in {}", cargo_toml_path))
-    }
+fn check_tag_exists(version: &str) -> bool {
+    exec_check("git", &["rev-parse", &format!("v{}", version)])
 }
 
-fn check_tag_exists(tag_prefix: &str, version: &str) -> bool {
-    exec_check("git", &["rev-parse", &format!("{}{}", tag_prefix, version)])
-}
-
+/// Check if a specific version exists on crates.io.
 fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
     let url = format!("https://crates.io/api/v1/crates/{}/{}", crate_name, version);
     match ureq::get(&url)
@@ -206,6 +187,7 @@ fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
     }
 }
 
+/// Get the maximum non-yanked version published on crates.io as (major, minor, patch).
 fn get_max_published_version(crate_name: &str) -> Option<(u32, u32, u32)> {
     let url = format!("https://crates.io/api/v1/crates/{}", crate_name);
     match ureq::get(&url)
@@ -249,10 +231,21 @@ fn get_max_published_version(crate_name: &str) -> Option<(u32, u32, u32)> {
     }
 }
 
+/// Get the crate name from Cargo.toml
+fn get_crate_name(cargo_toml_path: &str) -> Result<String, String> {
+    let content = fs::read_to_string(cargo_toml_path)
+        .map_err(|e| format!("Failed to read {}: {}", cargo_toml_path, e))?;
+    let re = Regex::new(r#"(?m)^name\s*=\s*"([^"]+)""#).unwrap();
+    re.captures(&content)
+        .map(|c| c.get(1).unwrap().as_str().to_string())
+        .ok_or_else(|| format!("Could not find name in {}", cargo_toml_path))
+}
+
+/// Given a version (major, minor, patch), ensure it is strictly greater than `max_published`.
+/// If not, set the version to max_published with patch+1. Returns the final version string.
 fn ensure_version_exceeds_published(
     version_str: &str,
     crate_name: &str,
-    tag_prefix: &str,
     max_published: Option<(u32, u32, u32)>,
 ) -> String {
     let parts: Vec<&str> = version_str.split('-').next().unwrap_or(version_str).split('.').collect();
@@ -266,6 +259,8 @@ fn ensure_version_exceeds_published(
 
     if let Some((pub_major, pub_minor, pub_patch)) = max_published {
         if (major, minor, patch) <= (pub_major, pub_minor, pub_patch) {
+            // The computed version does not exceed the max published version.
+            // Set to max_published and increment patch by 1 to exceed it.
             println!(
                 "Version {}.{}.{} is not greater than max published {}.{}.{}, adjusting to {}.{}.{}",
                 major, minor, patch,
@@ -278,9 +273,10 @@ fn ensure_version_exceeds_published(
         }
     }
 
+    // Also check git tags and crates.io for the specific version, in case of edge cases
     let mut candidate = format!("{}.{}.{}", major, minor, patch);
     let mut safety_counter = 0;
-    while (check_tag_exists(tag_prefix, &candidate) || check_version_on_crates_io(crate_name, &candidate))
+    while (check_tag_exists(&candidate) || check_version_on_crates_io(crate_name, &candidate))
         && safety_counter < 100
     {
         println!(
@@ -378,7 +374,7 @@ fn main() {
     let bump_type = match get_arg("bump-type") {
         Some(bt) => bt,
         None => {
-            eprintln!("Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>] [--tag-prefix <prefix>] [--release-label <label>]");
+            eprintln!("Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>]");
             exit(1);
         }
     };
@@ -389,8 +385,6 @@ fn main() {
     }
 
     let description = get_arg("description");
-    let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
-    let release_label = get_arg("release-label");
     let rust_root = get_rust_root();
     let cargo_toml = get_cargo_toml_path(&rust_root);
     let changelog_dir = get_changelog_dir(&rust_root);
@@ -419,6 +413,7 @@ fn main() {
 
     let initial_bump = current.bump(&bump_type);
 
+    // Query the crate name and max published version from crates.io
     let crate_name = match get_crate_name(&cargo_toml) {
         Ok(name) => name,
         Err(e) => {
@@ -436,7 +431,8 @@ fn main() {
 
     println!("Initial bump ({}) from {}.{}.{}: {}", bump_type, current.major, current.minor, current.patch, initial_bump);
 
-    let new_version = ensure_version_exceeds_published(&initial_bump, &crate_name, &tag_prefix, max_published);
+    // Ensure the new version is strictly greater than what's published and has no existing tag
+    let new_version = ensure_version_exceeds_published(&initial_bump, &crate_name, max_published);
 
     if new_version != initial_bump {
         println!(
@@ -461,6 +457,7 @@ fn main() {
 
     // Check if there are changes to commit
     if exec_check("git", &["diff", "--cached", "--quiet"]) {
+        // No changes to commit
         println!("No changes to commit");
         set_output("version_committed", "false");
         set_output("new_version", &new_version);
@@ -468,10 +465,9 @@ fn main() {
     }
 
     // Commit changes
-    let label_suffix = release_label.as_ref().map(|l| format!(" ({})", l)).unwrap_or_default();
     let commit_msg = match &description {
-        Some(desc) => format!("chore: release {}{}{}\n\n{}", tag_prefix, new_version, label_suffix, desc),
-        None => format!("chore: release {}{}{}", tag_prefix, new_version, label_suffix),
+        Some(desc) => format!("chore: release v{}\n\n{}", new_version, desc),
+        None => format!("chore: release v{}", new_version),
     };
 
     if let Err(e) = exec("git", &["commit", "-m", &commit_msg]) {
@@ -481,17 +477,16 @@ fn main() {
     println!("Committed version {}", new_version);
 
     // Create tag
-    let tag_name = format!("{}{}", tag_prefix, new_version);
     let tag_msg = match &description {
-        Some(desc) => format!("Release {}{}\n\n{}", tag_name, label_suffix, desc),
-        None => format!("Release {}{}", tag_name, label_suffix),
+        Some(desc) => format!("Release v{}\n\n{}", new_version, desc),
+        None => format!("Release v{}", new_version),
     };
 
-    if let Err(e) = exec("git", &["tag", "-a", &tag_name, "-m", &tag_msg]) {
+    if let Err(e) = exec("git", &["tag", "-a", &format!("v{}", new_version), "-m", &tag_msg]) {
         eprintln!("Error creating tag: {}", e);
         exit(1);
     }
-    println!("Created tag {}", tag_name);
+    println!("Created tag v{}", new_version);
 
     // Push changes and tag
     if let Err(e) = exec("git", &["push"]) {

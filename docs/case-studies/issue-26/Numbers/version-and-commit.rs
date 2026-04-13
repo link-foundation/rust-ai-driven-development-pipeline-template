@@ -2,25 +2,16 @@
 //! Bump version in Cargo.toml and commit changes
 //! Used by the CI/CD pipeline for releases
 //!
-//! IMPORTANT: This script checks crates.io (the source of truth for Rust packages),
-//! NOT git tags. This is critical because:
-//! - Git tags can exist without the package being published
-//! - GitHub releases create tags but don't publish to crates.io
-//! - Only crates.io publication means users can actually install the package
-//!
 //! Supports both single-language and multi-language repository structures:
 //! - Single-language: Cargo.toml and changelog.d/ in repository root
 //! - Multi-language: Cargo.toml and changelog.d/ in rust/ subfolder
 //!
-//! Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>] [--tag-prefix <prefix>] [--release-label <label>]
+//! Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>]
 //!
 //! ```cargo
 //! [dependencies]
 //! regex = "1"
 //! chrono = "0.4"
-//! ureq = "2"
-//! serde = { version = "1", features = ["derive"] }
-//! serde_json = "1"
 //! ```
 
 use std::env;
@@ -30,7 +21,6 @@ use std::path::Path;
 use std::process::{Command, exit};
 use regex::Regex;
 use chrono::Utc;
-use serde::Deserialize;
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -72,31 +62,20 @@ fn get_cargo_toml_path(rust_root: &str) -> String {
     }
 }
 
-fn get_changelog_dir(rust_root: &str) -> String {
-    if rust_root == "." {
-        "./changelog.d".to_string()
-    } else {
-        format!("{}/changelog.d", rust_root)
-    }
+fn get_changelog_dir(_rust_root: &str) -> String {
+    // In multi-language repos like linksplatform/Numbers, changelog.d is at repo root
+    "./changelog.d".to_string()
 }
 
-fn get_changelog_path(rust_root: &str) -> String {
-    if rust_root == "." {
-        "./CHANGELOG.md".to_string()
-    } else {
-        format!("{}/CHANGELOG.md", rust_root)
-    }
+fn get_changelog_path(_rust_root: &str) -> String {
+    // In multi-language repos like linksplatform/Numbers, CHANGELOG.md is at repo root
+    "./CHANGELOG.md".to_string()
 }
 
 fn set_output(key: &str, value: &str) {
     if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Err(e) = fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&output_file)
-            .and_then(|mut f| writeln!(f, "{}={}", key, value))
-        {
-            eprintln!("Warning: Could not write to GITHUB_OUTPUT: {}", e);
+        if let Ok(mut file) = fs::OpenOptions::new().create(true).append(true).open(&output_file) {
+            let _ = writeln!(file, "{}={}", key, value);
         }
     }
     println!("Output: {}={}", key, value);
@@ -128,19 +107,16 @@ struct Version {
     major: u32,
     minor: u32,
     patch: u32,
-    #[allow(dead_code)]
-    pre_release: Option<String>,
 }
 
 impl Version {
     fn parse(content: &str) -> Option<Version> {
-        let re = Regex::new(r#"(?m)^version\s*=\s*"(\d+)\.(\d+)\.(\d+)(?:-([^"]+))?""#).ok()?;
+        let re = Regex::new(r#"(?m)^version\s*=\s*"(\d+)\.(\d+)\.(\d+)""#).ok()?;
         let caps = re.captures(content)?;
         Some(Version {
             major: caps.get(1)?.as_str().parse().ok()?,
             minor: caps.get(2)?.as_str().parse().ok()?,
             patch: caps.get(3)?.as_str().parse().ok()?,
-            pre_release: caps.get(4).map(|m| m.as_str().to_string()),
         })
     }
 
@@ -167,137 +143,8 @@ fn update_cargo_toml(cargo_toml_path: &str, new_version: &str) -> Result<(), Str
     Ok(())
 }
 
-#[derive(Deserialize)]
-struct CratesIoCrate {
-    versions: Option<Vec<CratesIoVersionEntry>>,
-}
-
-#[derive(Deserialize)]
-struct CratesIoVersionEntry {
-    num: String,
-    yanked: bool,
-}
-
-fn get_crate_name(cargo_toml_path: &str) -> Result<String, String> {
-    let content = fs::read_to_string(cargo_toml_path)
-        .map_err(|e| format!("Failed to read {}: {}", cargo_toml_path, e))?;
-
-    let re = Regex::new(r#"(?m)^name\s*=\s*"([^"]+)""#).unwrap();
-
-    if let Some(caps) = re.captures(&content) {
-        Ok(caps.get(1).unwrap().as_str().to_string())
-    } else {
-        Err(format!("Could not find name in {}", cargo_toml_path))
-    }
-}
-
-fn check_tag_exists(tag_prefix: &str, version: &str) -> bool {
-    exec_check("git", &["rev-parse", &format!("{}{}", tag_prefix, version)])
-}
-
-fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
-    let url = format!("https://crates.io/api/v1/crates/{}/{}", crate_name, version);
-    match ureq::get(&url)
-        .set("User-Agent", "rust-script-version-and-commit")
-        .call()
-    {
-        Ok(response) => response.status() == 200,
-        Err(_) => false,
-    }
-}
-
-fn get_max_published_version(crate_name: &str) -> Option<(u32, u32, u32)> {
-    let url = format!("https://crates.io/api/v1/crates/{}", crate_name);
-    match ureq::get(&url)
-        .set("User-Agent", "rust-script-version-and-commit")
-        .call()
-    {
-        Ok(response) => {
-            if response.status() == 200 {
-                if let Ok(body) = response.into_string() {
-                    if let Ok(data) = serde_json::from_str::<CratesIoCrate>(&body) {
-                        if let Some(versions) = data.versions {
-                            let mut max: Option<(u32, u32, u32)> = None;
-                            for v in &versions {
-                                if v.yanked { continue; }
-                                let base = match v.num.split('-').next() {
-                                    Some(b) => b,
-                                    None => continue,
-                                };
-                                let parts: Vec<&str> = base.split('.').collect();
-                                if parts.len() == 3 {
-                                    if let (Ok(a), Ok(b), Ok(c)) = (
-                                        parts[0].parse::<u32>(),
-                                        parts[1].parse::<u32>(),
-                                        parts[2].parse::<u32>(),
-                                    ) {
-                                        let tuple = (a, b, c);
-                                        if max.map_or(true, |m| tuple > m) {
-                                            max = Some(tuple);
-                                        }
-                                    }
-                                }
-                            }
-                            return max;
-                        }
-                    }
-                }
-            }
-            None
-        }
-        Err(_) => None,
-    }
-}
-
-fn ensure_version_exceeds_published(
-    version_str: &str,
-    crate_name: &str,
-    tag_prefix: &str,
-    max_published: Option<(u32, u32, u32)>,
-) -> String {
-    let parts: Vec<&str> = version_str.split('-').next().unwrap_or(version_str).split('.').collect();
-    if parts.len() != 3 {
-        return version_str.to_string();
-    }
-
-    let mut major: u32 = parts[0].parse().unwrap_or(0);
-    let mut minor: u32 = parts[1].parse().unwrap_or(0);
-    let mut patch: u32 = parts[2].parse().unwrap_or(0);
-
-    if let Some((pub_major, pub_minor, pub_patch)) = max_published {
-        if (major, minor, patch) <= (pub_major, pub_minor, pub_patch) {
-            println!(
-                "Version {}.{}.{} is not greater than max published {}.{}.{}, adjusting to {}.{}.{}",
-                major, minor, patch,
-                pub_major, pub_minor, pub_patch,
-                pub_major, pub_minor, pub_patch + 1
-            );
-            major = pub_major;
-            minor = pub_minor;
-            patch = pub_patch + 1;
-        }
-    }
-
-    let mut candidate = format!("{}.{}.{}", major, minor, patch);
-    let mut safety_counter = 0;
-    while (check_tag_exists(tag_prefix, &candidate) || check_version_on_crates_io(crate_name, &candidate))
-        && safety_counter < 100
-    {
-        println!(
-            "Version {} already has a git tag or is published on crates.io, bumping patch",
-            candidate
-        );
-        patch += 1;
-        candidate = format!("{}.{}.{}", major, minor, patch);
-        safety_counter += 1;
-    }
-
-    if safety_counter >= 100 {
-        eprintln!("Error: Could not find an unpublished version after 100 attempts");
-        exit(1);
-    }
-
-    candidate
+fn check_tag_exists(version: &str) -> bool {
+    exec_check("git", &["rev-parse", &format!("v{}", version)])
 }
 
 fn strip_frontmatter(content: &str) -> String {
@@ -378,7 +225,7 @@ fn main() {
     let bump_type = match get_arg("bump-type") {
         Some(bt) => bt,
         None => {
-            eprintln!("Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>] [--tag-prefix <prefix>] [--release-label <label>]");
+            eprintln!("Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>]");
             exit(1);
         }
     };
@@ -389,8 +236,6 @@ fn main() {
     }
 
     let description = get_arg("description");
-    let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
-    let release_label = get_arg("release-label");
     let rust_root = get_rust_root();
     let cargo_toml = get_cargo_toml_path(&rust_root);
     let changelog_dir = get_changelog_dir(&rust_root);
@@ -417,35 +262,15 @@ fn main() {
         }
     };
 
-    let initial_bump = current.bump(&bump_type);
+    let new_version = current.bump(&bump_type);
 
-    let crate_name = match get_crate_name(&cargo_toml) {
-        Ok(name) => name,
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            exit(1);
-        }
-    };
-
-    let max_published = get_max_published_version(&crate_name);
-    if let Some((ma, mi, pa)) = max_published {
-        println!("Max published version on crates.io: {}.{}.{}", ma, mi, pa);
-    } else {
-        println!("No versions published on crates.io yet (or crate not found)");
+    // Check if this version was already released
+    if check_tag_exists(&new_version) {
+        println!("Tag v{} already exists", new_version);
+        set_output("already_released", "true");
+        set_output("new_version", &new_version);
+        return;
     }
-
-    println!("Initial bump ({}) from {}.{}.{}: {}", bump_type, current.major, current.minor, current.patch, initial_bump);
-
-    let new_version = ensure_version_exceeds_published(&initial_bump, &crate_name, &tag_prefix, max_published);
-
-    if new_version != initial_bump {
-        println!(
-            "Adjusted version from {} to {} to exceed published versions",
-            initial_bump, new_version
-        );
-    }
-
-    println!("Final release version: {}", new_version);
 
     // Update version in Cargo.toml
     if let Err(e) = update_cargo_toml(&cargo_toml, &new_version) {
@@ -468,10 +293,9 @@ fn main() {
     }
 
     // Commit changes
-    let label_suffix = release_label.as_ref().map(|l| format!(" ({})", l)).unwrap_or_default();
     let commit_msg = match &description {
-        Some(desc) => format!("chore: release {}{}{}\n\n{}", tag_prefix, new_version, label_suffix, desc),
-        None => format!("chore: release {}{}{}", tag_prefix, new_version, label_suffix),
+        Some(desc) => format!("chore: release v{}\n\n{}", new_version, desc),
+        None => format!("chore: release v{}", new_version),
     };
 
     if let Err(e) = exec("git", &["commit", "-m", &commit_msg]) {
@@ -481,17 +305,16 @@ fn main() {
     println!("Committed version {}", new_version);
 
     // Create tag
-    let tag_name = format!("{}{}", tag_prefix, new_version);
     let tag_msg = match &description {
-        Some(desc) => format!("Release {}{}\n\n{}", tag_name, label_suffix, desc),
-        None => format!("Release {}{}", tag_name, label_suffix),
+        Some(desc) => format!("Release v{}\n\n{}", new_version, desc),
+        None => format!("Release v{}", new_version),
     };
 
-    if let Err(e) = exec("git", &["tag", "-a", &tag_name, "-m", &tag_msg]) {
+    if let Err(e) = exec("git", &["tag", "-a", &format!("v{}", new_version), "-m", &tag_msg]) {
         eprintln!("Error creating tag: {}", e);
         exit(1);
     }
-    println!("Created tag {}", tag_name);
+    println!("Created tag v{}", new_version);
 
     // Push changes and tag
     if let Err(e) = exec("git", &["push"]) {

@@ -23,7 +23,6 @@
 //! Outputs (written to GITHUB_OUTPUT):
 //!   - should_release: 'true' if a release should be created
 //!   - skip_bump: 'true' if version bump should be skipped (version not yet released)
-//!   - max_published_version: the highest non-yanked version on crates.io (for downstream use)
 //!
 //! ```cargo
 //! [dependencies]
@@ -154,6 +153,7 @@ fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
     {
         Ok(response) => {
             if response.status() == 200 {
+                // Version exists on crates.io
                 if let Ok(body) = response.into_string() {
                     if let Ok(data) = serde_json::from_str::<CratesIoVersion>(&body) {
                         return data.version.is_some();
@@ -163,15 +163,18 @@ fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
             false
         }
         Err(ureq::Error::Status(404, _)) => {
+            // Version doesn't exist on crates.io
             false
         }
         Err(e) => {
             eprintln!("Warning: Could not check crates.io: {}", e);
+            // On error, assume not published (safer than incorrectly skipping)
             false
         }
     }
 }
 
+/// Parse a semver version string into (major, minor, patch) tuple for comparison.
 fn parse_semver(version: &str) -> Option<(u32, u32, u32)> {
     let parts: Vec<&str> = version.split('-').next()?.split('.').collect();
     if parts.len() != 3 {
@@ -184,6 +187,7 @@ fn parse_semver(version: &str) -> Option<(u32, u32, u32)> {
     ))
 }
 
+/// Query crates.io for the maximum (latest non-yanked) published version of a crate.
 fn get_max_published_version(crate_name: &str) -> Option<String> {
     let url = format!("https://crates.io/api/v1/crates/{}", crate_name);
 
@@ -196,6 +200,7 @@ fn get_max_published_version(crate_name: &str) -> Option<String> {
                 if let Ok(body) = response.into_string() {
                     if let Ok(data) = serde_json::from_str::<CratesIoCrate>(&body) {
                         if let Some(versions) = data.versions {
+                            // Find the maximum non-yanked version by semver ordering
                             let mut max_version: Option<(u32, u32, u32, String)> = None;
                             for v in &versions {
                                 if v.yanked {
@@ -253,6 +258,7 @@ fn main() {
         }
     };
 
+    // Always query and output the max published version for downstream scripts
     let max_published = get_max_published_version(&crate_name);
     if let Some(ref max_ver) = max_published {
         println!("Max published version on crates.io: {}", max_ver);

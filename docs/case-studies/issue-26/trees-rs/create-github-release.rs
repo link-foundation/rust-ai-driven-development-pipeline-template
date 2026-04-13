@@ -1,10 +1,7 @@
 #!/usr/bin/env rust-script
 //! Create GitHub Release from CHANGELOG.md
 //!
-//! Automatically includes crates.io and docs.rs badges in release notes
-//! when the crate name can be detected from Cargo.toml.
-//!
-//! Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository> [--tag-prefix <prefix>] [--release-label <label>]
+//! Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository>
 //!
 //! ```cargo
 //! [dependencies]
@@ -20,36 +17,6 @@ use std::path::Path;
 use std::process::{Command, Stdio, exit};
 use regex::Regex;
 use serde::Serialize;
-
-fn get_rust_root() -> String {
-    if let Some(root) = get_arg("rust-root") {
-        return root;
-    }
-
-    if Path::new("./Cargo.toml").exists() {
-        return ".".to_string();
-    }
-
-    if Path::new("./rust/Cargo.toml").exists() {
-        return "rust".to_string();
-    }
-
-    ".".to_string()
-}
-
-fn get_cargo_toml_path(rust_root: &str) -> String {
-    if rust_root == "." {
-        "./Cargo.toml".to_string()
-    } else {
-        format!("{}/Cargo.toml", rust_root)
-    }
-}
-
-fn get_crate_name_from_toml(cargo_toml_path: &str) -> Option<String> {
-    let content = fs::read_to_string(cargo_toml_path).ok()?;
-    let re = Regex::new(r#"(?m)^name\s*=\s*"([^"]+)""#).ok()?;
-    re.captures(&content).map(|c| c.get(1).unwrap().as_str().to_string())
-}
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -114,7 +81,6 @@ fn main() {
     };
 
     let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
-    let release_label = get_arg("release-label");
     let crates_io_url = get_arg("crates-io-url");
 
     let tag = format!("{}{}", tag_prefix, version);
@@ -122,32 +88,15 @@ fn main() {
 
     let mut release_notes = get_changelog_for_version(&version);
 
-    // Add crates.io and docs.rs badges
-    let rust_root = get_rust_root();
-    let cargo_toml = get_cargo_toml_path(&rust_root);
-    if let Some(crate_name) = get_crate_name_from_toml(&cargo_toml) {
-        let badges = format!(
-            "[![Crates.io](https://img.shields.io/crates/v/{}?label=crates.io)](https://crates.io/crates/{}/{}) [![Docs.rs](https://docs.rs/{}/badge.svg)](https://docs.rs/{}/{})",
-            crate_name, crate_name, version, crate_name, crate_name, version
-        );
-        release_notes = format!("{}\n\n{}", badges, release_notes);
-    }
-
-    // Add explicit crates.io link if provided (overrides auto-detected)
+    // Add crates.io link if provided
     if let Some(url) = crates_io_url {
         release_notes = format!("{}\n\n{}", url, release_notes);
     }
 
-    // Build release name with optional label for multi-language repos
-    let release_name = match &release_label {
-        Some(label) => format!("{}{} ({})", tag_prefix, version, label),
-        None => format!("{}{}", tag_prefix, version),
-    };
-
     // Create release using GitHub API with JSON input
     let payload = ReleasePayload {
         tag_name: tag.clone(),
-        name: release_name,
+        name: format!("{}{}", tag_prefix, version),
         body: release_notes,
     };
 
@@ -179,6 +128,8 @@ fn main() {
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
         let stdout = String::from_utf8_lossy(&output.stdout);
+        // GitHub returns HTTP 422 "Validation Failed" when a release for the tag already exists.
+        // The error text may appear in stderr or stdout depending on the gh CLI version.
         let combined = format!("{}{}", stderr, stdout);
         if combined.contains("already exists") || combined.contains("already_exists")
             || combined.contains("Validation Failed")

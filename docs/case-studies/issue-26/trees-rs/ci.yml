@@ -119,7 +119,6 @@ jobs:
 
   # === LINT AND FORMAT CHECK ===
   # Lint runs independently of changelog check - it's a fast check that should always run
-  # See: https://github.com/link-assistant/hive-mind/pull/1024 for why this dependency was removed
   lint:
     name: Lint and Format Check
     runs-on: ubuntu-latest
@@ -201,50 +200,6 @@ jobs:
 
       - name: Run doc tests
         run: cargo test --doc --verbose
-
-  # === CODE COVERAGE ===
-  # Generate and upload code coverage using cargo-llvm-cov
-  coverage:
-    name: Code Coverage
-    runs-on: ubuntu-latest
-    needs: [detect-changes]
-    if: |
-      always() && !cancelled() && (
-        github.event_name == 'push' ||
-        github.event_name == 'workflow_dispatch' ||
-        needs.detect-changes.outputs.rs-changed == 'true' ||
-        needs.detect-changes.outputs.toml-changed == 'true'
-      )
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: llvm-tools-preview
-
-      - name: Cache cargo registry
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-coverage-
-
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
-
-      - name: Generate code coverage
-        run: cargo llvm-cov --all-features --lcov --output-path lcov.info
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: lcov.info
-          fail_ci_if_error: false
 
   # === BUILD ===
   # Build package - only runs if lint and test pass
@@ -408,6 +363,39 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: rust-script scripts/create-github-release.rs --release-version "${{ steps.version.outputs.new_version }}" --repository "${{ github.repository }}"
 
+  # === DEPLOY DOCUMENTATION ===
+  # Generates and deploys Rust API documentation to GitHub Pages after a successful release
+  deploy-docs:
+    name: Deploy Rust Documentation
+    needs: [auto-release, manual-release]
+    # Run if either release job succeeded (the other will be skipped)
+    if: |
+      always() && !cancelled() && (
+        needs.auto-release.result == 'success' ||
+        needs.manual-release.result == 'success'
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build documentation
+        run: cargo doc --no-deps
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: target/doc
+          destination_dir: rust
+          keep_files: true
+
   # === MANUAL CHANGELOG PR ===
   changelog-pr:
     name: Create Changelog PR
@@ -455,35 +443,3 @@ jobs:
             1. Review the changelog fragment in this PR
             2. Merge this PR to main
             3. The automated release workflow will publish to crates.io and create a GitHub release
-
-  # === DEPLOY DOCUMENTATION ===
-  # Deploy Rust API documentation to GitHub Pages after a successful release
-  deploy-docs:
-    name: Deploy Documentation
-    needs: [auto-release, manual-release]
-    if: |
-      always() && !cancelled() && (
-        needs.auto-release.result == 'success' ||
-        needs.manual-release.result == 'success'
-      )
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: main
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build documentation
-        run: cargo doc --no-deps --all-features
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: target/doc
-          destination_dir: rust
-          keep_files: true
