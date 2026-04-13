@@ -29,6 +29,36 @@ fn get_arg(name: &str) -> Option<String> {
     env::var(&env_name).ok().filter(|s| !s.is_empty())
 }
 
+fn get_rust_root() -> String {
+    if let Some(root) = get_arg("rust-root") {
+        return root;
+    }
+
+    if let Ok(root) = env::var("RUST_ROOT") {
+        if !root.is_empty() {
+            return root;
+        }
+    }
+
+    if Path::new("./Cargo.toml").exists() {
+        return ".".to_string();
+    }
+
+    if Path::new("./rust/Cargo.toml").exists() {
+        return "rust".to_string();
+    }
+
+    ".".to_string()
+}
+
+fn get_changelog_dir(rust_root: &str) -> String {
+    if rust_root == "." {
+        "changelog.d".to_string()
+    } else {
+        format!("{}/changelog.d", rust_root)
+    }
+}
+
 fn get_category(bump_type: &str) -> &'static str {
     match bump_type {
         "major" => "### Breaking Changes",
@@ -52,7 +82,8 @@ fn main() {
         exit(1);
     }
 
-    let changelog_dir = "changelog.d";
+    let rust_root = get_rust_root();
+    let changelog_dir = get_changelog_dir(&rust_root);
     let timestamp = generate_timestamp();
     let fragment_file = format!("{}/{}-manual-{}.md", changelog_dir, timestamp, bump_type);
 
@@ -66,8 +97,8 @@ fn main() {
         bump_type, category, description_text
     );
 
-    // Ensure changelog.d directory exists
-    let dir_path = Path::new(changelog_dir);
+    // Ensure changelog directory exists
+    let dir_path = Path::new(&changelog_dir);
     if !dir_path.exists() {
         if let Err(e) = fs::create_dir_all(dir_path) {
             eprintln!("Error creating directory {}: {}", changelog_dir, e);

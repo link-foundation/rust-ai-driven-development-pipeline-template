@@ -27,6 +27,7 @@
 //! ```
 
 use std::env;
+use std::path::Path;
 use std::process::{Command, exit};
 use regex::Regex;
 
@@ -68,7 +69,33 @@ fn should_skip_version_check() -> bool {
     false
 }
 
-fn get_cargo_toml_diff() -> String {
+fn get_rust_root() -> String {
+    if let Ok(root) = env::var("RUST_ROOT") {
+        if !root.is_empty() {
+            return root;
+        }
+    }
+
+    if Path::new("./Cargo.toml").exists() {
+        return ".".to_string();
+    }
+
+    if Path::new("./rust/Cargo.toml").exists() {
+        return "rust".to_string();
+    }
+
+    ".".to_string()
+}
+
+fn get_cargo_toml_path(rust_root: &str) -> String {
+    if rust_root == "." {
+        "Cargo.toml".to_string()
+    } else {
+        format!("{}/Cargo.toml", rust_root)
+    }
+}
+
+fn get_cargo_toml_diff(cargo_toml_path: &str) -> String {
     let base_ref = env::var("GITHUB_BASE_REF").unwrap_or_else(|_| "main".to_string());
 
     // Ensure we have the base branch
@@ -77,7 +104,7 @@ fn get_cargo_toml_diff() -> String {
     // Get the diff for Cargo.toml
     exec(
         "git",
-        &["diff", &format!("origin/{}...HEAD", base_ref), "--", "Cargo.toml"],
+        &["diff", &format!("origin/{}...HEAD", base_ref), "--", cargo_toml_path],
     )
 }
 
@@ -108,7 +135,9 @@ fn main() {
     }
 
     // Get and check the diff
-    let diff = get_cargo_toml_diff();
+    let rust_root = get_rust_root();
+    let cargo_toml_path = get_cargo_toml_path(&rust_root);
+    let diff = get_cargo_toml_diff(&cargo_toml_path);
 
     if diff.is_empty() {
         println!("No changes to Cargo.toml detected.");
