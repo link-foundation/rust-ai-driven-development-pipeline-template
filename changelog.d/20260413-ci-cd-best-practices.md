@@ -13,7 +13,6 @@ bump: minor
 - `ensure_version_exceeds_published()` logic to prevent publishing duplicate versions
 - `get_max_published_version()` to query highest non-yanked version from crates.io
 - `max_published_version` output from check-release-needed for downstream use
-- `destination_dir` and `keep_files` for multi-language GitHub Pages doc coexistence
 - Version fallback logic in auto-release Create GitHub Release step
 
 ### Changed
