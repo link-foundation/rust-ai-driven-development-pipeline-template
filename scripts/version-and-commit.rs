@@ -467,6 +467,23 @@ fn main() {
         return;
     }
 
+    // Fetch latest remote state before committing (supports concurrent release workflows)
+    let current_branch = exec("git", &["rev-parse", "--abbrev-ref", "HEAD"]).unwrap_or_else(|_| "main".to_string());
+    if let Err(e) = exec("git", &["fetch", "origin", &current_branch]) {
+        eprintln!("Warning: Could not fetch origin/{}: {}", current_branch, e);
+    } else {
+        let local = exec("git", &["rev-parse", "HEAD"]).unwrap_or_default();
+        let remote = exec("git", &["rev-parse", &format!("origin/{}", current_branch)]).unwrap_or_default();
+        if !local.is_empty() && !remote.is_empty() && local != remote {
+            println!("Local branch is behind remote, rebasing...");
+            if let Err(e) = exec("git", &["rebase", &format!("origin/{}", current_branch)]) {
+                eprintln!("Error rebasing onto origin/{}: {}", current_branch, e);
+                let _ = exec("git", &["rebase", "--abort"]);
+                exit(1);
+            }
+        }
+    }
+
     // Commit changes
     let label_suffix = release_label.as_ref().map(|l| format!(" ({})", l)).unwrap_or_default();
     let commit_msg = match &description {
@@ -493,10 +510,26 @@ fn main() {
     }
     println!("Created tag {}", tag_name);
 
-    // Push changes and tag
-    if let Err(e) = exec("git", &["push"]) {
-        eprintln!("Error pushing: {}", e);
-        exit(1);
+    // Push changes and tag with retry (handles concurrent pushes in multi-workflow repos)
+    let max_push_attempts = 3;
+    for attempt in 1..=max_push_attempts {
+        match exec("git", &["push"]) {
+            Ok(_) => break,
+            Err(e) => {
+                if attempt < max_push_attempts {
+                    eprintln!("Push failed (attempt {}/{}): {}", attempt, max_push_attempts, e);
+                    eprintln!("Pulling with rebase and retrying...");
+                    if let Err(rebase_err) = exec("git", &["pull", "--rebase", "origin", &current_branch]) {
+                        eprintln!("Error during pull --rebase: {}", rebase_err);
+                        let _ = exec("git", &["rebase", "--abort"]);
+                        exit(1);
+                    }
+                } else {
+                    eprintln!("Error pushing after {} attempts: {}", max_push_attempts, e);
+                    exit(1);
+                }
+            }
+        }
     }
 
     if let Err(e) = exec("git", &["push", "--tags"]) {

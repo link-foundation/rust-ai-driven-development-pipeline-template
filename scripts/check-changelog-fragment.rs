@@ -21,6 +21,7 @@
 //! ```
 
 use std::env;
+use std::path::Path;
 use std::process::{Command, exit};
 use regex::Regex;
 
@@ -42,6 +43,24 @@ fn exec(command: &str, args: &[&str]) -> String {
     }
 }
 
+fn get_rust_root() -> String {
+    if let Ok(root) = env::var("RUST_ROOT") {
+        if !root.is_empty() {
+            return root;
+        }
+    }
+
+    if Path::new("./Cargo.toml").exists() {
+        return ".".to_string();
+    }
+
+    if Path::new("./rust/Cargo.toml").exists() {
+        return "rust".to_string();
+    }
+
+    ".".to_string()
+}
+
 fn get_changed_files() -> Vec<String> {
     let base_ref = env::var("GITHUB_BASE_REF").unwrap_or_else(|_| "main".to_string());
     eprintln!("Comparing against origin/{}...HEAD", base_ref);
@@ -58,26 +77,34 @@ fn get_changed_files() -> Vec<String> {
     output.lines().filter(|s| !s.is_empty()).map(String::from).collect()
 }
 
-fn is_source_file(file_path: &str) -> bool {
+fn is_source_file(file_path: &str, rust_root: &str) -> bool {
+    let prefix = if rust_root == "." { String::new() } else { format!("{}/", rust_root) };
+
     let source_patterns = [
-        Regex::new(r"^src/").unwrap(),
-        Regex::new(r"^tests/").unwrap(),
-        Regex::new(r"^scripts/").unwrap(),
-        Regex::new(r"^Cargo\.toml$").unwrap(),
+        Regex::new(&format!(r"^{}src/", regex::escape(&prefix))).unwrap(),
+        Regex::new(&format!(r"^{}tests/", regex::escape(&prefix))).unwrap(),
+        Regex::new(&format!(r"^{}?scripts/", regex::escape(&prefix))).unwrap(),
+        Regex::new(&format!(r"^{}Cargo\.toml$", regex::escape(&prefix))).unwrap(),
     ];
 
     source_patterns.iter().any(|pattern| pattern.is_match(file_path))
 }
 
-fn is_changelog_fragment(file_path: &str) -> bool {
-    // Changelog fragments are .md files in changelog.d/ (excluding README.md)
-    file_path.starts_with("changelog.d/")
+fn is_changelog_fragment(file_path: &str, rust_root: &str) -> bool {
+    let changelog_dir = if rust_root == "." { "changelog.d/".to_string() } else { format!("{}/changelog.d/", rust_root) };
+
+    (file_path.starts_with(&changelog_dir) || file_path.starts_with("changelog.d/"))
         && file_path.ends_with(".md")
         && !file_path.ends_with("README.md")
 }
 
 fn main() {
     println!("Checking for changelog fragment in PR diff...\n");
+
+    let rust_root = get_rust_root();
+    if rust_root != "." {
+        println!("Detected multi-language repository (Rust root: {})", rust_root);
+    }
 
     let changed_files = get_changed_files();
 
@@ -93,7 +120,7 @@ fn main() {
     println!();
 
     // Count source files changed
-    let source_changes: Vec<&String> = changed_files.iter().filter(|f| is_source_file(f)).collect();
+    let source_changes: Vec<&String> = changed_files.iter().filter(|f| is_source_file(f, &rust_root)).collect();
     let source_changed_count = source_changes.len();
 
     println!("Source files changed: {}", source_changed_count);
@@ -107,7 +134,7 @@ fn main() {
     // Count changelog fragments added in this PR
     let fragments_added: Vec<&String> = changed_files
         .iter()
-        .filter(|f| is_changelog_fragment(f))
+        .filter(|f| is_changelog_fragment(f, &rust_root))
         .collect();
     let fragment_added_count = fragments_added.len();
 
