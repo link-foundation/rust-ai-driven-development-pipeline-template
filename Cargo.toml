@@ -40,6 +40,14 @@ too_many_lines = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 
+[[test]]
+name = "unit"
+path = "tests/unit/mod.rs"
+
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"
+
 [profile.release]
 lto = true
 codegen-units = 1
