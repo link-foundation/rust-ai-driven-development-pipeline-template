@@ -1,5 +1,5 @@
 [package]
-name = "my-package"
+name = "example-sum-package-name"
 version = "0.4.0"
 edition = "2021"
 description = "A Rust package template for AI-driven development"
@@ -12,18 +12,19 @@ documentation = "https://github.com/link-foundation/rust-ai-driven-development-p
 rust-version = "1.70"
 
 [lib]
-name = "my_package"
+name = "example_sum_package_name"
 path = "src/lib.rs"
 
 [[bin]]
-name = "my-package"
+name = "example-sum-package-name"
 path = "src/main.rs"
 
 [dependencies]
-tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "time"] }
+lino-arguments = "0.3"
+clap = { version = "4.4", features = ["derive", "env"] }
 
 [dev-dependencies]
-tokio-test = "0.4"
+regex = "1"
 
 [lints.rust]
 unsafe_code = "forbid"

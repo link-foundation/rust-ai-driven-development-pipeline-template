@@ -126,6 +126,14 @@ fn main() {
     };
 
     println!("Package: {}@{}", name, version);
+
+    if name == "example-sum-package-name" {
+        println!("Skipping publish: package name is the template default 'example-sum-package-name'");
+        println!("Rename the package in Cargo.toml before publishing to crates.io");
+        set_output("publish_result", "skipped");
+        return;
+    }
+
     println!();
     println!("=== Attempting to publish to crates.io ===");
 

@@ -2,9 +2,9 @@
 
 A comprehensive template for AI-driven Rust development with full CI/CD pipeline support.
 
-[![CI/CD Pipeline](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/actions)
-[![Crates.io](https://img.shields.io/crates/v/my-package?label=crates.io&style=flat)](https://crates.io/crates/my-package)
-[![Docs.rs](https://docs.rs/my-package/badge.svg)](https://docs.rs/my-package)
+[![CI/CD Pipeline](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/actions?workflow=CI%2FCD+Pipeline)
+[![Crates.io](https://img.shields.io/crates/v/example-sum-package-name?label=crates.io&style=flat)](https://crates.io/crates/example-sum-package-name)
+[![Docs.rs](https://docs.rs/example-sum-package-name/badge.svg)](https://docs.rs/example-sum-package-name)
 [![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org/)
 [![Codecov](https://codecov.io/gh/link-foundation/rust-ai-driven-development-pipeline-template/branch/main/graph/badge.svg)](https://codecov.io/gh/link-foundation/rust-ai-driven-development-pipeline-template)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
@@ -19,7 +19,8 @@ A comprehensive template for AI-driven Rust development with full CI/CD pipeline
 - **CI/CD pipeline**: GitHub Actions with multi-platform support
 - **Changelog management**: Fragment-based changelog (like Changesets/Scriv)
 - **Code coverage**: Automated coverage reports with cargo-llvm-cov and Codecov
-- **Release automation**: Automatic GitHub releases
+- **Release automation**: Automatic GitHub releases and crates.io publishing
+- **Template-safe defaults**: CI/CD skips publishing when package name is `example-sum-package-name`
 
 ## Quick Start
 
@@ -27,10 +28,12 @@ A comprehensive template for AI-driven Rust development with full CI/CD pipeline
 
 1. Click "Use this template" on GitHub to create a new repository
 2. Clone your new repository
-3. Update `Cargo.toml` with your package name and description
-4. Rename the library and binary in `Cargo.toml`
-5. Update imports in tests and examples
-6. Build and start developing!
+3. Update `Cargo.toml`:
+   - Change `name` from `example-sum-package-name` to your package name
+   - Update `description`, `repository`, and `documentation` URLs
+   - Update `[lib]` name and `[[bin]]` name
+4. Update imports in `src/main.rs`, `tests/`, and `examples/`
+5. Build and start developing!
 
 ### Development Setup
 
@@ -45,8 +48,8 @@ cargo build
 # Run tests
 cargo test
 
-# Run the example binary
-cargo run
+# Run the CLI binary
+cargo run -- --a 3 --b 7
 
 # Run an example
 cargo run --example basic_usage
@@ -65,7 +68,7 @@ cargo test --verbose
 cargo test --doc
 
 # Run a specific test
-cargo test test_add_positive_numbers
+cargo test test_sum_positive_numbers
 
 # Run tests with output
 cargo test -- --nocapture
@@ -96,72 +99,88 @@ cargo fmt --check && cargo clippy --all-targets --all-features && rust-script sc
 .
 ├── .github/
 │   └── workflows/
-│       └── release.yml         # CI/CD pipeline configuration
-├── changelog.d/                # Changelog fragments
-│   ├── README.md               # Fragment instructions
-│   └── *.md                    # Individual changelog entries
+│       └── release.yml             # CI/CD pipeline configuration
+├── changelog.d/                    # Changelog fragments
+│   ├── README.md                   # Fragment instructions
+│   └── *.md                        # Individual changelog entries
 ├── examples/
-│   └── basic_usage.rs          # Usage examples
-├── scripts/                    # Rust scripts (via rust-script)
-│   ├── bump-version.rs         # Version bumping utility
-│   ├── check-file-size.rs      # File size validation script
-│   ├── collect-changelog.rs    # Changelog collection script
-│   ├── create-github-release.rs # GitHub release creation
-│   ├── detect-code-changes.rs  # Detects code changes for CI
-│   ├── get-bump-type.rs        # Determines version bump type
-│   └── version-and-commit.rs   # CI/CD version management
+│   └── basic_usage.rs              # Usage examples
+├── experiments/                    # Experiment and debug scripts
+│   ├── test-changelog-parsing.rs   # Changelog parsing validation
+│   └── test-crates-io-check.rs     # Crates.io version check validation
+├── scripts/                        # Rust scripts (via rust-script)
+│   ├── bump-version.rs             # Version bumping utility
+│   ├── check-changelog-fragment.rs # Changelog fragment validation
+│   ├── check-file-size.rs          # File size validation script
+│   ├── check-release-needed.rs     # Release necessity check
+│   ├── check-version-modification.rs # Version modification detection
+│   ├── collect-changelog.rs        # Changelog collection script
+│   ├── create-changelog-fragment.rs # Changelog fragment creation
+│   ├── create-github-release.rs    # GitHub release creation
+│   ├── detect-code-changes.rs      # Code change detection for CI
+│   ├── get-bump-type.rs            # Version bump type determination
+│   ├── get-version.rs              # Version extraction from Cargo.toml
+│   ├── git-config.rs               # Git configuration for CI
+│   ├── publish-crate.rs            # Crates.io publishing
+│   ├── rust-paths.rs               # Rust root path detection
+│   └── version-and-commit.rs       # CI/CD version management
 ├── src/
-│   ├── lib.rs                  # Library entry point
-│   └── main.rs                 # Binary entry point
+│   ├── lib.rs                      # Library entry point
+│   ├── main.rs                     # CLI binary (uses lino-arguments)
+│   └── sum.rs                      # Sum function module
 ├── tests/
-│   └── integration_test.rs     # Integration tests
-├── .gitignore                  # Git ignore patterns
-├── .pre-commit-config.yaml     # Pre-commit hooks configuration
-├── Cargo.toml                  # Project configuration
-├── CHANGELOG.md                # Project changelog
-├── CONTRIBUTING.md             # Contribution guidelines
-├── LICENSE                     # Unlicense (public domain)
-└── README.md                   # This file
+│   ├── unit_tests.rs               # Unit test entry point
+│   ├── unit/
+│   │   ├── mod.rs
+│   │   ├── sum.rs                  # Unit tests for sum function
+│   │   └── ci-cd/
+│   │       ├── mod.rs
+│   │       └── changelog_parsing.rs # CI/CD changelog parsing tests
+│   ├── integration_tests.rs        # Integration test entry point
+│   └── integration/
+│       ├── mod.rs
+│       └── sum.rs                  # CLI integration tests
+├── .gitignore                      # Git ignore patterns
+├── .pre-commit-config.yaml         # Pre-commit hooks configuration
+├── Cargo.toml                      # Project configuration
+├── CHANGELOG.md                    # Project changelog
+├── CONTRIBUTING.md                 # Contribution guidelines
+├── LICENSE                         # Unlicense (public domain)
+└── README.md                       # This file
 ```
 
 ## Design Choices
 
+### Example Application
+
+The template includes a simple CLI sum application using [lino-arguments](https://github.com/link-foundation/lino-arguments) (a drop-in replacement for clap that also supports `.lenv` and `.env` files). This demonstrates:
+
+- Library module (`src/sum.rs`) with a pure function
+- CLI binary (`src/main.rs`) using `lino-arguments` for argument parsing
+- Unit tests (`tests/unit/sum.rs`) testing the function directly
+- Integration tests (`tests/integration/sum.rs`) testing the full CLI binary
+
 ### Code Quality Tools
 
 - **rustfmt**: Standard Rust code formatter
-  - Ensures consistent code style across the project
-  - Configured to run on all Rust files
-
-- **Clippy**: Rust linter with comprehensive checks
-  - Pedantic and nursery lints enabled for strict code quality
-  - Catches common mistakes and suggests improvements
-  - Enforces best practices
-
+- **Clippy**: Rust linter with pedantic and nursery lints enabled
 - **Pre-commit hooks**: Automated checks before each commit
-  - Runs rustfmt to ensure formatting
-  - Runs Clippy to catch issues early
-  - Runs tests to prevent broken commits
 
 ### Testing Strategy
 
 The template supports multiple levels of testing:
 
-- **Unit tests**: In `src/lib.rs` using `#[cfg(test)]` modules
-- **Integration tests**: In `tests/` directory
+- **Unit tests**: In `tests/unit/` directory, testing functions directly
+- **Integration tests**: In `tests/integration/` directory, testing CLI binary
+- **CI/CD tests**: In `tests/unit/ci-cd/` directory, testing CI/CD script logic
 - **Doc tests**: In documentation examples using `///` comments
 - **Examples**: In `examples/` directory (also serve as documentation)
 
+Users can easily delete CI/CD tests in `tests/unit/ci-cd/` if not needed.
+
 ### Changelog Management
 
-This template uses a fragment-based changelog system similar to:
-- [Changesets](https://github.com/changesets/changesets) (JavaScript)
-- [Scriv](https://scriv.readthedocs.io/) (Python)
-
-Benefits:
-- **No merge conflicts**: Multiple PRs can add fragments without conflicts
-- **Per-PR documentation**: Each PR documents its own changes
-- **Automated collection**: Fragments are collected during release
-- **Consistent format**: Template ensures consistent changelog entries
+This template uses a fragment-based changelog system similar to [Changesets](https://github.com/changesets/changesets) and [Scriv](https://scriv.readthedocs.io/).
 
 ```bash
 # Create a changelog fragment
@@ -174,20 +193,24 @@ touch changelog.d/$(date +%Y%m%d_%H%M%S)_my_change.md
 
 The GitHub Actions workflow provides:
 
-1. **Linting**: rustfmt and Clippy checks
-2. **Changelog check**: Warns if PRs are missing changelog fragments
-3. **Test matrix**: 3 OS (Ubuntu, macOS, Windows) with Rust stable
-4. **Building**: Release build and package validation
-5. **Release**: Automated GitHub releases when version changes
+1. **Change detection**: Only runs relevant jobs based on changed files
+2. **Changelog check**: Validates changelog fragments on PRs with code changes
+3. **Version check**: Prevents manual version modification in PRs
+4. **Linting**: rustfmt and Clippy checks
+5. **Test matrix**: 3 OS (Ubuntu, macOS, Windows) with Rust stable
+6. **Code coverage**: cargo-llvm-cov with Codecov upload
+7. **Building**: Release build and package validation
+8. **Auto release**: Automatic releases when changelog fragments are merged to main
+9. **Manual release**: Workflow dispatch with version bump type selection
+10. **Documentation**: Automatic docs deployment to GitHub Pages after release
 
-### Release Automation
+### Template-Safe Defaults
 
-The release workflow supports:
+The default package name `example-sum-package-name` triggers skip logic in CI/CD scripts:
+- `publish-crate.rs` skips crates.io publishing
+- `create-github-release.rs` skips GitHub release creation
 
-- **Auto-release**: Automatically creates releases when version in Cargo.toml changes
-- **Manual release**: Trigger releases via workflow_dispatch with version bump type
-- **Changelog collection**: Automatically collects fragments during release
-- **GitHub releases**: Automatic creation with CHANGELOG content
+Rename the package in `Cargo.toml` to enable full CI/CD publishing.
 
 ## Configuration
 
@@ -196,63 +219,41 @@ The release workflow supports:
 After creating a repository from this template:
 
 1. Update `Cargo.toml`:
-   - Change `name` field
+   - Change `name` field from `example-sum-package-name`
    - Update `repository` and `documentation` URLs
-   - Change `[lib]` and `[[bin]]` names
+   - Change `[lib]` name and `[[bin]]` name
 
-2. Rename the crate in imports:
-   - `tests/integration_test.rs`
-   - `examples/basic_usage.rs`
+2. Update imports:
    - `src/main.rs`
+   - `tests/unit/sum.rs`
+   - `tests/integration/sum.rs`
+   - `examples/basic_usage.rs`
 
-### Clippy Configuration
-
-Clippy is configured in `Cargo.toml` under `[lints.clippy]`:
-
-- Pedantic lints enabled for strict code quality
-- Nursery lints enabled for additional checks
-- Some common patterns allowed (e.g., `module_name_repetitions`)
-
-### rustfmt Configuration
-
-Uses default rustfmt settings. To customize, create a `rustfmt.toml`:
-
-```toml
-edition = "2021"
-max_width = 100
-tab_spaces = 4
-```
+3. Update badges in this `README.md`
 
 ## Scripts Reference
 
 All scripts in `scripts/` are Rust scripts that use [rust-script](https://github.com/fornwall/rust-script).
 Install rust-script with: `cargo install rust-script`
 
-| Script                                    | Description                    |
-| ----------------------------------------- | ------------------------------ |
-| `cargo test`                              | Run all tests                  |
-| `cargo fmt`                               | Format code                    |
-| `cargo clippy`                            | Run lints                      |
-| `cargo run --example basic_usage`         | Run example                    |
-| `rust-script scripts/check-file-size.rs`  | Check file size limits         |
-| `rust-script scripts/bump-version.rs`     | Bump version                   |
+| Command                               | Description              |
+| ------------------------------------- | ------------------------ |
+| `cargo test`                          | Run all tests            |
+| `cargo fmt`                           | Format code              |
+| `cargo clippy`                        | Run lints                |
+| `cargo run -- --a 3 --b 7`           | Run CLI (sum 3 + 7)     |
+| `cargo run --example basic_usage`     | Run example              |
+| `rust-script scripts/check-file-size.rs` | Check file size limits |
+| `rust-script scripts/bump-version.rs` | Bump version             |
 
 ## Example Usage
 
 ```rust
-use my_package::{add, multiply, delay};
+use example_sum_package_name::sum;
 
-#[tokio::main]
-async fn main() {
-    // Basic arithmetic
-    let sum = add(2, 3);     // 5
-    let product = multiply(2, 3);  // 6
-
-    println!("2 + 3 = {sum}");
-    println!("2 * 3 = {product}");
-
-    // Async operations
-    delay(1.0).await;  // Wait for 1 second
+fn main() {
+    let result = sum(2, 3);
+    println!("2 + 3 = {result}");
 }
 ```
 
@@ -283,6 +284,8 @@ This is free and unencumbered software released into the public domain. See [LIC
 Inspired by:
 - [js-ai-driven-development-pipeline-template](https://github.com/link-foundation/js-ai-driven-development-pipeline-template)
 - [python-ai-driven-development-pipeline-template](https://github.com/link-foundation/python-ai-driven-development-pipeline-template)
+- [lino-arguments](https://github.com/link-foundation/lino-arguments)
+- [trees-rs](https://github.com/linksplatform/trees-rs)
 
 ## Resources
 

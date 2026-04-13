@@ -1,29 +1,18 @@
-//! Example binary entry point.
-//!
-//! This is a simple CLI that demonstrates the library functionality.
+use lino_arguments::Parser;
 
-use my_package::{add, delay, multiply};
+use example_sum_package_name::sum;
 
-#[tokio::main]
-async fn main() {
-    println!("my-package v{}", my_package::VERSION);
-    println!();
+#[derive(Parser, Debug)]
+#[command(name = "example-sum-package-name", about = "Sum two numbers")]
+struct Args {
+    #[arg(long, env = "A", default_value = "0", allow_hyphen_values = true)]
+    a: i64,
 
-    // Example 1: Basic arithmetic
-    println!("Example 1: Basic arithmetic");
-    println!("2 + 3 = {}", add(2, 3));
-    println!("2 * 3 = {}", multiply(2, 3));
-    println!();
+    #[arg(long, env = "B", default_value = "0", allow_hyphen_values = true)]
+    b: i64,
+}
 
-    // Example 2: Working with larger numbers
-    println!("Example 2: Working with larger numbers");
-    println!("1000 + 2000 = {}", add(1000, 2000));
-    println!("100 * 200 = {}", multiply(100, 200));
-    println!();
-
-    // Example 3: Async delay
-    println!("Example 3: Async delay");
-    println!("Waiting for 1 second...");
-    delay(1.0).await;
-    println!("Done!");
+fn main() {
+    let args = Args::parse();
+    println!("{}", sum(args.a, args.b));
 }

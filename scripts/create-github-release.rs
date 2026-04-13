@@ -133,14 +133,21 @@ fn main() {
     let release_label = get_arg("release-label");
     let crates_io_url = get_arg("crates-io-url");
 
+    let rust_root = get_rust_root();
+    let cargo_toml = get_cargo_toml_path(&rust_root);
+
+    if let Some(ref crate_name) = get_crate_name_from_toml(&cargo_toml) {
+        if crate_name == "example-sum-package-name" {
+            println!("Skipping GitHub release: package name is the template default 'example-sum-package-name'");
+            println!("Rename the package in Cargo.toml before creating releases");
+            return;
+        }
+    }
+
     let tag = format!("{}{}", tag_prefix, version);
     println!("Creating GitHub release for {}...", tag);
 
     let mut release_notes = get_changelog_for_version(&version);
-
-    // Add crates.io and docs.rs badges
-    let rust_root = get_rust_root();
-    let cargo_toml = get_cargo_toml_path(&rust_root);
     if let Some(crate_name) = get_crate_name_from_toml(&cargo_toml) {
         let badges = format!(
             "[![Crates.io](https://img.shields.io/crates/v/{}?label=crates.io)](https://crates.io/crates/{}/{}) [![Docs.rs](https://docs.rs/{}/badge.svg)](https://docs.rs/{}/{})",

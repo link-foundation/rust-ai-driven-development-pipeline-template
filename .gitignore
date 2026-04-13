@@ -54,3 +54,4 @@ doc/
 # Log files
 *.log
 logs/
+ci-logs/
