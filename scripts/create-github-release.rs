@@ -77,11 +77,27 @@ fn get_changelog_for_version(version: &str) -> String {
 
     // Find the section for this version
     let escaped_version = regex::escape(version);
-    let pattern = format!(r"(?s)## \[{}\].*?\n(.*?)(?=\n## \[|$)", escaped_version);
-    let re = Regex::new(&pattern).unwrap();
+    let header_pattern = format!(r"(?m)^## \[{}\]", escaped_version);
+    let header_re = Regex::new(&header_pattern).unwrap();
 
-    if let Some(caps) = re.captures(&content) {
-        caps.get(1).unwrap().as_str().trim().to_string()
+    if let Some(m) = header_re.find(&content) {
+        let after_header = &content[m.end()..];
+        let body_start = after_header.find('\n').map_or(after_header.len(), |i| i + 1);
+        let body = &after_header[body_start..];
+
+        let next_section_re = Regex::new(r"(?m)^## \[").unwrap();
+        let section_body = if let Some(next) = next_section_re.find(body) {
+            &body[..next.start()]
+        } else {
+            body
+        };
+
+        let trimmed = section_body.trim();
+        if trimmed.is_empty() {
+            format!("Release v{}", version)
+        } else {
+            trimmed.to_string()
+        }
     } else {
         format!("Release v{}", version)
     }
