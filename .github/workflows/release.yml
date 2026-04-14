@@ -67,8 +67,6 @@ jobs:
         id: changes
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: rust-script scripts/detect-code-changes.rs
 
   # === CHANGELOG CHECK - only runs on PRs with code changes ===
