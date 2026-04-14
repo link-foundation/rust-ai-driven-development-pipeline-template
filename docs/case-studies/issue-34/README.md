@@ -84,6 +84,22 @@ The `GITHUB_BASE_SHA` and `GITHUB_HEAD_SHA` environment variables were removed f
 | Use `GITHUB_BASE_SHA`/`GITHUB_HEAD_SHA` with commit limiting | Uses official GitHub API values | Still gives full PR diff; doesn't solve the core problem | No |
 | GitHub Actions `paths:` filters | Built-in, no script needed | Evaluates full PR diff; same fundamental problem | No |
 
+## CI Verification
+
+The fix was verified in CI run [#24394764654](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/actions/runs/24394764654). The last commit (removing `.gitkeep`) correctly triggered only the per-commit diff:
+
+```
+Merge commit detected (pull_request event)
+Comparing HEAD^2^ to HEAD^2 (per-commit diff of PR head)
+Changed files:
+  .gitkeep
+rs-changed=false
+toml-changed=false
+any-code-changed=false
+```
+
+As a result, Lint, Code Coverage, and Changelog Fragment Check were all correctly **skipped** — they would have been triggered under the old full-PR-diff behavior because earlier commits in the PR modified `.rs` and `.yml` files.
+
 ## Additional Context: GitHub Actions Merge Commit Behavior
 
 GitHub Actions creates two special refs for every pull request:
