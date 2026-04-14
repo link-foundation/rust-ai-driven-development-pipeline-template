@@ -84,9 +84,25 @@ The `GITHUB_BASE_SHA` and `GITHUB_HEAD_SHA` environment variables were removed f
 | Use `GITHUB_BASE_SHA`/`GITHUB_HEAD_SHA` with commit limiting | Uses official GitHub API values | Still gives full PR diff; doesn't solve the core problem | No |
 | GitHub Actions `paths:` filters | Built-in, no script needed | Evaluates full PR diff; same fundamental problem | No |
 
+## Additional Context: GitHub Actions Merge Commit Behavior
+
+GitHub Actions creates two special refs for every pull request:
+- `refs/pull/NUMBER/head` — the HEAD of the PR branch
+- `refs/pull/NUMBER/merge` — a synthetic merge commit previewing the merge into the target branch
+
+When using the `pull_request` trigger, `@actions/checkout` checks out `refs/pull/NUMBER/merge` (the synthetic merge commit). This means:
+- `HEAD` is the merge commit (has 2 parents)
+- `HEAD^` (first parent) is the base branch tip
+- `HEAD^2` (second parent) is the actual PR head commit
+
+This is documented in the [GitHub community discussion on base.sha behavior](https://github.com/orgs/community/discussions/59677) and the [Frontside deep dive into pull_request](https://frontside.com/blog/2020-05-26-github-actions-pull_request/). The [actions/checkout issue #426](https://github.com/actions/checkout/issues/426) also discusses the distinction between checking out the merge commit vs the HEAD commit.
+
 ## References
 
 - [link-assistant/web-capture#50](https://github.com/link-assistant/web-capture/issues/50) — Original issue
 - [link-assistant/web-capture#51](https://github.com/link-assistant/web-capture/pull/51) — Reference implementation (JS)
 - [link-foundation/js-ai-driven-development-pipeline-template#31](https://github.com/link-foundation/js-ai-driven-development-pipeline-template/issues/31) — Same issue on JS template
 - [GitHub Actions: Events that trigger workflows](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request) — Documentation on synthetic merge commits
+- [GitHub community discussion: base.sha update behavior](https://github.com/orgs/community/discussions/59677) — Explains how `github.event.pull_request.base.sha` works
+- [Frontside: GitHub Actions pull_request deep dive](https://frontside.com/blog/2020-05-26-github-actions-pull_request/) — Explains synthetic merge commit structure
+- [actions/checkout#426: Merge commit vs HEAD commit](https://github.com/actions/checkout/issues/426) — Discussion on checkout behavior for PRs
