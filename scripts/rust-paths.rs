@@ -254,6 +254,7 @@ fn find_manifest_value(content: &str, key: &str) -> Option<String> {
         .and_then(|caps| caps.get(1).map(|m| m.as_str().to_string()))
 }
 
+#[cfg(not(test))]
 fn main() {
     // When run directly, just print the detected rust root
     match get_rust_root(None, true) {
