@@ -14,9 +14,11 @@
 
 use std::env;
 use std::fs;
-use std::path::Path;
 use std::process::exit;
 use regex::Regex;
+
+#[path = "rust-paths.rs"]
+mod rust_paths;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum BumpType {
@@ -75,34 +77,6 @@ fn has_flag(name: &str) -> bool {
     args.contains(&flag)
 }
 
-fn get_rust_root() -> String {
-    if let Some(root) = get_arg("rust-root") {
-        return root;
-    }
-
-    // Auto-detect
-    if Path::new("./Cargo.toml").exists() {
-        eprintln!("Detected single-language repository (Cargo.toml in root)");
-        return ".".to_string();
-    }
-
-    if Path::new("./rust/Cargo.toml").exists() {
-        eprintln!("Detected multi-language repository (Cargo.toml in rust/)");
-        return "rust".to_string();
-    }
-
-    eprintln!("Error: Could not find Cargo.toml in expected locations");
-    exit(1);
-}
-
-fn get_cargo_toml_path(rust_root: &str) -> String {
-    if rust_root == "." {
-        "./Cargo.toml".to_string()
-    } else {
-        format!("{}/Cargo.toml", rust_root)
-    }
-}
-
 fn get_current_version(cargo_toml_path: &str) -> Result<Version, String> {
     let content = fs::read_to_string(cargo_toml_path)
         .map_err(|e| format!("Failed to read {}: {}", cargo_toml_path, e))?;
@@ -150,10 +124,23 @@ fn main() {
     };
 
     let dry_run = has_flag("dry-run");
-    let rust_root = get_rust_root();
-    let cargo_toml = get_cargo_toml_path(&rust_root);
+    let rust_root = match rust_paths::get_rust_root(None, true) {
+        Ok(root) => root,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            exit(1);
+        }
+    };
+    let cargo_toml = rust_paths::get_cargo_toml_path(&rust_root);
+    let package_manifest = match rust_paths::get_package_manifest_path(&cargo_toml) {
+        Ok(path) => path,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            exit(1);
+        }
+    };
 
-    let current = match get_current_version(&cargo_toml) {
+    let current = match get_current_version(package_manifest.to_string_lossy().as_ref()) {
         Ok(v) => v,
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -169,10 +156,10 @@ fn main() {
     if dry_run {
         println!("Dry run - no changes made");
     } else {
-        if let Err(e) = update_cargo_toml(&cargo_toml, &new_version) {
+        if let Err(e) = update_cargo_toml(package_manifest.to_string_lossy().as_ref(), &new_version) {
             eprintln!("Error: {}", e);
             exit(1);
         }
-        println!("Updated {}", cargo_toml);
+        println!("Updated {}", package_manifest.display());
     }
 }

@@ -32,6 +32,9 @@ use regex::Regex;
 use chrono::Utc;
 use serde::Deserialize;
 
+#[path = "rust-paths.rs"]
+mod rust_paths;
+
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
     let flag = format!("--{}", name);
@@ -42,34 +45,6 @@ fn get_arg(name: &str) -> Option<String> {
 
     let env_name = name.to_uppercase().replace('-', "_");
     env::var(&env_name).ok().filter(|s| !s.is_empty())
-}
-
-fn get_rust_root() -> String {
-    if let Some(root) = get_arg("rust-root") {
-        eprintln!("Using explicitly configured Rust root: {}", root);
-        return root;
-    }
-
-    if Path::new("./Cargo.toml").exists() {
-        eprintln!("Detected single-language repository (Cargo.toml in root)");
-        return ".".to_string();
-    }
-
-    if Path::new("./rust/Cargo.toml").exists() {
-        eprintln!("Detected multi-language repository (Cargo.toml in rust/)");
-        return "rust".to_string();
-    }
-
-    eprintln!("Error: Could not find Cargo.toml in expected locations");
-    exit(1);
-}
-
-fn get_cargo_toml_path(rust_root: &str) -> String {
-    if rust_root == "." {
-        "./Cargo.toml".to_string()
-    } else {
-        format!("{}/Cargo.toml", rust_root)
-    }
 }
 
 fn get_changelog_dir(rust_root: &str) -> String {
@@ -391,8 +366,21 @@ fn main() {
     let description = get_arg("description");
     let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
     let release_label = get_arg("release-label");
-    let rust_root = get_rust_root();
-    let cargo_toml = get_cargo_toml_path(&rust_root);
+    let rust_root = match rust_paths::get_rust_root(None, true) {
+        Ok(root) => root,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            exit(1);
+        }
+    };
+    let cargo_toml = rust_paths::get_cargo_toml_path(&rust_root);
+    let package_manifest = match rust_paths::get_package_manifest_path(&cargo_toml) {
+        Ok(path) => path,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            exit(1);
+        }
+    };
     let changelog_dir = get_changelog_dir(&rust_root);
     let changelog_file = get_changelog_path(&rust_root);
 
@@ -401,10 +389,10 @@ fn main() {
     let _ = exec("git", &["config", "user.email", "github-actions[bot]@users.noreply.github.com"]);
 
     // Get current version
-    let content = match fs::read_to_string(&cargo_toml) {
+    let content = match fs::read_to_string(&package_manifest) {
         Ok(c) => c,
         Err(e) => {
-            eprintln!("Error reading {}: {}", cargo_toml, e);
+            eprintln!("Error reading {}: {}", package_manifest.display(), e);
             exit(1);
         }
     };
@@ -412,14 +400,14 @@ fn main() {
     let current = match Version::parse(&content) {
         Some(v) => v,
         None => {
-            eprintln!("Error: Could not parse version from {}", cargo_toml);
+            eprintln!("Error: Could not parse version from {}", package_manifest.display());
             exit(1);
         }
     };
 
     let initial_bump = current.bump(&bump_type);
 
-    let crate_name = match get_crate_name(&cargo_toml) {
+    let crate_name = match get_crate_name(package_manifest.to_string_lossy().as_ref()) {
         Ok(name) => name,
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -448,7 +436,7 @@ fn main() {
     println!("Final release version: {}", new_version);
 
     // Update version in Cargo.toml
-    if let Err(e) = update_cargo_toml(&cargo_toml, &new_version) {
+    if let Err(e) = update_cargo_toml(package_manifest.to_string_lossy().as_ref(), &new_version) {
         eprintln!("Error: {}", e);
         exit(1);
     }
@@ -457,7 +445,8 @@ fn main() {
     collect_changelog(&changelog_dir, &changelog_file, &new_version);
 
     // Stage Cargo.toml and CHANGELOG.md
-    let _ = exec("git", &["add", &cargo_toml, &changelog_file]);
+    let package_manifest_str = package_manifest.to_string_lossy().to_string();
+    let _ = exec("git", &["add", &package_manifest_str, &changelog_file]);
 
     // Check if there are changes to commit
     if exec_check("git", &["diff", "--cached", "--quiet"]) {
