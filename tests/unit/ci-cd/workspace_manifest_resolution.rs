@@ -2,7 +2,11 @@ use std::fs;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use super::rust_paths::{get_package_manifest_path, read_package_info};
+use super::rust_paths::{
+    get_cargo_lock_path, get_cargo_toml_path, get_changelog_dir, get_changelog_path,
+    get_package_manifest_path, get_rust_root, needs_cd, parse_rust_root_from_args,
+    read_package_info,
+};
 
 fn temp_dir(name: &str) -> PathBuf {
     let nanos = SystemTime::now()
@@ -101,4 +105,42 @@ publish = false
 
     let error = get_package_manifest_path(&repo.join("Cargo.toml")).unwrap_err();
     assert!(error.contains("No publishable workspace members"));
+}
+
+#[test]
+fn path_helpers_match_repository_layout() {
+    assert_eq!(get_cargo_toml_path("."), PathBuf::from("./Cargo.toml"));
+    assert_eq!(get_cargo_lock_path("."), PathBuf::from("./Cargo.lock"));
+    assert_eq!(get_changelog_dir("."), PathBuf::from("./changelog.d"));
+    assert_eq!(get_changelog_path("."), PathBuf::from("./CHANGELOG.md"));
+    assert!(!needs_cd("."));
+
+    assert_eq!(
+        get_cargo_toml_path("rust"),
+        PathBuf::from("rust/Cargo.toml")
+    );
+    assert_eq!(
+        get_cargo_lock_path("rust"),
+        PathBuf::from("rust/Cargo.lock")
+    );
+    assert_eq!(get_changelog_dir("rust"), PathBuf::from("rust/changelog.d"));
+    assert_eq!(
+        get_changelog_path("rust"),
+        PathBuf::from("rust/CHANGELOG.md")
+    );
+    assert!(needs_cd("rust"));
+}
+
+#[test]
+fn rust_root_prefers_explicit_parameter() {
+    assert_eq!(
+        get_rust_root(Some("custom-root"), false).unwrap(),
+        "custom-root"
+    );
+}
+
+#[test]
+fn rust_root_cli_parser_returns_none_without_configuration() {
+    std::env::remove_var("RUST_ROOT");
+    assert_eq!(parse_rust_root_from_args(), None);
 }
