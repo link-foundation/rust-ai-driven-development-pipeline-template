@@ -35,10 +35,11 @@
 
 use std::env;
 use std::fs;
-use std::path::Path;
 use std::process::exit;
-use regex::Regex;
 use serde::Deserialize;
+
+#[path = "rust-paths.rs"]
+mod rust_paths;
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -50,34 +51,6 @@ fn get_arg(name: &str) -> Option<String> {
 
     let env_name = name.to_uppercase().replace('-', "_");
     env::var(&env_name).ok().filter(|s| !s.is_empty())
-}
-
-fn get_rust_root() -> String {
-    if let Some(root) = get_arg("rust-root") {
-        eprintln!("Using explicitly configured Rust root: {}", root);
-        return root;
-    }
-
-    if Path::new("./Cargo.toml").exists() {
-        eprintln!("Detected single-language repository (Cargo.toml in root)");
-        return ".".to_string();
-    }
-
-    if Path::new("./rust/Cargo.toml").exists() {
-        eprintln!("Detected multi-language repository (Cargo.toml in rust/)");
-        return "rust".to_string();
-    }
-
-    eprintln!("Error: Could not find Cargo.toml in expected locations");
-    exit(1);
-}
-
-fn get_cargo_toml_path(rust_root: &str) -> String {
-    if rust_root == "." {
-        "./Cargo.toml".to_string()
-    } else {
-        format!("{}/Cargo.toml", rust_root)
-    }
 }
 
 fn set_output(key: &str, value: &str) {
@@ -95,32 +68,6 @@ fn set_output(key: &str, value: &str) {
         }
     }
     println!("Output: {}={}", key, value);
-}
-
-fn get_current_version(cargo_toml_path: &str) -> Result<String, String> {
-    let content = fs::read_to_string(cargo_toml_path)
-        .map_err(|e| format!("Failed to read {}: {}", cargo_toml_path, e))?;
-
-    let re = Regex::new(r#"(?m)^version\s*=\s*"([^"]+)""#).unwrap();
-
-    if let Some(caps) = re.captures(&content) {
-        Ok(caps.get(1).unwrap().as_str().to_string())
-    } else {
-        Err(format!("Could not find version in {}", cargo_toml_path))
-    }
-}
-
-fn get_crate_name(cargo_toml_path: &str) -> Result<String, String> {
-    let content = fs::read_to_string(cargo_toml_path)
-        .map_err(|e| format!("Failed to read {}: {}", cargo_toml_path, e))?;
-
-    let re = Regex::new(r#"(?m)^name\s*=\s*"([^"]+)""#).unwrap();
-
-    if let Some(caps) = re.captures(&content) {
-        Ok(caps.get(1).unwrap().as_str().to_string())
-    } else {
-        Err(format!("Could not find name in {}", cargo_toml_path))
-    }
 }
 
 #[derive(Deserialize)]
@@ -230,28 +177,35 @@ fn get_max_published_version(crate_name: &str) -> Option<String> {
 }
 
 fn main() {
-    let rust_root = get_rust_root();
-    let cargo_toml = get_cargo_toml_path(&rust_root);
+    let rust_root = match rust_paths::get_rust_root(None, true) {
+        Ok(root) => root,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            exit(1);
+        }
+    };
+    let cargo_toml = rust_paths::get_cargo_toml_path(&rust_root);
+    let package_manifest = match rust_paths::get_package_manifest_path(&cargo_toml) {
+        Ok(path) => path,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            exit(1);
+        }
+    };
 
     let has_fragments = env::var("HAS_FRAGMENTS")
         .map(|v| v == "true")
         .unwrap_or(false);
 
-    let crate_name = match get_crate_name(&cargo_toml) {
-        Ok(name) => name,
+    let package_info = match rust_paths::read_package_info(&package_manifest) {
+        Ok(info) => info,
         Err(e) => {
             eprintln!("Error: {}", e);
             exit(1);
         }
     };
-
-    let current_version = match get_current_version(&cargo_toml) {
-        Ok(version) => version,
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            exit(1);
-        }
-    };
+    let crate_name = package_info.name;
+    let current_version = package_info.version;
 
     let max_published = get_max_published_version(&crate_name);
     if let Some(ref max_ver) = max_published {

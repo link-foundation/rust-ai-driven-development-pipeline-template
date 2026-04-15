@@ -18,50 +18,11 @@
 //! regex = "1"
 //! ```
 
-use std::env;
 use std::fs;
-use std::path::Path;
 use std::process::exit;
-use regex::Regex;
 
-fn get_rust_root() -> String {
-    // Check CLI arguments
-    let args: Vec<String> = env::args().collect();
-    if let Some(idx) = args.iter().position(|a| a == "--rust-root") {
-        if let Some(root) = args.get(idx + 1) {
-            return root.clone();
-        }
-    }
-
-    // Check environment variable
-    if let Ok(root) = env::var("RUST_ROOT") {
-        if !root.is_empty() {
-            return root;
-        }
-    }
-
-    // Auto-detect
-    if Path::new("./Cargo.toml").exists() {
-        eprintln!("Detected single-language repository (Cargo.toml in root)");
-        return ".".to_string();
-    }
-
-    if Path::new("./rust/Cargo.toml").exists() {
-        eprintln!("Detected multi-language repository (Cargo.toml in rust/)");
-        return "rust".to_string();
-    }
-
-    eprintln!("Error: Could not find Cargo.toml in expected locations");
-    exit(1);
-}
-
-fn get_cargo_toml_path(rust_root: &str) -> String {
-    if rust_root == "." {
-        "./Cargo.toml".to_string()
-    } else {
-        format!("{}/Cargo.toml", rust_root)
-    }
-}
+#[path = "rust-paths.rs"]
+mod rust_paths;
 
 fn set_output(key: &str, value: &str) {
     if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
@@ -80,27 +41,27 @@ fn set_output(key: &str, value: &str) {
     println!("Output: {}={}", key, value);
 }
 
-fn get_current_version(cargo_toml_path: &str) -> Result<String, String> {
-    let content = fs::read_to_string(cargo_toml_path)
-        .map_err(|e| format!("Failed to read {}: {}", cargo_toml_path, e))?;
-
-    let re = Regex::new(r#"(?m)^version\s*=\s*"([^"]+)""#).unwrap();
-
-    if let Some(caps) = re.captures(&content) {
-        Ok(caps.get(1).unwrap().as_str().to_string())
-    } else {
-        Err(format!("Could not find version in {}", cargo_toml_path))
-    }
-}
-
 fn main() {
-    let rust_root = get_rust_root();
-    let cargo_toml = get_cargo_toml_path(&rust_root);
+    let rust_root = match rust_paths::get_rust_root(None, true) {
+        Ok(root) => root,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            exit(1);
+        }
+    };
+    let cargo_toml = rust_paths::get_cargo_toml_path(&rust_root);
+    let package_manifest = match rust_paths::get_package_manifest_path(&cargo_toml) {
+        Ok(path) => path,
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            exit(1);
+        }
+    };
 
-    match get_current_version(&cargo_toml) {
-        Ok(version) => {
-            println!("Current version: {}", version);
-            set_output("version", &version);
+    match rust_paths::read_package_info(&package_manifest) {
+        Ok(info) => {
+            println!("Current version: {}", info.version);
+            set_output("version", &info.version);
         }
         Err(e) => {
             eprintln!("Error: {}", e);
