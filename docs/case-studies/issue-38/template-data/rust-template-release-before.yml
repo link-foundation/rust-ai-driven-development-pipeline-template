@@ -31,7 +31,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
@@ -458,17 +458,14 @@ jobs:
             3. The automated release workflow will publish to crates.io and create a GitHub release
 
   # === DEPLOY DOCUMENTATION ===
-  # Deploy Rust API documentation to GitHub Pages after a successful package build.
-  # Keep this independent from package/GitHub release publication so the website
-  # still updates when the release path fails.
+  # Deploy Rust API documentation to GitHub Pages after a successful release
   deploy-docs:
     name: Deploy Rust Documentation
-    needs: [build]
+    needs: [auto-release, manual-release]
     if: |
-      !cancelled() &&
-      needs.build.result == 'success' && (
-        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-        (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'instant')
+      always() && !cancelled() && (
+        needs.auto-release.result == 'success' ||
+        needs.manual-release.result == 'success'
       )
     runs-on: ubuntu-latest
     permissions:
