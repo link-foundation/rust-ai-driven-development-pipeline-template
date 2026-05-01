@@ -41,18 +41,6 @@ use serde::Deserialize;
 #[path = "rust-paths.rs"]
 mod rust_paths;
 
-fn get_arg(name: &str) -> Option<String> {
-    let args: Vec<String> = env::args().collect();
-    let flag = format!("--{}", name);
-
-    if let Some(idx) = args.iter().position(|a| a == &flag) {
-        return args.get(idx + 1).cloned();
-    }
-
-    let env_name = name.to_uppercase().replace('-', "_");
-    env::var(&env_name).ok().filter(|s| !s.is_empty())
-}
-
 fn set_output(key: &str, value: &str) {
     if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
         if let Err(e) = fs::OpenOptions::new()

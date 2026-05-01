@@ -17,6 +17,8 @@
 //!   3. Environment variable: `RUST_ROOT`
 //!   4. Auto-detection: Check ./Cargo.toml first, then ./rust/Cargo.toml
 
+#![allow(dead_code)]
+
 use regex::Regex;
 use std::env;
 use std::fs;
