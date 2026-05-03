@@ -85,6 +85,8 @@ Thank you for your interest in contributing! This document provides guidelines a
    cargo test test_name
    ```
 
+   CI caps each test-matrix job at 10 minutes. Rust's built-in `cargo test` runner does not provide a portable global per-test timeout, so wrap long-running network, IO, or async tests with explicit test-level deadlines. If a repository adopts `cargo nextest`, configure runner deadlines with options such as `--slow-timeout` and `--leak-timeout`.
+
 5. **Add a changelog fragment**
 
    For any user-facing changes, create a changelog fragment:
