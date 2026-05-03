@@ -72,10 +72,13 @@ const fn classify_line_count(line_count: usize) -> LineStatus {
 }
 
 fn relative_path(path: &Path, cwd: &Path) -> String {
-    path.strip_prefix(cwd)
+    let relative = path
+        .strip_prefix(cwd)
         .unwrap_or(path)
         .to_string_lossy()
-        .to_string()
+        .to_string();
+
+    relative.replace(std::path::MAIN_SEPARATOR, "/")
 }
 
 fn check_directory(cwd: &Path) -> CheckResult {
