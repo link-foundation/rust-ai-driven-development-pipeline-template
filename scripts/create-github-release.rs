@@ -4,7 +4,7 @@
 //! Automatically includes crates.io and docs.rs badges in release notes
 //! when the crate name can be detected from Cargo.toml.
 //!
-//! Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository> [--tag-prefix <prefix>] [--language <name>] [--release-label <label>]
+//! Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository> [--tag-prefix <prefix>] [--language <name>] [--release-label <label>] [--docker-hub-url <url>]
 //!
 //! ```cargo
 //! [dependencies]
@@ -28,7 +28,7 @@ use std::path::Path;
 use std::process::{exit, Command, Stdio};
 
 #[cfg(not(test))]
-const USAGE: &str = "Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository> [--tag-prefix <prefix>] [--language <name>] [--release-label <label>]";
+const USAGE: &str = "Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository> [--tag-prefix <prefix>] [--language <name>] [--release-label <label>] [--docker-hub-url <url>]";
 
 #[cfg(not(test))]
 fn get_rust_root() -> String {
@@ -129,6 +129,39 @@ fn build_release_name(
     }
 }
 
+fn badge_escape(value: &str) -> String {
+    value
+        .replace('-', "--")
+        .replace('_', "__")
+        .replace(' ', "%20")
+        .replace('/', "%2F")
+        .replace(':', "%3A")
+        .replace('+', "%2B")
+}
+
+fn docker_hub_tag_query(version: &str) -> String {
+    version.replace('+', "%2B")
+}
+
+fn docker_hub_badge(url: &str, version: &str) -> String {
+    let trimmed_url = url.trim_end_matches('/');
+    let image = trimmed_url
+        .strip_prefix("https://hub.docker.com/r/")
+        .unwrap_or(trimmed_url);
+    let image_tag = format!("{image}:{version}");
+    let tag_url = format!(
+        "{}/tags?name={}",
+        trimmed_url,
+        docker_hub_tag_query(version)
+    );
+
+    format!(
+        "[![Docker Hub](https://img.shields.io/badge/docker-{}-2496ED?logo=docker)]({})",
+        badge_escape(&image_tag),
+        tag_url
+    )
+}
+
 #[cfg(not(test))]
 fn get_changelog_for_version(version: &str) -> String {
     let changelog_path = "CHANGELOG.md";
@@ -217,6 +250,7 @@ fn main() {
     let language = get_arg("language").unwrap_or_else(|| "Rust".to_string());
     let release_label = get_arg("release-label");
     let crates_io_url = get_arg("crates-io-url");
+    let docker_hub_url = get_arg("docker-hub-url");
     let normalized_version = normalize_release_version(&version);
 
     let rust_root = get_rust_root();
@@ -233,11 +267,18 @@ fn main() {
     }
 
     let mut release_notes = get_changelog_for_version(&normalized_version);
+    let mut badges = Vec::new();
     if let Some(crate_name) = get_crate_name_from_toml(&cargo_toml) {
-        let badges = format!(
+        let crate_badges = format!(
             "[![Crates.io](https://img.shields.io/crates/v/{crate_name}?label=crates.io)](https://crates.io/crates/{crate_name}/{normalized_version}) [![Docs.rs](https://docs.rs/{crate_name}/badge.svg)](https://docs.rs/{crate_name}/{normalized_version})"
         );
-        release_notes = format!("{badges}\n\n{release_notes}");
+        badges.push(crate_badges);
+    }
+    if let Some(url) = docker_hub_url {
+        badges.push(docker_hub_badge(&url, &normalized_version));
+    }
+    if !badges.is_empty() {
+        release_notes = format!("{}\n\n{release_notes}", badges.join(" "));
     }
 
     if let Some(url) = crates_io_url {
@@ -352,5 +393,21 @@ mod tests {
                 body: "release notes".to_string(),
             }
         );
+    }
+
+    #[test]
+    fn docker_hub_badge_links_to_exact_tag() {
+        let badge = docker_hub_badge("https://hub.docker.com/r/example/project", "1.2.3");
+
+        assert!(badge.contains("docker-example%2Fproject%3A1.2.3"));
+        assert!(badge.contains("https://hub.docker.com/r/example/project/tags?name=1.2.3"));
+    }
+
+    #[test]
+    fn docker_hub_badge_escapes_build_metadata() {
+        let badge = docker_hub_badge("https://hub.docker.com/r/example/project", "1.2.3+build.4");
+
+        assert!(badge.contains("1.2.3%2Bbuild.4"));
+        assert!(badge.contains("tags?name=1.2.3%2Bbuild.4"));
     }
 }

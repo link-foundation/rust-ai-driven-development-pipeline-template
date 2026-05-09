@@ -7,8 +7,9 @@ This guide covers common CI/CD issues and their solutions for Rust projects usin
 1. [Release Jobs Skipped](#release-jobs-skipped)
 2. [Version Already Released (False Positive)](#version-already-released-false-positive)
 3. [Crates.io Publishing Fails](#cratesio-publishing-fails)
-4. [Secret Configuration Issues](#secret-configuration-issues)
-5. [Multi-Language Repository Issues](#multi-language-repository-issues)
+4. [Docker Hub Publishing Fails](#docker-hub-publishing-fails)
+5. [Secret Configuration Issues](#secret-configuration-issues)
+6. [Multi-Language Repository Issues](#multi-language-repository-issues)
 
 ---
 
@@ -115,6 +116,44 @@ The "Publish to Crates.io" step fails with an error.
 
 ---
 
+## Docker Hub Publishing Fails
+
+### Symptom
+The crates.io publish succeeds, but the release workflow fails before or during Docker Hub publishing.
+
+### Required Configuration
+
+Docker Hub publishing is optional. It runs only when all of these are true:
+
+- A root `Dockerfile` exists
+- Repository variable `DOCKERHUB_IMAGE` is set to `namespace/repository`
+- `DOCKERHUB_USERNAME` is set as a repository variable or secret
+- Repository secret `DOCKERHUB_TOKEN` is set
+
+### Common Errors
+
+#### "Docker Hub publishing requires DOCKERHUB_USERNAME and DOCKERHUB_TOKEN"
+**Cause:** `DOCKERHUB_IMAGE` and `Dockerfile` enabled Docker publishing, but credentials are incomplete.
+
+**Solution:** Set `DOCKERHUB_USERNAME` and create a Docker Hub access token stored as `DOCKERHUB_TOKEN`.
+
+#### Docker tag is missing after crates.io already published
+**Cause:** A previous release run published the crate, then failed before Docker Hub or GitHub Release completed.
+
+**Solution:** Re-run the release workflow after fixing the Docker Hub configuration. The release check treats the version as incomplete and recreates missing artifacts without bumping the Cargo version again.
+
+### Verification
+Check whether a Docker Hub tag exists:
+
+```bash
+curl -fsSL "https://hub.docker.com/v2/repositories/NAMESPACE/REPOSITORY/tags/VERSION"
+```
+
+### Reference
+- [Docker GitHub Actions guide](https://docs.docker.com/build/ci/github-actions/)
+
+---
+
 ## Secret Configuration Issues
 
 ### Required Secrets
@@ -122,6 +161,7 @@ The "Publish to Crates.io" step fails with an error.
 | Secret Name | Purpose | Where to Get |
 |------------|---------|--------------|
 | `CARGO_REGISTRY_TOKEN` or `CARGO_TOKEN` | Publish to crates.io | https://crates.io/settings/tokens |
+| `DOCKERHUB_TOKEN` | Publish to Docker Hub when `DOCKERHUB_IMAGE` is configured | https://app.docker.com/settings/personal-access-tokens |
 | `GITHUB_TOKEN` | Create GitHub releases | Automatic (provided by GitHub) |
 
 ### Organization vs Repository Secrets

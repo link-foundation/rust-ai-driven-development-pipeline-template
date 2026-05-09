@@ -19,7 +19,7 @@ A comprehensive template for AI-driven Rust development with full CI/CD pipeline
 - **CI/CD pipeline**: GitHub Actions with multi-platform support
 - **Changelog management**: Fragment-based changelog (like Changesets/Scriv)
 - **Code coverage**: Automated coverage reports with cargo-llvm-cov and Codecov
-- **Release automation**: Automatic GitHub releases and crates.io publishing
+- **Release automation**: Automatic GitHub releases, crates.io publishing, and optional Docker Hub image publishing
 - **Template-safe defaults**: CI/CD skips publishing when package name is `example-sum-package-name`
 
 ## Quick Start
@@ -125,7 +125,8 @@ cargo fmt --check && cargo clippy --all-targets --all-features && rust-script sc
 │   ├── git-config.rs               # Git configuration for CI
 │   ├── publish-crate.rs            # Crates.io publishing
 │   ├── rust-paths.rs               # Rust root path detection
-│   └── version-and-commit.rs       # CI/CD version management
+│   ├── version-and-commit.rs       # CI/CD version management
+│   └── wait-for-crate.rs           # Crates.io availability wait before image publishing
 ├── src/
 │   ├── lib.rs                      # Library entry point
 │   ├── main.rs                     # CLI binary (uses lino-arguments)
@@ -204,13 +205,15 @@ The GitHub Actions workflow provides:
 7. **Building**: Release build and package validation
 8. **Auto release**: Automatic releases when changelog fragments are merged to main
 9. **Manual release**: Workflow dispatch with version bump type selection
-10. **Documentation**: Automatic docs deployment to GitHub Pages after release
+10. **Optional Docker Hub publishing**: Pushes `latest` and version tags after the matching crates.io version is visible
+11. **Documentation**: Automatic docs deployment to GitHub Pages after release
 
 ### Template-Safe Defaults
 
 The default package name `example-sum-package-name` triggers skip logic in CI/CD scripts:
 - `publish-crate.rs` skips crates.io publishing
 - `create-github-release.rs` skips GitHub release creation
+- Docker Hub publishing stays disabled unless `DOCKERHUB_IMAGE` is configured and a root `Dockerfile` exists
 
 Rename the package in `Cargo.toml` to enable full CI/CD publishing.
 
@@ -232,6 +235,24 @@ After creating a repository from this template:
    - `examples/basic_usage.rs`
 
 3. Update badges in this `README.md`
+
+### Optional Docker Hub Publishing
+
+Projects that ship a Docker image can publish Docker Hub releases from the same Rust release workflow. Add a root `Dockerfile`, then configure:
+
+| Name | Type | Example | Purpose |
+| ---- | ---- | ------- | ------- |
+| `DOCKERHUB_IMAGE` | Repository variable | `my-dockerhub-user/my-image` | Docker Hub repository to publish |
+| `DOCKERHUB_USERNAME` | Repository variable or secret | `my-dockerhub-user` | Docker Hub login username |
+| `DOCKERHUB_TOKEN` | Repository secret | Docker Hub access token | Docker Hub login token |
+
+When configured, the release workflow publishes both `latest` and the Cargo package version tag, for example `my-dockerhub-user/my-image:0.10.0`. Docker publishing runs only after crates.io reports the matching version as available, and release checks rerun missing Docker Hub or GitHub release artifacts without bumping the version again.
+
+Add a visible Docker Hub badge next to the crates.io badge in repositories that enable image publishing:
+
+```markdown
+[![Docker Hub](https://img.shields.io/docker/v/my-dockerhub-user/my-image?label=docker%20hub)](https://hub.docker.com/r/my-dockerhub-user/my-image)
+```
 
 ## Scripts Reference
 
