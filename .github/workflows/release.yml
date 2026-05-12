@@ -628,6 +628,11 @@ jobs:
   # still updates when the release path fails. Use the official Pages artifact
   # deployment path so repositories configured with "GitHub Actions" as their
   # Pages source fail this job if Pages cannot deploy.
+  #
+  # One-time setup: in the repository's Settings -> Pages, set Source to
+  # "GitHub Actions". Without this, the first run fails on actions/deploy-pages
+  # with "Get Pages site failed" / "Failed to create deployment". This cannot be
+  # configured from a workflow. See README.md "Deploying API documentation".
   deploy-docs:
     name: Deploy Rust Documentation
     needs: [build]

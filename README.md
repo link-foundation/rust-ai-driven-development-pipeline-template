@@ -254,6 +254,14 @@ Add a visible Docker Hub badge next to the crates.io badge in repositories that 
 [![Docker Hub](https://img.shields.io/docker/v/my-dockerhub-user/my-image?label=docker%20hub)](https://hub.docker.com/r/my-dockerhub-user/my-image)
 ```
 
+## Deploying API documentation
+
+The `deploy-docs` job in `.github/workflows/release.yml` publishes `cargo doc --no-deps --all-features` output to GitHub Pages on every push to `main` and on `workflow_dispatch` with `release_mode == 'instant'`. It uses the official `actions/configure-pages` / `actions/upload-pages-artifact` / `actions/deploy-pages` flow, which requires the repository's Pages source to be set to **GitHub Actions**.
+
+Before the first run on `main`, open **Settings → Pages** of the new repository and set **Source = GitHub Actions**. This is a one-time manual step and cannot be configured from a workflow. The `deploy-docs` job will then provision the Pages site on its first run.
+
+If this step is skipped, the first `deploy-docs` run fails on `actions/deploy-pages@v5` with `Error: Get Pages site failed.` / `Error: Failed to create deployment`. Flip the Pages source as described above and re-run the failed job; no workflow changes are required.
+
 ## Scripts Reference
 
 All scripts in `scripts/` are Rust scripts that use [rust-script](https://github.com/fornwall/rust-script).
