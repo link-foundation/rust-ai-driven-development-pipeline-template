@@ -625,7 +625,9 @@ jobs:
   # === DEPLOY DOCUMENTATION ===
   # Deploy Rust API documentation to GitHub Pages after a successful package build.
   # Keep this independent from package/GitHub release publication so the website
-  # still updates when the release path fails.
+  # still updates when the release path fails. Use the official Pages artifact
+  # deployment path so repositories configured with "GitHub Actions" as their
+  # Pages source fail this job if Pages cannot deploy.
   deploy-docs:
     name: Deploy Rust Documentation
     needs: [build]
@@ -638,7 +640,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -650,8 +657,14 @@ jobs:
       - name: Build documentation
         run: cargo doc --no-deps --all-features
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: target/doc
+          path: target/doc
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
