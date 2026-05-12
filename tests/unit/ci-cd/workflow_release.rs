@@ -61,6 +61,27 @@ fn documentation_deploy_is_independent_from_release_publication() {
 }
 
 #[test]
+fn documentation_deploy_uses_github_pages_artifact_flow() {
+    let workflow = release_workflow();
+    let deploy_docs = job_block(&workflow, "deploy-docs");
+
+    assert!(deploy_docs.contains("contents: read"));
+    assert!(deploy_docs.contains("pages: write"));
+    assert!(deploy_docs.contains("id-token: write"));
+    assert!(deploy_docs.contains("environment:"));
+    assert!(deploy_docs.contains("name: github-pages"));
+    assert!(deploy_docs.contains("url: ${{ steps.deployment.outputs.page_url }}"));
+    assert!(deploy_docs.contains("uses: actions/configure-pages@v6"));
+    assert!(deploy_docs.contains("uses: actions/upload-pages-artifact@v5"));
+    assert!(deploy_docs.contains("path: target/doc"));
+    assert!(deploy_docs.contains("id: deployment"));
+    assert!(deploy_docs.contains("uses: actions/deploy-pages@v5"));
+    assert!(!deploy_docs.contains("contents: write"));
+    assert!(!deploy_docs.contains("peaceiris/actions-gh-pages"));
+    assert!(!deploy_docs.contains("publish_dir: target/doc"));
+}
+
+#[test]
 fn release_workflow_jobs_have_explicit_timeouts() {
     let workflow = release_workflow();
     let expected_timeouts = [
