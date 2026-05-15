@@ -23,14 +23,18 @@
 //! serde_json = "1"
 //! ```
 
+#[cfg(not(test))]
+use chrono::Utc;
+use regex::Regex;
+#[cfg(not(test))]
+use serde::Deserialize;
 use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
-use std::process::{Command, exit};
-use regex::Regex;
-use chrono::Utc;
-use serde::Deserialize;
+#[cfg(not(test))]
+use std::process::exit;
+use std::process::Command;
 
 #[path = "rust-paths.rs"]
 mod rust_paths;
@@ -142,11 +146,59 @@ fn update_cargo_toml(cargo_toml_path: &str, new_version: &str) -> Result<(), Str
     Ok(())
 }
 
+fn update_cargo_lock(
+    cargo_lock_path: &Path,
+    crate_name: &str,
+    new_version: &str,
+) -> Result<bool, String> {
+    if !cargo_lock_path.exists() {
+        println!(
+            "No Cargo.lock at {} (skipping lock-file version sync)",
+            cargo_lock_path.display()
+        );
+        return Ok(false);
+    }
+
+    let path_str = cargo_lock_path.to_string_lossy();
+    let content = fs::read_to_string(cargo_lock_path)
+        .map_err(|e| format!("Failed to read {}: {}", path_str, e))?;
+
+    let pattern = format!(
+        r#"(?m)(\[\[package\]\]\s*\nname\s*=\s*"{}"\s*\nversion\s*=\s*")[^"]+(")"#,
+        regex::escape(crate_name),
+    );
+    let re =
+        Regex::new(&pattern).map_err(|e| format!("Failed to build Cargo.lock regex: {}", e))?;
+
+    if !re.is_match(&content) {
+        println!(
+            "Warning: Could not find [[package]] entry for `{}` in {} (lock file left untouched)",
+            crate_name, path_str
+        );
+        return Ok(false);
+    }
+
+    let new_content = re.replace(&content, format!("${{1}}{}${{2}}", new_version).as_str());
+
+    if new_content == content {
+        println!("Cargo.lock already at version {}", new_version);
+        return Ok(false);
+    }
+
+    fs::write(cargo_lock_path, new_content.as_ref())
+        .map_err(|e| format!("Failed to write {}: {}", path_str, e))?;
+
+    println!("Updated {} to version {}", path_str, new_version);
+    Ok(true)
+}
+
+#[cfg(not(test))]
 #[derive(Deserialize)]
 struct CratesIoCrate {
     versions: Option<Vec<CratesIoVersionEntry>>,
 }
 
+#[cfg(not(test))]
 #[derive(Deserialize)]
 struct CratesIoVersionEntry {
     num: String,
@@ -170,6 +222,7 @@ fn check_tag_exists(tag_prefix: &str, version: &str) -> bool {
     exec_check("git", &["rev-parse", &format!("{}{}", tag_prefix, version)])
 }
 
+#[cfg(not(test))]
 fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
     let url = format!("https://crates.io/api/v1/crates/{}/{}", crate_name, version);
     match ureq::get(&url)
@@ -181,6 +234,7 @@ fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
     }
 }
 
+#[cfg(not(test))]
 fn get_max_published_version(crate_name: &str) -> Option<(u32, u32, u32)> {
     let url = format!("https://crates.io/api/v1/crates/{}", crate_name);
     match ureq::get(&url)
@@ -194,7 +248,9 @@ fn get_max_published_version(crate_name: &str) -> Option<(u32, u32, u32)> {
                         if let Some(versions) = data.versions {
                             let mut max: Option<(u32, u32, u32)> = None;
                             for v in &versions {
-                                if v.yanked { continue; }
+                                if v.yanked {
+                                    continue;
+                                }
                                 let base = match v.num.split('-').next() {
                                     Some(b) => b,
                                     None => continue,
@@ -224,13 +280,19 @@ fn get_max_published_version(crate_name: &str) -> Option<(u32, u32, u32)> {
     }
 }
 
+#[cfg(not(test))]
 fn ensure_version_exceeds_published(
     version_str: &str,
     crate_name: &str,
     tag_prefix: &str,
     max_published: Option<(u32, u32, u32)>,
 ) -> String {
-    let parts: Vec<&str> = version_str.split('-').next().unwrap_or(version_str).split('.').collect();
+    let parts: Vec<&str> = version_str
+        .split('-')
+        .next()
+        .unwrap_or(version_str)
+        .split('.')
+        .collect();
     if parts.len() != 3 {
         return version_str.to_string();
     }
@@ -255,7 +317,8 @@ fn ensure_version_exceeds_published(
 
     let mut candidate = format!("{}.{}.{}", major, minor, patch);
     let mut safety_counter = 0;
-    while (check_tag_exists(tag_prefix, &candidate) || check_version_on_crates_io(crate_name, &candidate))
+    while (check_tag_exists(tag_prefix, &candidate)
+        || check_version_on_crates_io(crate_name, &candidate))
         && safety_counter < 100
     {
         println!(
@@ -284,6 +347,7 @@ fn strip_frontmatter(content: &str) -> String {
     }
 }
 
+#[cfg(not(test))]
 fn collect_changelog(changelog_dir: &str, changelog_file: &str, version: &str) {
     let dir_path = Path::new(changelog_dir);
     if !dir_path.exists() {
@@ -320,7 +384,12 @@ fn collect_changelog(changelog_dir: &str, changelog_file: &str, version: &str) {
     }
 
     let date_str = Utc::now().format("%Y-%m-%d").to_string();
-    let new_entry = format!("\n## [{}] - {}\n\n{}\n", version, date_str, fragments.join("\n\n"));
+    let new_entry = format!(
+        "\n## [{}] - {}\n\n{}\n",
+        version,
+        date_str,
+        fragments.join("\n\n")
+    );
 
     if Path::new(changelog_file).exists() {
         let mut content = fs::read_to_string(changelog_file).unwrap_or_default();
@@ -349,6 +418,94 @@ fn collect_changelog(changelog_dir: &str, changelog_file: &str, version: &str) {
     println!("Collected {} changelog fragment(s)", files.len());
 }
 
+#[cfg(test)]
+mod tests {
+    use super::update_cargo_lock;
+    use std::fs;
+    use std::path::PathBuf;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temp_dir(name: &str) -> PathBuf {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("version-and-commit-{name}-{nanos}"));
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    #[test]
+    fn cargo_lock_update_scopes_to_named_package_entry() {
+        let repo = temp_dir("lock-update");
+        let cargo_lock = repo.join("Cargo.lock");
+        fs::write(
+            &cargo_lock,
+            r#"[[package]]
+name = "example-sum-package-name-helper"
+version = "9.9.9"
+
+[[package]]
+name = "example-sum-package-name"
+version = "0.13.0"
+dependencies = [
+ "clap",
+]
+
+[[package]]
+name = "regex"
+version = "1.12.3"
+"#,
+        )
+        .unwrap();
+
+        assert!(update_cargo_lock(&cargo_lock, "example-sum-package-name", "0.14.0").unwrap());
+
+        let updated = fs::read_to_string(&cargo_lock).unwrap();
+        assert!(updated.contains("name = \"example-sum-package-name\"\nversion = \"0.14.0\""));
+        assert!(updated.contains("name = \"example-sum-package-name-helper\"\nversion = \"9.9.9\""));
+        assert!(updated.contains("name = \"regex\"\nversion = \"1.12.3\""));
+    }
+
+    #[test]
+    fn cargo_lock_update_is_idempotent_when_version_already_matches() {
+        let repo = temp_dir("lock-idempotent");
+        let cargo_lock = repo.join("Cargo.lock");
+        let content = r#"[[package]]
+name = "example-sum-package-name"
+version = "0.14.0"
+"#;
+        fs::write(&cargo_lock, content).unwrap();
+
+        assert!(!update_cargo_lock(&cargo_lock, "example-sum-package-name", "0.14.0").unwrap());
+        assert_eq!(fs::read_to_string(&cargo_lock).unwrap(), content);
+    }
+
+    #[test]
+    fn cargo_lock_update_returns_false_when_lock_file_is_absent() {
+        let repo = temp_dir("lock-absent");
+        let cargo_lock = repo.join("Cargo.lock");
+
+        assert!(!update_cargo_lock(&cargo_lock, "example-sum-package-name", "0.14.0").unwrap());
+        assert!(!cargo_lock.exists());
+    }
+
+    #[test]
+    fn cargo_lock_update_returns_false_when_package_entry_is_absent() {
+        let repo = temp_dir("lock-entry-absent");
+        let cargo_lock = repo.join("Cargo.lock");
+        let content = r#"[[package]]
+name = "regex"
+version = "1.12.3"
+"#;
+        fs::write(&cargo_lock, content).unwrap();
+
+        assert!(!update_cargo_lock(&cargo_lock, "example-sum-package-name", "0.14.0").unwrap());
+        assert_eq!(fs::read_to_string(&cargo_lock).unwrap(), content);
+    }
+}
+
+#[cfg(not(test))]
 fn main() {
     let bump_type = match get_arg("bump-type") {
         Some(bt) => bt,
@@ -359,7 +516,10 @@ fn main() {
     };
 
     if !["major", "minor", "patch"].contains(&bump_type.as_str()) {
-        eprintln!("Invalid bump type: {}. Must be major, minor, or patch.", bump_type);
+        eprintln!(
+            "Invalid bump type: {}. Must be major, minor, or patch.",
+            bump_type
+        );
         exit(1);
     }
 
@@ -386,7 +546,14 @@ fn main() {
 
     // Configure git
     let _ = exec("git", &["config", "user.name", "github-actions[bot]"]);
-    let _ = exec("git", &["config", "user.email", "github-actions[bot]@users.noreply.github.com"]);
+    let _ = exec(
+        "git",
+        &[
+            "config",
+            "user.email",
+            "github-actions[bot]@users.noreply.github.com",
+        ],
+    );
 
     // Get current version
     let content = match fs::read_to_string(&package_manifest) {
@@ -400,7 +567,10 @@ fn main() {
     let current = match Version::parse(&content) {
         Some(v) => v,
         None => {
-            eprintln!("Error: Could not parse version from {}", package_manifest.display());
+            eprintln!(
+                "Error: Could not parse version from {}",
+                package_manifest.display()
+            );
             exit(1);
         }
     };
@@ -422,9 +592,13 @@ fn main() {
         println!("No versions published on crates.io yet (or crate not found)");
     }
 
-    println!("Initial bump ({}) from {}.{}.{}: {}", bump_type, current.major, current.minor, current.patch, initial_bump);
+    println!(
+        "Initial bump ({}) from {}.{}.{}: {}",
+        bump_type, current.major, current.minor, current.patch, initial_bump
+    );
 
-    let new_version = ensure_version_exceeds_published(&initial_bump, &crate_name, &tag_prefix, max_published);
+    let new_version =
+        ensure_version_exceeds_published(&initial_bump, &crate_name, &tag_prefix, max_published);
 
     if new_version != initial_bump {
         println!(
@@ -441,12 +615,26 @@ fn main() {
         exit(1);
     }
 
+    let cargo_lock_path = rust_paths::get_cargo_lock_path(&rust_root);
+    let lock_updated = match update_cargo_lock(&cargo_lock_path, &crate_name, &new_version) {
+        Ok(updated) => updated,
+        Err(e) => {
+            eprintln!("Error updating Cargo.lock: {}", e);
+            exit(1);
+        }
+    };
+
     // Collect changelog fragments
     collect_changelog(&changelog_dir, &changelog_file, &new_version);
 
-    // Stage Cargo.toml and CHANGELOG.md
+    // Stage Cargo.toml, Cargo.lock if changed, and CHANGELOG.md
     let package_manifest_str = package_manifest.to_string_lossy().to_string();
-    let _ = exec("git", &["add", &package_manifest_str, &changelog_file]);
+    let cargo_lock_str = cargo_lock_path.to_string_lossy().to_string();
+    let mut add_args = vec!["add", &package_manifest_str, &changelog_file];
+    if lock_updated {
+        add_args.push(&cargo_lock_str);
+    }
+    let _ = exec("git", &add_args);
 
     // Check if there are changes to commit
     if exec_check("git", &["diff", "--cached", "--quiet"]) {
@@ -457,12 +645,14 @@ fn main() {
     }
 
     // Fetch latest remote state before committing (supports concurrent release workflows)
-    let current_branch = exec("git", &["rev-parse", "--abbrev-ref", "HEAD"]).unwrap_or_else(|_| "main".to_string());
+    let current_branch =
+        exec("git", &["rev-parse", "--abbrev-ref", "HEAD"]).unwrap_or_else(|_| "main".to_string());
     if let Err(e) = exec("git", &["fetch", "origin", &current_branch]) {
         eprintln!("Warning: Could not fetch origin/{}: {}", current_branch, e);
     } else {
         let local = exec("git", &["rev-parse", "HEAD"]).unwrap_or_default();
-        let remote = exec("git", &["rev-parse", &format!("origin/{}", current_branch)]).unwrap_or_default();
+        let remote =
+            exec("git", &["rev-parse", &format!("origin/{}", current_branch)]).unwrap_or_default();
         if !local.is_empty() && !remote.is_empty() && local != remote {
             println!("Local branch is behind remote, rebasing...");
             if let Err(e) = exec("git", &["rebase", &format!("origin/{}", current_branch)]) {
@@ -474,10 +664,19 @@ fn main() {
     }
 
     // Commit changes
-    let label_suffix = release_label.as_ref().map(|l| format!(" ({})", l)).unwrap_or_default();
+    let label_suffix = release_label
+        .as_ref()
+        .map(|l| format!(" ({})", l))
+        .unwrap_or_default();
     let commit_msg = match &description {
-        Some(desc) => format!("chore: release {}{}{}\n\n{}", tag_prefix, new_version, label_suffix, desc),
-        None => format!("chore: release {}{}{}", tag_prefix, new_version, label_suffix),
+        Some(desc) => format!(
+            "chore: release {}{}{}\n\n{}",
+            tag_prefix, new_version, label_suffix, desc
+        ),
+        None => format!(
+            "chore: release {}{}{}",
+            tag_prefix, new_version, label_suffix
+        ),
     };
 
     if let Err(e) = exec("git", &["commit", "-m", &commit_msg]) {
@@ -506,9 +705,14 @@ fn main() {
             Ok(_) => break,
             Err(e) => {
                 if attempt < max_push_attempts {
-                    eprintln!("Push failed (attempt {}/{}): {}", attempt, max_push_attempts, e);
+                    eprintln!(
+                        "Push failed (attempt {}/{}): {}",
+                        attempt, max_push_attempts, e
+                    );
                     eprintln!("Pulling with rebase and retrying...");
-                    if let Err(rebase_err) = exec("git", &["pull", "--rebase", "origin", &current_branch]) {
+                    if let Err(rebase_err) =
+                        exec("git", &["pull", "--rebase", "origin", &current_branch])
+                    {
                         eprintln!("Error during pull --rebase: {}", rebase_err);
                         let _ = exec("git", &["rebase", "--abort"]);
                         exit(1);
