@@ -1,4 +1,6 @@
 mod changelog_parsing;
+#[path = "../../../scripts/check-crate-size.rs"]
+mod check_crate_size;
 #[path = "../../../scripts/check-file-size.rs"]
 mod check_file_size;
 #[path = "../../../scripts/create-github-release.rs"]

@@ -91,6 +91,9 @@ cargo clippy --all-targets --all-features
 # Check file size limits (requires rust-script: cargo install rust-script)
 rust-script scripts/check-file-size.rs
 
+# Check the packaged crate stays under the crates.io 10 MiB upload limit
+rust-script scripts/check-crate-size.rs
+
 # Run all checks
 cargo fmt --check && cargo clippy --all-targets --all-features && rust-script scripts/check-file-size.rs
 ```
@@ -113,6 +116,7 @@ cargo fmt --check && cargo clippy --all-targets --all-features && rust-script sc
 ├── scripts/                        # Rust scripts (via rust-script)
 │   ├── bump-version.rs             # Version bumping utility
 │   ├── check-changelog-fragment.rs # Changelog fragment validation
+│   ├── check-crate-size.rs         # Crate archive size guard (crates.io 10 MiB limit)
 │   ├── check-file-size.rs          # File size validation script
 │   ├── check-release-needed.rs     # Release necessity check
 │   ├── check-version-modification.rs # Version modification detection
@@ -275,6 +279,7 @@ Install rust-script with: `cargo install rust-script`
 | `cargo run -- --a 3 --b 7`           | Run CLI (sum 3 + 7)     |
 | `cargo run --example basic_usage`     | Run example              |
 | `rust-script scripts/check-file-size.rs` | Check file size limits |
+| `rust-script scripts/check-crate-size.rs` | Check crate archive size (crates.io 10 MiB limit) |
 | `rust-script scripts/bump-version.rs` | Bump version             |
 
 ## Example Usage

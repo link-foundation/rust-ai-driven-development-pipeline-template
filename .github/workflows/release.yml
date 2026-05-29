@@ -267,6 +267,9 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install rust-script
+        run: cargo install rust-script
+
       - name: Cache cargo registry
         uses: actions/cache@v5
         with:
@@ -283,6 +286,9 @@ jobs:
 
       - name: Check package
         run: cargo package --list --allow-dirty
+
+      - name: Check crate package size
+        run: rust-script scripts/check-crate-size.rs
 
   # === AUTO RELEASE ===
   # Automatic release on push to main using changelog fragments
@@ -344,6 +350,10 @@ jobs:
       - name: Build release
         if: steps.check.outputs.should_release == 'true'
         run: cargo build --release
+
+      - name: Check crate package size
+        if: steps.check.outputs.should_release == 'true' && steps.check.outputs.crate_published != 'true'
+        run: rust-script scripts/check-crate-size.rs
 
       - name: Publish to Crates.io
         if: steps.check.outputs.should_release == 'true' && steps.check.outputs.crate_published != 'true'
@@ -485,6 +495,10 @@ jobs:
       - name: Build release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         run: cargo build --release
+
+      - name: Check crate package size
+        if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
+        run: rust-script scripts/check-crate-size.rs
 
       - name: Publish to Crates.io
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
