@@ -19,7 +19,10 @@
 //!       'success'        - the crate version was published to crates.io
 //!       'already_exists' - the version is already on crates.io (version-bump bug)
 //!       'auth_failed'    - missing or invalid crates.io authentication token
-//!       'rate_limited'   - crates.io returned HTTP 429 (too many versions in 24h)
+//!       'rate_limited'   - crates.io returned HTTP 429 (too many versions in 24h);
+//!                          deferred, automatically-recoverable outcome — the
+//!                          script exits 0 and the same version is retried on the
+//!                          next push to 'main' once the throttle window clears
 //!       'skipped'        - publish skipped (e.g. template default package name)
 //!       'failed'         - publish failed for an unrecognised reason
 //!
@@ -80,6 +83,18 @@ impl FailureKind {
             FailureKind::RateLimited => "rate_limited",
             FailureKind::Unknown => "failed",
         }
+    }
+
+    /// Whether this failure is a *deferred*, automatically-recoverable outcome
+    /// rather than a hard error.
+    ///
+    /// A crates.io HTTP 429 throttle is transient: the same version is re-tried
+    /// on the next push to `main` once the 24-hour window clears (see
+    /// `scripts/check-release-needed.rs`). The script therefore exits
+    /// successfully for this case so a recoverable throttle does not turn the
+    /// whole release job red. Every other failure stays non-zero.
+    fn is_deferred(self) -> bool {
+        matches!(self, FailureKind::RateLimited)
     }
 }
 
@@ -245,6 +260,16 @@ fn main() {
         }
 
         set_output("publish_result", kind.output_value());
+
+        // A rate-limit is a deferred, automatically-recoverable outcome: exit
+        // successfully so the release job does not go red over a transient
+        // crates.io throttle. Downstream release-artifact steps are gated on a
+        // successful publish (see .github/workflows/release.yml), so a deferred
+        // upload never produces partial Docker/GitHub release artifacts.
+        if kind.is_deferred() {
+            return;
+        }
+
         exit(1);
     }
 }
@@ -299,5 +324,15 @@ You have published too many versions of this crate in the last 24 hours
         // classified as rate-limited, since the throttle is the actionable cause.
         let body = "status 429 Too Many Requests: authentication retry later";
         assert_eq!(classify_failure(body), FailureKind::RateLimited);
+    }
+
+    #[test]
+    fn only_rate_limit_is_deferred() {
+        // A rate-limit is the single deferred (exit-0) outcome; every other
+        // failure must remain a hard, non-zero error.
+        assert!(FailureKind::RateLimited.is_deferred());
+        assert!(!FailureKind::AlreadyExists.is_deferred());
+        assert!(!FailureKind::AuthFailed.is_deferred());
+        assert!(!FailureKind::Unknown.is_deferred());
     }
 }
