@@ -185,6 +185,83 @@ fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible()
 }
 
 #[test]
+fn release_jobs_check_crate_size_before_publishing() {
+    let workflow = release_workflow();
+
+    for job_name in ["auto-release", "manual-release"] {
+        let job = job_block(&workflow, job_name);
+
+        let size_check = job
+            .find("- name: Check crate package size")
+            .unwrap_or_else(|| panic!("{job_name} should guard the crate size before publishing"));
+        let publish = job
+            .find("- name: Publish to Crates.io")
+            .unwrap_or_else(|| panic!("{job_name} should publish the crate"));
+
+        assert!(
+            size_check < publish,
+            "{job_name} should check the crate size before publishing to crates.io"
+        );
+        assert!(
+            job.contains("rust-script scripts/check-crate-size.rs"),
+            "{job_name} should run the check-crate-size guard script"
+        );
+    }
+}
+
+#[test]
+fn build_job_checks_crate_size() {
+    let workflow = release_workflow();
+    let build = job_block(&workflow, "build");
+
+    assert!(
+        build.contains("- name: Check crate package size"),
+        "build job should surface oversized packages early on PRs"
+    );
+    assert!(
+        build.contains("rust-script scripts/check-crate-size.rs"),
+        "build job should run the check-crate-size guard script"
+    );
+}
+
+#[test]
+fn crate_size_guard_uses_documented_crates_io_limit() {
+    let script = fs::read_to_string(format!(
+        "{}/scripts/check-crate-size.rs",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .unwrap();
+
+    assert!(
+        script.contains("10 * 1024 * 1024"),
+        "size guard should encode the crates.io 10 MiB upload limit"
+    );
+}
+
+#[test]
+fn cargo_manifest_uses_narrow_include_allowlist() {
+    let manifest =
+        fs::read_to_string(format!("{}/Cargo.toml", env!("CARGO_MANIFEST_DIR"))).unwrap();
+
+    assert!(
+        manifest.contains("include = ["),
+        "Cargo.toml should declare a narrow include allowlist to keep release archives small"
+    );
+    assert!(
+        manifest.contains("\"src/**/*.rs\""),
+        "include allowlist should ship the crate sources"
+    );
+    // Docs, case studies, changelog fragments, scripts, and experiments must not
+    // be opted into the published archive.
+    for excluded in ["\"docs/", "\"changelog.d/", "\"scripts/", "\"experiments/"] {
+        assert!(
+            !manifest.contains(excluded),
+            "include allowlist should not bundle {excluded} into release archives"
+        );
+    }
+}
+
+#[test]
 fn release_scripts_check_configured_release_artifacts() {
     let release_check = fs::read_to_string(format!(
         "{}/scripts/check-release-needed.rs",

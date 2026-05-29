@@ -11,6 +11,18 @@ repository = "https://github.com/link-foundation/rust-ai-driven-development-pipe
 documentation = "https://github.com/link-foundation/rust-ai-driven-development-pipeline-template"
 rust-version = "1.70"
 
+# Narrow allowlist of files shipped in the published `.crate` archive.
+# Keeping this list tight prevents docs, case studies, generated CI artifacts,
+# changelog fragments, and experiments from silently inflating the release
+# archive past the crates.io 10 MiB upload limit. See issue #58.
+include = [
+    "src/**/*.rs",
+    "examples/**/*.rs",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+]
+
 [lib]
 name = "example_sum_package_name"
 path = "src/lib.rs"

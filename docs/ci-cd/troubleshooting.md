@@ -7,9 +7,10 @@ This guide covers common CI/CD issues and their solutions for Rust projects usin
 1. [Release Jobs Skipped](#release-jobs-skipped)
 2. [Version Already Released (False Positive)](#version-already-released-false-positive)
 3. [Crates.io Publishing Fails](#cratesio-publishing-fails)
-4. [Docker Hub Publishing Fails](#docker-hub-publishing-fails)
-5. [Secret Configuration Issues](#secret-configuration-issues)
-6. [Multi-Language Repository Issues](#multi-language-repository-issues)
+4. [Crate Package Too Large (HTTP 413)](#crate-package-too-large-http-413)
+5. [Docker Hub Publishing Fails](#docker-hub-publishing-fails)
+6. [Secret Configuration Issues](#secret-configuration-issues)
+7. [Multi-Language Repository Issues](#multi-language-repository-issues)
 
 ---
 
@@ -113,6 +114,64 @@ The "Publish to Crates.io" step fails with an error.
 ### Reference
 - [browser-commander Issue #33](https://github.com/link-foundation/browser-commander/issues/33)
 - [Cargo Publishing Documentation](https://doc.rust-lang.org/cargo/reference/publishing.html)
+
+---
+
+## Crate Package Too Large (HTTP 413)
+
+### Symptom
+`cargo publish` is rejected by crates.io with:
+
+```
+error: failed to publish to registry
+the remote server responded with an error (status 413 Payload Too Large):
+max upload size is 10485760
+```
+
+### Root Cause
+The generated `.crate` archive exceeds the crates.io upload limit of **10 MiB
+(10485760 bytes)**. This usually happens when documentation, case studies,
+generated CI artifacts, datasets, or experiment files are silently bundled into
+the package.
+
+### How This Template Prevents It
+
+#### 1. Pre-publish size guard
+`scripts/check-crate-size.rs` builds the `.crate` archive and fails the workflow
+**before** publishing when the archive is over the limit. It runs in the `build`
+job (early PR feedback) and again right before the publish step in both the
+`auto-release` and `manual-release` jobs.
+
+Run it locally before pushing:
+```bash
+rust-script scripts/check-crate-size.rs
+```
+
+#### 2. Narrow `include` allowlist
+`Cargo.toml` declares an `include` list so only the crate sources and a few
+documentation files ship in the release archive:
+```toml
+include = [
+    "src/**/*.rs",
+    "examples/**/*.rs",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+]
+```
+
+### Solution When the Guard Fails
+1. Inspect what is being packaged:
+   ```bash
+   cargo package --list --allow-dirty
+   ```
+2. Tighten the `include` allowlist in `Cargo.toml` (or add an `exclude` list) to
+   drop large files such as docs, datasets, generated logs, and experiments.
+3. Re-run the size guard to confirm the archive is under 10 MiB.
+
+### Reference
+- [Cargo `include`/`exclude` fields](https://doc.rust-lang.org/cargo/reference/manifest.html#the-exclude-and-include-fields)
+- [Cargo packaging documentation](https://doc.rust-lang.org/cargo/reference/publishing.html#packaging-a-crate)
 
 ---
 
@@ -255,4 +314,5 @@ cargo fmt --all -- --check
 cargo clippy --all-targets --all-features
 cargo test --all-features
 cargo package --list
+rust-script scripts/check-crate-size.rs
 ```
