@@ -30,6 +30,8 @@ use std::process::{exit, Command, Stdio};
 #[cfg(not(test))]
 const USAGE: &str = "Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository> [--tag-prefix <prefix>] [--language <name>] [--release-label <label>] [--docker-hub-url <url>]";
 
+const GITHUB_RELEASE_BODY_MAX_CHARS: usize = 125_000;
+
 #[cfg(not(test))]
 fn get_rust_root() -> String {
     if let Some(root) = get_arg("rust-root") {
@@ -53,6 +55,15 @@ fn get_cargo_toml_path(rust_root: &str) -> String {
         "./Cargo.toml".to_string()
     } else {
         format!("{rust_root}/Cargo.toml")
+    }
+}
+
+#[cfg(not(test))]
+fn get_changelog_path(rust_root: &str) -> String {
+    if rust_root == "." {
+        "./CHANGELOG.md".to_string()
+    } else {
+        format!("{rust_root}/CHANGELOG.md")
     }
 }
 
@@ -163,9 +174,7 @@ fn docker_hub_badge(url: &str, version: &str) -> String {
 }
 
 #[cfg(not(test))]
-fn get_changelog_for_version(version: &str) -> String {
-    let changelog_path = "CHANGELOG.md";
-
+fn get_changelog_for_version(changelog_path: &str, version: &str) -> String {
     if !Path::new(changelog_path).exists() {
         return format!("Release v{version}");
     }
@@ -226,6 +235,79 @@ fn build_release_payload(
     }
 }
 
+fn is_existing_release_error(combined: &str) -> bool {
+    let Some(error) = parse_first_json_object(combined) else {
+        return false;
+    };
+    let Some(errors) = error.get("errors").and_then(serde_json::Value::as_array) else {
+        return false;
+    };
+
+    !errors.is_empty()
+        && errors.iter().all(|error| {
+            error.get("resource").and_then(serde_json::Value::as_str) == Some("Release")
+                && error.get("code").and_then(serde_json::Value::as_str) == Some("already_exists")
+                && error.get("field").and_then(serde_json::Value::as_str) == Some("tag_name")
+        })
+}
+
+fn parse_first_json_object(output: &str) -> Option<serde_json::Value> {
+    output.match_indices('{').find_map(|(start, _)| {
+        let mut values =
+            serde_json::Deserializer::from_str(&output[start..]).into_iter::<serde_json::Value>();
+        let value = values.next()?.ok()?;
+
+        matches!(value, serde_json::Value::Object(_)).then_some(value)
+    })
+}
+
+fn normalize_changelog_blob_path(changelog_path: &str) -> String {
+    changelog_path
+        .replace('\\', "/")
+        .trim_start_matches("./")
+        .trim_start_matches('/')
+        .to_string()
+}
+
+fn full_changelog_url(repository: &str, tag: &str, changelog_path: &str) -> String {
+    format!(
+        "https://github.com/{repository}/blob/{tag}/{}",
+        normalize_changelog_blob_path(changelog_path)
+    )
+}
+
+fn cap_release_notes(
+    release_notes: String,
+    repository: &str,
+    tag: &str,
+    changelog_path: &str,
+) -> String {
+    if release_notes.chars().count() <= GITHUB_RELEASE_BODY_MAX_CHARS {
+        return release_notes;
+    }
+
+    let footer = format!(
+        "\n\nRelease notes truncated. See the [full changelog]({}).",
+        full_changelog_url(repository, tag, changelog_path)
+    );
+    let marker = "\n\n...";
+    let reserved_chars = footer.chars().count() + marker.chars().count();
+
+    if reserved_chars >= GITHUB_RELEASE_BODY_MAX_CHARS {
+        return release_notes
+            .chars()
+            .take(GITHUB_RELEASE_BODY_MAX_CHARS)
+            .collect();
+    }
+
+    let keep_chars = GITHUB_RELEASE_BODY_MAX_CHARS - reserved_chars;
+    let mut truncated = release_notes.chars().take(keep_chars).collect::<String>();
+    let trimmed_len = truncated.trim_end().len();
+    truncated.truncate(trimmed_len);
+
+    format!("{truncated}{marker}{footer}")
+}
+
 #[cfg(not(test))]
 fn main() {
     let version = match get_arg("release-version") {
@@ -266,7 +348,8 @@ fn main() {
         }
     }
 
-    let mut release_notes = get_changelog_for_version(&normalized_version);
+    let changelog_path = get_changelog_path(&rust_root);
+    let mut release_notes = get_changelog_for_version(&changelog_path, &normalized_version);
     let mut badges = Vec::new();
     if let Some(crate_name) = get_crate_name_from_toml(&cargo_toml) {
         let crate_badges = format!(
@@ -284,6 +367,9 @@ fn main() {
     if let Some(url) = crates_io_url {
         release_notes = format!("{url}\n\n{release_notes}");
     }
+
+    let release_tag = build_release_tag(&tag_prefix, &normalized_version);
+    release_notes = cap_release_notes(release_notes, &repository, &release_tag, &changelog_path);
 
     let payload = build_release_payload(
         &tag_prefix,
@@ -328,13 +414,15 @@ fn main() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         let stdout = String::from_utf8_lossy(&output.stdout);
         let combined = format!("{stderr}{stdout}");
-        if combined.contains("already exists")
-            || combined.contains("already_exists")
-            || combined.contains("Validation Failed")
-        {
+        if is_existing_release_error(&combined) {
             println!("Release {tag} already exists, skipping");
         } else {
-            eprintln!("Error creating release: {stderr}");
+            let details = combined.trim();
+            if details.is_empty() {
+                eprintln!("Error creating release: gh api exited unsuccessfully");
+            } else {
+                eprintln!("Error creating release:\n{details}");
+            }
             exit(1);
         }
     }
@@ -409,5 +497,39 @@ mod tests {
 
         assert!(badge.contains("1.2.3%2Bbuild.4"));
         assert!(badge.contains("tags?name=1.2.3%2Bbuild.4"));
+    }
+
+    #[test]
+    fn duplicate_release_validation_is_idempotent() {
+        let output = r#"gh: Validation Failed (HTTP 422)
+{"message":"Validation Failed","errors":[{"resource":"Release","code":"already_exists","field":"tag_name"}]}"#;
+
+        assert!(is_existing_release_error(output));
+    }
+
+    #[test]
+    fn generic_validation_failure_is_not_existing_release() {
+        let output = r#"gh: Validation Failed (HTTP 422)
+{"message":"Validation Failed","errors":[{"resource":"Release","code":"custom","field":"body"}]}"#;
+
+        assert!(!is_existing_release_error(output));
+    }
+
+    #[test]
+    fn mixed_validation_failure_is_not_existing_release() {
+        let output = r#"gh: Validation Failed (HTTP 422)
+{"message":"Validation Failed","errors":[{"resource":"Release","code":"already_exists","field":"tag_name"},{"resource":"Release","code":"custom","field":"body"}]}"#;
+
+        assert!(!is_existing_release_error(output));
+    }
+
+    #[test]
+    fn oversized_release_notes_are_capped_with_full_changelog_link() {
+        let release_notes = "a".repeat(GITHUB_RELEASE_BODY_MAX_CHARS + 100);
+        let capped = cap_release_notes(release_notes, "owner/repo", "v1.2.3", "./CHANGELOG.md");
+
+        assert!(capped.chars().count() <= GITHUB_RELEASE_BODY_MAX_CHARS);
+        assert!(capped.contains("Release notes truncated"));
+        assert!(capped.contains("https://github.com/owner/repo/blob/v1.2.3/CHANGELOG.md"));
     }
 }
