@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.18.3] - 2026-06-13
+
+### Fixed
+- Skipped the full test matrix on pull requests that only change non-code files.
+
 ## [0.18.2] - 2026-06-13
 
 ### Fixed
