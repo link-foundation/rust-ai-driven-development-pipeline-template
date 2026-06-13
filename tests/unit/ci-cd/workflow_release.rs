@@ -116,6 +116,37 @@ fn release_workflow_jobs_have_explicit_timeouts() {
 }
 
 #[test]
+fn test_job_is_gated_by_detected_code_changes_not_changelog_result() {
+    let workflow = release_workflow();
+    let test = job_block(&workflow, "test");
+
+    assert!(
+        test.contains("needs: [detect-changes]"),
+        "test job should depend only on change detection"
+    );
+    assert!(
+        !test.contains("needs.changelog.result"),
+        "test job should not infer file changes from the changelog job result"
+    );
+    assert!(
+        !test.contains("docs-changed"),
+        "docs-only changes should not run the full test matrix"
+    );
+
+    for output in [
+        "any-code-changed",
+        "rs-changed",
+        "toml-changed",
+        "workflow-changed",
+    ] {
+        assert!(
+            test.contains(&format!("needs.detect-changes.outputs.{output} == 'true'")),
+            "test job should run when {output} is true"
+        );
+    }
+}
+
+#[test]
 fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible() {
     let workflow = release_workflow();
 

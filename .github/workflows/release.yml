@@ -173,14 +173,24 @@ jobs:
         run: rust-script scripts/check-file-size.rs
 
   # === TEST ===
-  # Test runs independently of changelog check
+  # Test runs independently of changelog check and only for code-affecting changes
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
-    needs: [detect-changes, changelog]
-    # Run if: push event, OR changelog succeeded, OR changelog was skipped (docs-only PR)
-    if: always() && !cancelled() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || needs.changelog.result == 'success' || needs.changelog.result == 'skipped')
+    needs: [detect-changes]
+    # Note: always() is required because detect-changes is skipped on workflow_dispatch,
+    # and without always(), this job would also be skipped even though its condition includes workflow_dispatch.
+    # See: https://github.com/actions/runner/issues/491
+    if: |
+      always() && !cancelled() && (
+        github.event_name == 'push' ||
+        github.event_name == 'workflow_dispatch' ||
+        needs.detect-changes.outputs.any-code-changed == 'true' ||
+        needs.detect-changes.outputs.rs-changed == 'true' ||
+        needs.detect-changes.outputs.toml-changed == 'true' ||
+        needs.detect-changes.outputs.workflow-changed == 'true'
+      )
     strategy:
       fail-fast: false
       matrix:
