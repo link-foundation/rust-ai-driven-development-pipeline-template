@@ -82,6 +82,58 @@ fn documentation_deploy_uses_github_pages_artifact_flow() {
 }
 
 #[test]
+fn documentation_deploy_publishes_working_pages_root() {
+    let workflow = release_workflow();
+    let deploy_docs = job_block(&workflow, "deploy-docs");
+
+    let build_docs = deploy_docs
+        .find("- name: Build documentation")
+        .expect("deploy-docs should build rustdoc output");
+    let generate_root = deploy_docs
+        .find("- name: Generate Pages root index")
+        .expect("deploy-docs should generate a root index for GitHub Pages");
+    let verify_tree = deploy_docs
+        .find("- name: Verify site tree")
+        .expect("deploy-docs should log the artifact tree before upload");
+    let upload_artifact = deploy_docs
+        .find("- name: Upload GitHub Pages artifact")
+        .expect("deploy-docs should upload the Pages artifact");
+
+    assert!(
+        build_docs < generate_root && generate_root < verify_tree && verify_tree < upload_artifact,
+        "deploy-docs should build docs, add root Pages files, verify the tree, then upload"
+    );
+    assert!(
+        deploy_docs.contains("cargo metadata --no-deps --format-version 1"),
+        "root redirect should derive the crate docs directory from cargo metadata"
+    );
+    assert!(
+        deploy_docs.contains(r#"replace("-","_")"#),
+        "root redirect should use rustdoc's crate directory naming"
+    );
+    assert!(
+        deploy_docs.contains("target/doc/index.html"),
+        "GitHub Pages artifact should contain a root index.html"
+    );
+    assert!(
+        deploy_docs.contains("url=%s/index.html"),
+        "root index.html should redirect to the crate rustdoc index"
+    );
+    assert!(
+        deploy_docs.contains("target/doc/.nojekyll"),
+        "GitHub Pages artifact should disable Jekyll so rustdoc assets are served verbatim"
+    );
+    assert!(
+        deploy_docs.contains("include-hidden-files: true"),
+        "Pages artifact upload should include the hidden .nojekyll file"
+    );
+    assert!(
+        deploy_docs.contains("find target/doc -maxdepth 2 -print"),
+        "deploy-docs should log the published tree for easier CI diagnosis"
+    );
+}
+
+#[test]
 fn release_workflow_jobs_have_explicit_timeouts() {
     let workflow = release_workflow();
     let expected_timeouts = [
