@@ -36,6 +36,8 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::process::Command;
 
+#[path = "release-naming.rs"]
+mod release_naming;
 #[path = "rust-paths.rs"]
 mod rust_paths;
 
@@ -681,9 +683,6 @@ fn main() {
         exit(1);
     }
 
-    let description = get_arg("description");
-    let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
-    let release_label = get_arg("release-label");
     let rust_root = match rust_paths::get_rust_root(None, true) {
         Ok(root) => root,
         Err(e) => {
@@ -691,6 +690,10 @@ fn main() {
             exit(1);
         }
     };
+    let description = get_arg("description");
+    let tag_prefix = get_arg("tag-prefix")
+        .unwrap_or_else(|| release_naming::tag_prefix_for_rust_root(&rust_root).to_string());
+    let release_label = get_arg("release-label");
     let cargo_toml = rust_paths::get_cargo_toml_path(&rust_root);
     let package_manifest = match rust_paths::get_package_manifest_path(&cargo_toml) {
         Ok(path) => path,

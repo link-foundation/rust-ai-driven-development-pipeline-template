@@ -48,6 +48,8 @@ use std::process::exit;
 
 #[path = "rust-paths.rs"]
 mod rust_paths;
+#[path = "release-naming.rs"]
+mod release_naming;
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -312,7 +314,8 @@ fn main() {
 
     if !has_fragments {
         let crate_published = check_version_on_crates_io(&crate_name, &current_version);
-        let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
+        let tag_prefix = get_arg("tag-prefix")
+            .unwrap_or_else(|| release_naming::tag_prefix_for_rust_root(&rust_root).to_string());
         let dockerhub_image = docker_hub_image_to_check();
         let dockerhub_required = dockerhub_image.is_some();
         let dockerhub_published = dockerhub_image

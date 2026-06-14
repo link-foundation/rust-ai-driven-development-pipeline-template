@@ -129,6 +129,7 @@ cargo fmt --check && cargo clippy --all-targets --all-features && rust-script sc
 │   ├── get-version.rs              # Version extraction from Cargo.toml
 │   ├── git-config.rs               # Git configuration for CI
 │   ├── publish-crate.rs            # Crates.io publishing
+│   ├── release-naming.rs           # Release tag/title/badge naming helpers
 │   ├── rust-paths.rs               # Rust root path detection
 │   ├── smoke-test-published-crate.rs # Install/import/run smoke test for published crates
 │   ├── version-and-commit.rs       # CI/CD version management
@@ -214,6 +215,12 @@ The GitHub Actions workflow provides:
 10. **Published crate smoke test**: Installs the just-published crate from crates.io, runs CLI entry points with captured output, and compiles a fresh dependent crate against the library
 11. **Optional Docker Hub publishing**: Pushes `latest` and version tags after the matching crates.io version is visible and smoke-tested
 12. **Documentation**: Automatic docs deployment to GitHub Pages after release
+
+#### Multi-Language Monorepos
+
+Release scripts auto-detect the Rust layout with no extra configuration. A root `Cargo.toml` is treated as a single-language repository and keeps the plain `v<version>` tag plus `<crate> <version>` GitHub release title. A `rust/Cargo.toml` layout is treated as a multi-language monorepo and uses `rust_v<version>` tags plus `[Rust] <version>` titles so Rust releases do not collide with JavaScript or other language releases in the same GitHub Releases list.
+
+GitHub release notes include a crates.io badge that links to the exact published version page, for example `https://crates.io/crates/<crate>/<version>`.
 
 ### Template-Safe Defaults
 
