@@ -381,6 +381,14 @@ jobs:
           )
         run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.current_version.outputs.version }}"
 
+      - name: Smoke-test published crate
+        if: |
+          steps.check.outputs.should_release == 'true' && (
+            steps.check.outputs.crate_published == 'true' ||
+            steps.publish-crate.outputs.publish_result == 'success'
+          )
+        run: rust-script scripts/smoke-test-published-crate.rs --release-version "${{ steps.current_version.outputs.version }}"
+
       - name: Configure Docker Hub publishing
         if: |
           steps.check.outputs.should_release == 'true' && (
@@ -540,6 +548,13 @@ jobs:
             steps.version.outputs.already_released == 'true') &&
           steps.publish-crate.outputs.publish_result == 'success'
         run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.version.outputs.new_version }}"
+
+      - name: Smoke-test published crate
+        if: |
+          (steps.version.outputs.version_committed == 'true' ||
+            steps.version.outputs.already_released == 'true') &&
+          steps.publish-crate.outputs.publish_result == 'success'
+        run: rust-script scripts/smoke-test-published-crate.rs --release-version "${{ steps.version.outputs.new_version }}"
 
       - name: Configure Docker Hub publishing
         if: |
