@@ -121,17 +121,15 @@ jobs:
           GITHUB_BASE_REF: ${{ github.base_ref }}
         run: rust-script scripts/check-version-modification.rs
 
-  # === LINT AND FORMAT CHECK ===
-  # Lint runs independently of changelog check - it's a fast check that should always run
-  # See: https://github.com/link-assistant/hive-mind/pull/1024 for why this dependency was removed
-  lint:
-    name: Lint and Format Check
+  # === CARGO.LOCK GUARD ===
+  # Binary crates must commit Cargo.lock so CI and release jobs resolve the same
+  # dependency graph every run. This also prevents cache keys based on
+  # hashFiles('**/Cargo.lock') from silently degrading to the empty hash.
+  cargo-lock:
+    name: Cargo.lock Guard
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     needs: [detect-changes]
-    # Note: always() is required because detect-changes is skipped on workflow_dispatch,
-    # and without always(), this job would also be skipped even though its condition includes workflow_dispatch.
-    # See: https://github.com/actions/runner/issues/491
     if: |
       always() && !cancelled() && (
         github.event_name == 'push' ||
@@ -139,7 +137,42 @@ jobs:
         needs.detect-changes.outputs.rs-changed == 'true' ||
         needs.detect-changes.outputs.toml-changed == 'true' ||
         needs.detect-changes.outputs.docs-changed == 'true' ||
-        needs.detect-changes.outputs.workflow-changed == 'true'
+        needs.detect-changes.outputs.workflow-changed == 'true' ||
+        needs.detect-changes.outputs.any-code-changed == 'true'
+      )
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install rust-script
+        run: cargo install rust-script
+
+      - name: Check committed Cargo.lock for binary crates
+        run: rust-script scripts/check-cargo-lock.rs
+
+  # === LINT AND FORMAT CHECK ===
+  # Lint runs independently of changelog check - it's a fast check that should always run
+  # See: https://github.com/link-assistant/hive-mind/pull/1024 for why this dependency was removed
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [detect-changes, cargo-lock]
+    # Note: always() is required because detect-changes is skipped on workflow_dispatch,
+    # and without always(), this job would also be skipped even though its condition includes workflow_dispatch.
+    # See: https://github.com/actions/runner/issues/491
+    if: |
+      always() && !cancelled() && (
+        needs.cargo-lock.result == 'success' && (
+          github.event_name == 'push' ||
+          github.event_name == 'workflow_dispatch' ||
+          needs.detect-changes.outputs.rs-changed == 'true' ||
+          needs.detect-changes.outputs.toml-changed == 'true' ||
+          needs.detect-changes.outputs.docs-changed == 'true' ||
+          needs.detect-changes.outputs.workflow-changed == 'true'
+        )
       )
     steps:
       - uses: actions/checkout@v6
@@ -178,18 +211,20 @@ jobs:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
-    needs: [detect-changes]
+    needs: [detect-changes, cargo-lock]
     # Note: always() is required because detect-changes is skipped on workflow_dispatch,
     # and without always(), this job would also be skipped even though its condition includes workflow_dispatch.
     # See: https://github.com/actions/runner/issues/491
     if: |
       always() && !cancelled() && (
-        github.event_name == 'push' ||
-        github.event_name == 'workflow_dispatch' ||
-        needs.detect-changes.outputs.any-code-changed == 'true' ||
-        needs.detect-changes.outputs.rs-changed == 'true' ||
-        needs.detect-changes.outputs.toml-changed == 'true' ||
-        needs.detect-changes.outputs.workflow-changed == 'true'
+        needs.cargo-lock.result == 'success' && (
+          github.event_name == 'push' ||
+          github.event_name == 'workflow_dispatch' ||
+          needs.detect-changes.outputs.any-code-changed == 'true' ||
+          needs.detect-changes.outputs.rs-changed == 'true' ||
+          needs.detect-changes.outputs.toml-changed == 'true' ||
+          needs.detect-changes.outputs.workflow-changed == 'true'
+        )
       )
     strategy:
       fail-fast: false
@@ -224,13 +259,15 @@ jobs:
     name: Code Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [detect-changes]
+    needs: [detect-changes, cargo-lock]
     if: |
       always() && !cancelled() && (
-        github.event_name == 'push' ||
-        github.event_name == 'workflow_dispatch' ||
-        needs.detect-changes.outputs.rs-changed == 'true' ||
-        needs.detect-changes.outputs.toml-changed == 'true'
+        needs.cargo-lock.result == 'success' && (
+          github.event_name == 'push' ||
+          github.event_name == 'workflow_dispatch' ||
+          needs.detect-changes.outputs.rs-changed == 'true' ||
+          needs.detect-changes.outputs.toml-changed == 'true'
+        )
       )
     steps:
       - uses: actions/checkout@v6
