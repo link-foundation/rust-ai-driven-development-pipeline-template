@@ -382,10 +382,10 @@ mod tests {
 
     #[test]
     fn git_object_paths_are_relative_to_the_repository_root() {
-        let path = Path::new("/repo/rust/Cargo.lock");
-        let repository_root = Path::new("/repo");
+        let repository_root = std::env::current_dir().unwrap().join("repo-root");
+        let path = repository_root.join("rust").join("Cargo.lock");
 
-        let git_path = format_git_object_path(path, Some(repository_root)).unwrap();
+        let git_path = format_git_object_path(&path, Some(&repository_root)).unwrap();
 
         assert_eq!(git_path, "rust/Cargo.lock");
     }
