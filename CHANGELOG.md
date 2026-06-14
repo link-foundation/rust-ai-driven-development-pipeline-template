@@ -27,6 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.18.4] - 2026-06-14
+
+### Added
+- Add a post-publish crates.io smoke test to the release workflow. The new `scripts/smoke-test-published-crate.rs` installs the exact published crate into a throwaway root, runs detected CLI binaries with captured `--help` output, and compiles a fresh dependent crate against the published library before Docker Hub or GitHub release artifacts are created.
+
+### Fixed
+- Harden the template CLI stdout path so `BrokenPipe` from a closed downstream reader is treated as a clean exit instead of a panic.
+
 ## [0.18.3] - 2026-06-13
 
 ### Fixed
