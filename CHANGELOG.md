@@ -31,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.2] - 2026-06-14
+
+### Fixed
+- Detect real merge commits pushed to `main` with a first-parent diff so earlier code commits in the merged branch still trigger CI.
+
 ## [0.19.1] - 2026-06-14
 
 ### Fixed
