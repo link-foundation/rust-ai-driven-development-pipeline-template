@@ -32,8 +32,9 @@ A comprehensive template for AI-driven Rust development with full CI/CD pipeline
    - Change `name` from `example-sum-package-name` to your package name
    - Update `description`, `repository`, and `documentation` URLs
    - Update `[lib]` name and `[[bin]]` name
-4. Update imports in `src/main.rs`, `tests/`, and `examples/`
-5. Build and start developing!
+4. Keep `Cargo.lock` committed when the project has a binary target (`[[bin]]` or `src/main.rs`)
+5. Update imports in `src/main.rs`, `tests/`, and `examples/`
+6. Build and start developing!
 
 ### Development Setup
 
@@ -231,6 +232,7 @@ After creating a repository from this template:
    - Change `name` field from `example-sum-package-name`
    - Update `repository` and `documentation` URLs
    - Change `[lib]` name and `[[bin]]` name
+   - Keep `Cargo.lock` committed for executable crates
 
 2. Update imports:
    - `src/main.rs`
@@ -239,6 +241,25 @@ After creating a repository from this template:
    - `examples/basic_usage.rs`
 
 3. Update badges in this `README.md`
+
+### Cargo.lock for Binary Crates
+
+This template leaves `Cargo.lock` committed because it includes a CLI binary.
+Downstream executable crates should do the same. The CI workflow runs
+`scripts/check-cargo-lock.rs` and fails when a binary package has no
+`Cargo.lock` committed at `HEAD`.
+
+This prevents fresh dependency resolution from changing between CI runs. It also
+keeps cargo cache keys deterministic: without a lockfile, GitHub Actions'
+`hashFiles('**/Cargo.lock')` expression resolves to the same empty hash, so an
+unpinned dependency graph can be cached and hide resolution drift.
+
+If the guard fails, generate the lockfile and commit it:
+
+```bash
+cargo generate-lockfile
+git add Cargo.lock
+```
 
 ### Optional Docker Hub Publishing
 
@@ -278,6 +299,7 @@ Install rust-script with: `cargo install rust-script`
 | `cargo clippy`                        | Run lints                |
 | `cargo run -- --a 3 --b 7`           | Run CLI (sum 3 + 7)     |
 | `cargo run --example basic_usage`     | Run example              |
+| `rust-script scripts/check-cargo-lock.rs` | Require committed Cargo.lock for binary crates |
 | `rust-script scripts/check-file-size.rs` | Check file size limits |
 | `rust-script scripts/check-crate-size.rs` | Check crate archive size (crates.io 10 MiB limit) |
 | `rust-script scripts/bump-version.rs` | Bump version             |

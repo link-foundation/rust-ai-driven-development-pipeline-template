@@ -37,11 +37,11 @@
 //! regex = "1"
 //! ```
 
+use regex::Regex;
 use std::env;
 use std::fs;
 use std::io::Write;
 use std::process::Command;
-use regex::Regex;
 
 fn exec(command: &str, args: &[&str]) -> String {
     match Command::new(command).args(args).output() {
@@ -63,7 +63,11 @@ fn exec(command: &str, args: &[&str]) -> String {
 
 fn set_output(name: &str, value: &str) {
     if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Ok(mut file) = fs::OpenOptions::new().create(true).append(true).open(&output_file) {
+        if let Ok(mut file) = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&output_file)
+        {
             let _ = writeln!(file, "{}={}", name, value);
         }
     }
@@ -72,7 +76,11 @@ fn set_output(name: &str, value: &str) {
 
 fn is_merge_commit() -> bool {
     let output = exec("git", &["cat-file", "-p", "HEAD"]);
-    output.lines().filter(|line| line.starts_with("parent ")).count() > 1
+    output
+        .lines()
+        .filter(|line| line.starts_with("parent "))
+        .count()
+        > 1
 }
 
 fn get_changed_files() -> Vec<String> {
@@ -86,13 +94,21 @@ fn get_changed_files() -> Vec<String> {
         println!("Comparing HEAD^2^ to HEAD^2 (per-commit diff of PR head)");
         let output = exec("git", &["diff", "--name-only", "HEAD^2^", "HEAD^2"]);
         if !output.is_empty() {
-            return output.lines().filter(|s| !s.is_empty()).map(String::from).collect();
+            return output
+                .lines()
+                .filter(|s| !s.is_empty())
+                .map(String::from)
+                .collect();
         }
         // Fallback: first commit in PR, compare base to PR head
         println!("HEAD^2^ not available (first commit in PR), comparing HEAD^ to HEAD^2");
         let output = exec("git", &["diff", "--name-only", "HEAD^", "HEAD^2"]);
         if !output.is_empty() {
-            return output.lines().filter(|s| !s.is_empty()).map(String::from).collect();
+            return output
+                .lines()
+                .filter(|s| !s.is_empty())
+                .map(String::from)
+                .collect();
         }
     }
 
@@ -102,10 +118,18 @@ fn get_changed_files() -> Vec<String> {
     if output.is_empty() {
         println!("HEAD^ not available, listing all files in HEAD");
         let output = exec("git", &["ls-tree", "--name-only", "-r", "HEAD"]);
-        return output.lines().filter(|s| !s.is_empty()).map(String::from).collect();
+        return output
+            .lines()
+            .filter(|s| !s.is_empty())
+            .map(String::from)
+            .collect();
     }
 
-    output.lines().filter(|s| !s.is_empty()).map(String::from).collect()
+    output
+        .lines()
+        .filter(|s| !s.is_empty())
+        .map(String::from)
+        .collect()
 }
 
 fn is_excluded_from_code_changes(file_path: &str) -> bool {
@@ -124,6 +148,14 @@ fn is_excluded_from_code_changes(file_path: &str) -> bool {
     }
 
     false
+}
+
+fn is_manifest_or_lockfile_change(file_path: &str) -> bool {
+    file_path.ends_with(".toml") || file_path.ends_with("Cargo.lock")
+}
+
+fn code_change_pattern() -> Regex {
+    Regex::new(r"(\.(rs|toml|mjs|js|yml|yaml)$|(^|/)Cargo\.lock$|^\.github/workflows/)").unwrap()
 }
 
 fn main() {
@@ -145,8 +177,10 @@ fn main() {
     let rs_changed = changed_files.iter().any(|f| f.ends_with(".rs"));
     set_output("rs-changed", if rs_changed { "true" } else { "false" });
 
-    // Detect .toml file changes (Cargo.toml, Cargo.lock, etc.)
-    let toml_changed = changed_files.iter().any(|f| f.ends_with(".toml"));
+    // Detect manifest/lockfile changes (Cargo.toml, Cargo.lock, etc.)
+    let toml_changed = changed_files
+        .iter()
+        .any(|f| is_manifest_or_lockfile_change(f));
     set_output("toml-changed", if toml_changed { "true" } else { "false" });
 
     // Detect .mjs file changes (scripts)
@@ -158,8 +192,13 @@ fn main() {
     set_output("docs-changed", if docs_changed { "true" } else { "false" });
 
     // Detect workflow changes
-    let workflow_changed = changed_files.iter().any(|f| f.starts_with(".github/workflows/"));
-    set_output("workflow-changed", if workflow_changed { "true" } else { "false" });
+    let workflow_changed = changed_files
+        .iter()
+        .any(|f| f.starts_with(".github/workflows/"));
+    set_output(
+        "workflow-changed",
+        if workflow_changed { "true" } else { "false" },
+    );
 
     // Detect code changes (excluding docs, changelog.d, experiments, examples folders, and markdown files)
     let code_changed_files: Vec<&String> = changed_files
@@ -177,10 +216,29 @@ fn main() {
     }
     println!();
 
-    // Check if any code files changed (.rs, .toml, .mjs, .yml, .yaml, or workflow files)
-    let code_pattern = Regex::new(r"\.(rs|toml|mjs|js|yml|yaml)$|\.github/workflows/").unwrap();
+    // Check if any code files changed (.rs, .toml, Cargo.lock, .mjs, .yml, .yaml, or workflow files)
+    let code_pattern = code_change_pattern();
     let code_changed = code_changed_files.iter().any(|f| code_pattern.is_match(f));
-    set_output("any-code-changed", if code_changed { "true" } else { "false" });
+    set_output(
+        "any-code-changed",
+        if code_changed { "true" } else { "false" },
+    );
 
     println!("\nChange detection completed.");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn cargo_lock_changes_count_as_manifest_and_code_changes() {
+        let code_pattern = code_change_pattern();
+
+        for path in ["Cargo.lock", "rust/Cargo.lock"] {
+            assert!(is_manifest_or_lockfile_change(path));
+            assert!(code_pattern.is_match(path));
+            assert!(!is_excluded_from_code_changes(path));
+        }
+    }
 }

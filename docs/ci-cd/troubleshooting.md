@@ -6,11 +6,12 @@ This guide covers common CI/CD issues and their solutions for Rust projects usin
 
 1. [Release Jobs Skipped](#release-jobs-skipped)
 2. [Version Already Released (False Positive)](#version-already-released-false-positive)
-3. [Crates.io Publishing Fails](#cratesio-publishing-fails)
-4. [Crate Package Too Large (HTTP 413)](#crate-package-too-large-http-413)
-5. [Docker Hub Publishing Fails](#docker-hub-publishing-fails)
-6. [Secret Configuration Issues](#secret-configuration-issues)
-7. [Multi-Language Repository Issues](#multi-language-repository-issues)
+3. [Missing Committed Cargo.lock](#missing-committed-cargolock)
+4. [Crates.io Publishing Fails](#cratesio-publishing-fails)
+5. [Crate Package Too Large (HTTP 413)](#crate-package-too-large-http-413)
+6. [Docker Hub Publishing Fails](#docker-hub-publishing-fails)
+7. [Secret Configuration Issues](#secret-configuration-issues)
+8. [Multi-Language Repository Issues](#multi-language-repository-issues)
 
 ---
 
@@ -76,6 +77,57 @@ curl -s "https://crates.io/api/v1/crates/YOUR_CRATE_NAME" | jq
 
 ### Reference
 - [browser-commander Issue #29](https://github.com/link-foundation/browser-commander/issues/29)
+
+---
+
+## Missing Committed Cargo.lock
+
+### Symptom
+The `Cargo.lock Guard` job fails with an error like:
+
+```
+Binary package ./Cargo.toml requires a committed ./Cargo.lock
+```
+
+or:
+
+```
+Binary package ./Cargo.toml has ./Cargo.lock, but it is not committed at HEAD
+```
+
+### Root Cause
+The package has a binary target (`[[bin]]` or `src/main.rs`), but `Cargo.lock`
+is missing from the committed repository state. Binary crates should commit the
+lockfile so CI, releases, and downstream installs use a deterministic dependency
+graph.
+
+Without a committed lockfile, GitHub Actions cache keys such as
+`hashFiles('**/Cargo.lock')` degrade to the same empty hash. That can cache an
+unpinned dependency graph and let dependency re-resolution drift appear only in
+fresh or cache-less jobs.
+
+### Solution
+Generate and commit the lockfile:
+
+```bash
+cargo generate-lockfile
+git add Cargo.lock
+git commit -m "chore: commit Cargo.lock"
+```
+
+For a multi-language repository where Rust lives under `rust/`, commit
+`rust/Cargo.lock` instead.
+
+Library-only crates can leave `Cargo.lock` uncommitted. If the package contains
+`src/main.rs` only for local development, set `autobins = false` in `[package]`
+or remove the binary target.
+
+### Verification
+Run the guard locally:
+
+```bash
+rust-script scripts/check-cargo-lock.rs
+```
 
 ---
 
