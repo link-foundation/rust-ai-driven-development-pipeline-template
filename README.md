@@ -19,7 +19,7 @@ A comprehensive template for AI-driven Rust development with full CI/CD pipeline
 - **CI/CD pipeline**: GitHub Actions with multi-platform support
 - **Changelog management**: Fragment-based changelog (like Changesets/Scriv)
 - **Code coverage**: Automated coverage reports with cargo-llvm-cov and Codecov
-- **Release automation**: Automatic GitHub releases, crates.io publishing, and optional Docker Hub image publishing
+- **Release automation**: Automatic GitHub releases, crates.io publishing, post-publish smoke tests, and optional Docker Hub image publishing
 - **Template-safe defaults**: CI/CD skips publishing when package name is `example-sum-package-name`
 
 ## Quick Start
@@ -130,6 +130,7 @@ cargo fmt --check && cargo clippy --all-targets --all-features && rust-script sc
 │   ├── publish-crate.rs            # Crates.io publishing
 │   ├── release-naming.rs           # Release tag/title/badge naming helpers
 │   ├── rust-paths.rs               # Rust root path detection
+│   ├── smoke-test-published-crate.rs # Install/import/run smoke test for published crates
 │   ├── version-and-commit.rs       # CI/CD version management
 │   └── wait-for-crate.rs           # Crates.io availability wait before image publishing
 ├── src/
@@ -210,8 +211,9 @@ The GitHub Actions workflow provides:
 7. **Building**: Release build and package validation
 8. **Auto release**: Automatic releases when changelog fragments are merged to main
 9. **Manual release**: Workflow dispatch with version bump type selection
-10. **Optional Docker Hub publishing**: Pushes `latest` and version tags after the matching crates.io version is visible
-11. **Documentation**: Automatic docs deployment to GitHub Pages after release
+10. **Published crate smoke test**: Installs the just-published crate from crates.io, runs CLI entry points with captured output, and compiles a fresh dependent crate against the library
+11. **Optional Docker Hub publishing**: Pushes `latest` and version tags after the matching crates.io version is visible and smoke-tested
+12. **Documentation**: Automatic docs deployment to GitHub Pages after release
 
 #### Multi-Language Monorepos
 
@@ -223,6 +225,7 @@ GitHub release notes include a crates.io badge that links to the exact published
 
 The default package name `example-sum-package-name` triggers skip logic in CI/CD scripts:
 - `publish-crate.rs` skips crates.io publishing
+- `smoke-test-published-crate.rs` skips install-from-package verification
 - `create-github-release.rs` skips GitHub release creation
 - Docker Hub publishing stays disabled unless `DOCKERHUB_IMAGE` is configured and a root `Dockerfile` exists
 
@@ -287,6 +290,7 @@ Install rust-script with: `cargo install rust-script`
 | `cargo run --example basic_usage`     | Run example              |
 | `rust-script scripts/check-file-size.rs` | Check file size limits |
 | `rust-script scripts/check-crate-size.rs` | Check crate archive size (crates.io 10 MiB limit) |
+| `rust-script scripts/smoke-test-published-crate.rs --release-version <version>` | Verify the published crates.io artifact from a clean install |
 | `rust-script scripts/bump-version.rs` | Bump version             |
 
 ## Example Usage
