@@ -28,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.18.5] - 2026-06-14
+
+### Fixed
+- Added a CI guard that fails binary Rust crates when `Cargo.lock` is missing from the committed repository state, preventing empty-hash cargo cache keys and fresh dependency re-resolution drift.
+
 ## [0.18.4] - 2026-06-14
 
 ### Added
