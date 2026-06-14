@@ -1,10 +1,15 @@
 mod changelog_parsing;
+#[path = "../../../scripts/check-cargo-lock.rs"]
+mod check_cargo_lock;
 #[path = "../../../scripts/check-crate-size.rs"]
 mod check_crate_size;
 #[path = "../../../scripts/check-file-size.rs"]
 mod check_file_size;
 #[path = "../../../scripts/create-github-release.rs"]
 mod create_github_release;
+#[allow(clippy::all, clippy::nursery, clippy::pedantic, dead_code)]
+#[path = "../../../scripts/detect-code-changes.rs"]
+mod detect_code_changes;
 #[path = "../../../scripts/release-naming.rs"]
 mod release_naming;
 mod release_naming_tests;

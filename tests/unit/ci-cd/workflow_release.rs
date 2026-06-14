@@ -88,6 +88,7 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("detect-changes", 5),
         ("changelog", 10),
         ("version-check", 5),
+        ("cargo-lock", 5),
         ("lint", 10),
         ("test", 10),
         ("coverage", 15),
@@ -121,12 +122,16 @@ fn test_job_is_gated_by_detected_code_changes_not_changelog_result() {
     let test = job_block(&workflow, "test");
 
     assert!(
-        test.contains("needs: [detect-changes]"),
-        "test job should depend only on change detection"
+        test.contains("needs: [detect-changes, cargo-lock]"),
+        "test job should depend on change detection and the Cargo.lock guard"
     );
     assert!(
         !test.contains("needs.changelog.result"),
         "test job should not infer file changes from the changelog job result"
+    );
+    assert!(
+        test.contains("needs.cargo-lock.result == 'success'"),
+        "test job should not run unless the Cargo.lock guard passes"
     );
     assert!(
         !test.contains("docs-changed"),
@@ -142,6 +147,38 @@ fn test_job_is_gated_by_detected_code_changes_not_changelog_result() {
         assert!(
             test.contains(&format!("needs.detect-changes.outputs.{output} == 'true'")),
             "test job should run when {output} is true"
+        );
+    }
+}
+
+#[test]
+fn cargo_lock_guard_blocks_cached_cargo_jobs() {
+    let workflow = release_workflow();
+    let cargo_lock = job_block(&workflow, "cargo-lock");
+
+    assert!(
+        cargo_lock.contains("rust-script scripts/check-cargo-lock.rs"),
+        "workflow should run the committed Cargo.lock guard"
+    );
+    assert!(
+        workflow.contains("hashFiles('**/Cargo.lock')")
+            && workflow.contains("silently degrading to the empty hash"),
+        "workflow should document why an absent lockfile breaks cache determinism"
+    );
+    assert!(
+        !cargo_lock.contains("actions/cache"),
+        "guard job should run before any cargo cache restore"
+    );
+
+    for job_name in ["lint", "test", "coverage"] {
+        let job = job_block(&workflow, job_name);
+        assert!(
+            job.contains("needs: [detect-changes, cargo-lock]"),
+            "{job_name} should depend on the Cargo.lock guard before restoring cargo caches"
+        );
+        assert!(
+            job.contains("needs.cargo-lock.result == 'success'"),
+            "{job_name} should require the Cargo.lock guard to pass"
         );
     }
 }
