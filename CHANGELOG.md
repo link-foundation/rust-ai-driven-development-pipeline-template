@@ -29,6 +29,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.0] - 2026-06-14
+
+### Added
+- Auto-detect single-language versus `rust/` multi-language release layout for Rust releases, using `rust_v` tags and `[Rust]` titles only in multi-language monorepos while adding exact-version crates.io badges to GitHub release notes.
+
 ## [0.18.5] - 2026-06-14
 
 ### Fixed
