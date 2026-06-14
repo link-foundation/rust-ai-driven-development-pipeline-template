@@ -767,13 +767,28 @@ jobs:
       - name: Build documentation
         run: cargo doc --no-deps --all-features
 
+      - name: Generate Pages root index
+        run: |
+          # rustdoc emits target/doc/<crate>/index.html but no root index.html,
+          # which makes the GitHub Pages root URL return 404. Redirect the root
+          # to the crate docs directory that rustdoc generated.
+          crate=$(cargo metadata --no-deps --format-version 1 \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["name"].replace("-","_"))')
+          printf '<!doctype html><meta http-equiv="refresh" content="0; url=%s/index.html">\n' "$crate" \
+            > target/doc/index.html
+          touch target/doc/.nojekyll
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
+
+      - name: Verify site tree
+        run: find target/doc -maxdepth 2 -print
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
           path: target/doc
+          include-hidden-files: true
 
       - name: Deploy to GitHub Pages
         id: deployment

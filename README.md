@@ -291,7 +291,7 @@ Add a visible Docker Hub badge next to the crates.io badge in repositories that 
 
 ## Deploying API documentation
 
-The `deploy-docs` job in `.github/workflows/release.yml` publishes `cargo doc --no-deps --all-features` output to GitHub Pages on every push to `main` and on `workflow_dispatch` with `release_mode == 'instant'`. It uses the official `actions/configure-pages` / `actions/upload-pages-artifact` / `actions/deploy-pages` flow, which requires the repository's Pages source to be set to **GitHub Actions**.
+The `deploy-docs` job in `.github/workflows/release.yml` publishes `cargo doc --no-deps --all-features` output to GitHub Pages on every push to `main` and on `workflow_dispatch` with `release_mode == 'instant'`. It adds a root `index.html` redirect to the generated crate documentation and a `.nojekyll` marker so rustdoc assets are served verbatim. It uses the official `actions/configure-pages` / `actions/upload-pages-artifact` / `actions/deploy-pages` flow, which requires the repository's Pages source to be set to **GitHub Actions**.
 
 Before the first run on `main`, open **Settings → Pages** of the new repository and set **Source = GitHub Actions**. This is a one-time manual step and cannot be configured from a workflow. The `deploy-docs` job will then provision the Pages site on its first run.
 
