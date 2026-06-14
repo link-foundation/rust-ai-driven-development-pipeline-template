@@ -216,6 +216,36 @@ fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible()
 }
 
 #[test]
+fn release_jobs_smoke_test_published_crate_before_release_artifacts() {
+    let workflow = release_workflow();
+
+    for job_name in ["auto-release", "manual-release"] {
+        let job = job_block(&workflow, job_name);
+        let wait = job
+            .find("- name: Wait for Crate availability on Crates.io")
+            .unwrap_or_else(|| panic!("{job_name} should wait for crates.io visibility"));
+        let smoke = job
+            .find("- name: Smoke-test published crate")
+            .unwrap_or_else(|| panic!("{job_name} should smoke-test the published crate"));
+        let docker = job
+            .find("- name: Configure Docker Hub publishing")
+            .unwrap_or_else(|| panic!("{job_name} should configure Docker Hub publishing"));
+        let github_release = job
+            .find("- name: Create GitHub Release")
+            .unwrap_or_else(|| panic!("{job_name} should create a GitHub release"));
+
+        assert!(
+            wait < smoke && smoke < docker && smoke < github_release,
+            "{job_name} should verify the installable crates.io artifact before release artifacts"
+        );
+        assert!(
+            job.contains("rust-script scripts/smoke-test-published-crate.rs"),
+            "{job_name} should run the reusable published-crate smoke-test script"
+        );
+    }
+}
+
+#[test]
 fn release_jobs_check_crate_size_before_publishing() {
     let workflow = release_workflow();
 

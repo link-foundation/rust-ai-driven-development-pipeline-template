@@ -8,6 +8,9 @@ mod create_github_release;
 #[path = "../../../scripts/rust-paths.rs"]
 mod rust_paths;
 #[allow(clippy::all, clippy::nursery, clippy::pedantic, dead_code)]
+#[path = "../../../scripts/smoke-test-published-crate.rs"]
+mod smoke_test_published_crate;
+#[allow(clippy::all, clippy::nursery, clippy::pedantic, dead_code)]
 #[path = "../../../scripts/version-and-commit.rs"]
 mod version_and_commit;
 mod workflow_release;
