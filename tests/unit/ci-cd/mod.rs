@@ -5,6 +5,9 @@ mod check_crate_size;
 mod check_file_size;
 #[path = "../../../scripts/create-github-release.rs"]
 mod create_github_release;
+#[path = "../../../scripts/release-naming.rs"]
+mod release_naming;
+mod release_naming_tests;
 #[path = "../../../scripts/rust-paths.rs"]
 mod rust_paths;
 #[allow(clippy::all, clippy::nursery, clippy::pedantic, dead_code)]

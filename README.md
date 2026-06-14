@@ -128,6 +128,7 @@ cargo fmt --check && cargo clippy --all-targets --all-features && rust-script sc
 │   ├── get-version.rs              # Version extraction from Cargo.toml
 │   ├── git-config.rs               # Git configuration for CI
 │   ├── publish-crate.rs            # Crates.io publishing
+│   ├── release-naming.rs           # Release tag/title/badge naming helpers
 │   ├── rust-paths.rs               # Rust root path detection
 │   ├── version-and-commit.rs       # CI/CD version management
 │   └── wait-for-crate.rs           # Crates.io availability wait before image publishing
@@ -211,6 +212,12 @@ The GitHub Actions workflow provides:
 9. **Manual release**: Workflow dispatch with version bump type selection
 10. **Optional Docker Hub publishing**: Pushes `latest` and version tags after the matching crates.io version is visible
 11. **Documentation**: Automatic docs deployment to GitHub Pages after release
+
+#### Multi-Language Monorepos
+
+Release scripts auto-detect the Rust layout with no extra configuration. A root `Cargo.toml` is treated as a single-language repository and keeps the plain `v<version>` tag plus `<crate> <version>` GitHub release title. A `rust/Cargo.toml` layout is treated as a multi-language monorepo and uses `rust_v<version>` tags plus `[Rust] <version>` titles so Rust releases do not collide with JavaScript or other language releases in the same GitHub Releases list.
+
+GitHub release notes include a crates.io badge that links to the exact published version page, for example `https://crates.io/crates/<crate>/<version>`.
 
 ### Template-Safe Defaults
 

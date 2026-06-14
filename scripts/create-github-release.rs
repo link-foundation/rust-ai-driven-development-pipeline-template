@@ -13,6 +13,7 @@
 //! serde_json = "1"
 //! ```
 
+#[cfg(not(test))]
 use regex::Regex;
 #[cfg(not(test))]
 use serde::Serialize;
@@ -28,35 +29,24 @@ use std::path::Path;
 use std::process::{exit, Command, Stdio};
 
 #[cfg(not(test))]
+#[path = "release-naming.rs"]
+mod release_naming;
+#[cfg(test)]
+use super::release_naming;
+#[cfg(not(test))]
+#[path = "rust-paths.rs"]
+mod rust_paths;
+
+#[cfg(not(test))]
 const USAGE: &str = "Usage: rust-script scripts/create-github-release.rs --release-version <version> --repository <repository> [--tag-prefix <prefix>] [--language <name>] [--release-label <label>] [--docker-hub-url <url>]";
 
 const GITHUB_RELEASE_BODY_MAX_CHARS: usize = 125_000;
 
+use release_naming::{build_crates_io_badge, build_release_name, build_release_tag};
 #[cfg(not(test))]
-fn get_rust_root() -> String {
-    if let Some(root) = get_arg("rust-root") {
-        return root;
-    }
-
-    if Path::new("./Cargo.toml").exists() {
-        return ".".to_string();
-    }
-
-    if Path::new("./rust/Cargo.toml").exists() {
-        return "rust".to_string();
-    }
-
-    ".".to_string()
-}
-
-#[cfg(not(test))]
-fn get_cargo_toml_path(rust_root: &str) -> String {
-    if rust_root == "." {
-        "./Cargo.toml".to_string()
-    } else {
-        format!("{rust_root}/Cargo.toml")
-    }
-}
+use release_naming::{
+    is_multi_language_rust_root, normalize_release_version, tag_prefix_for_rust_root,
+};
 
 #[cfg(not(test))]
 fn get_changelog_path(rust_root: &str) -> String {
@@ -65,14 +55,6 @@ fn get_changelog_path(rust_root: &str) -> String {
     } else {
         format!("{rust_root}/CHANGELOG.md")
     }
-}
-
-#[cfg(not(test))]
-fn get_crate_name_from_toml(cargo_toml_path: &str) -> Option<String> {
-    let content = fs::read_to_string(cargo_toml_path).ok()?;
-    let re = Regex::new(r#"(?m)^name\s*=\s*"([^"]+)""#).ok()?;
-    re.captures(&content)
-        .map(|captures| captures.get(1).unwrap().as_str().to_string())
 }
 
 #[cfg(not(test))]
@@ -86,58 +68,6 @@ fn get_arg(name: &str) -> Option<String> {
 
     let env_name = name.to_uppercase().replace('-', "_");
     env::var(&env_name).ok().filter(|value| !value.is_empty())
-}
-
-fn normalize_release_version(release_version: &str) -> String {
-    let trimmed = release_version.trim();
-    let semver_re =
-        Regex::new(r"(?i)(?:^|[-_])v?(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)$")
-            .expect("release version regex should compile");
-
-    semver_re.captures(trimmed).map_or_else(
-        || {
-            trimmed
-                .strip_prefix('v')
-                .or_else(|| trimmed.strip_prefix('V'))
-                .unwrap_or(trimmed)
-                .to_string()
-        },
-        |captures| {
-            captures
-                .get(1)
-                .expect("release version regex should capture the semver")
-                .as_str()
-                .to_string()
-        },
-    )
-}
-
-fn build_release_tag(tag_prefix: &str, release_version: &str) -> String {
-    let normalized_semver = normalize_release_version(release_version);
-    format!("{tag_prefix}{normalized_semver}")
-}
-
-fn build_release_name(
-    language: &str,
-    release_version: &str,
-    release_label: Option<&str>,
-) -> String {
-    let trimmed_language = language.trim();
-    let language = if trimmed_language.is_empty() {
-        "Rust"
-    } else {
-        trimmed_language
-    };
-    let normalized_semver = normalize_release_version(release_version);
-    let name = format!("[{language}] {normalized_semver}");
-
-    match release_label
-        .map(str::trim)
-        .filter(|label| !label.is_empty())
-    {
-        Some(label) => format!("{name} ({label})"),
-        None => name,
-    }
 }
 
 fn badge_escape(value: &str) -> String {
@@ -224,13 +154,21 @@ struct ReleasePayload {
 fn build_release_payload(
     tag_prefix: &str,
     release_version: &str,
+    crate_name: &str,
     language: &str,
+    multi_language: bool,
     release_label: Option<&str>,
     body: String,
 ) -> ReleasePayload {
     ReleasePayload {
         tag_name: build_release_tag(tag_prefix, release_version),
-        name: build_release_name(language, release_version, release_label),
+        name: build_release_name(
+            crate_name,
+            language,
+            release_version,
+            multi_language,
+            release_label,
+        ),
         body,
     }
 }
@@ -328,32 +266,53 @@ fn main() {
         }
     };
 
-    let tag_prefix = get_arg("tag-prefix").unwrap_or_else(|| "v".to_string());
+    let rust_root = match rust_paths::get_rust_root(None, true) {
+        Ok(root) => root,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            exit(1);
+        }
+    };
+    let cargo_toml = rust_paths::get_cargo_toml_path(&rust_root);
+    let package_manifest = match rust_paths::get_package_manifest_path(&cargo_toml) {
+        Ok(path) => path,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            exit(1);
+        }
+    };
+    let package_info = match rust_paths::read_package_info(&package_manifest) {
+        Ok(info) => info,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            exit(1);
+        }
+    };
+    let tag_prefix =
+        get_arg("tag-prefix").unwrap_or_else(|| tag_prefix_for_rust_root(&rust_root).to_string());
     let language = get_arg("language").unwrap_or_else(|| "Rust".to_string());
     let release_label = get_arg("release-label");
     let crates_io_url = get_arg("crates-io-url");
     let docker_hub_url = get_arg("docker-hub-url");
     let normalized_version = normalize_release_version(&version);
+    let multi_language = is_multi_language_rust_root(&rust_root);
 
-    let rust_root = get_rust_root();
-    let cargo_toml = get_cargo_toml_path(&rust_root);
-
-    if let Some(ref crate_name) = get_crate_name_from_toml(&cargo_toml) {
-        if crate_name == "example-sum-package-name" {
-            println!(
-                "Skipping GitHub release: package name is the template default 'example-sum-package-name'"
-            );
-            println!("Rename the package in Cargo.toml before creating releases");
-            return;
-        }
+    if package_info.name == "example-sum-package-name" {
+        println!(
+            "Skipping GitHub release: package name is the template default 'example-sum-package-name'"
+        );
+        println!("Rename the package in Cargo.toml before creating releases");
+        return;
     }
 
     let changelog_path = get_changelog_path(&rust_root);
     let mut release_notes = get_changelog_for_version(&changelog_path, &normalized_version);
     let mut badges = Vec::new();
-    if let Some(crate_name) = get_crate_name_from_toml(&cargo_toml) {
+    if !package_info.name.trim().is_empty() {
+        let crate_name = &package_info.name;
         let crate_badges = format!(
-            "[![Crates.io](https://img.shields.io/crates/v/{crate_name}?label=crates.io)](https://crates.io/crates/{crate_name}/{normalized_version}) [![Docs.rs](https://docs.rs/{crate_name}/badge.svg)](https://docs.rs/{crate_name}/{normalized_version})"
+            "{} [![Docs.rs](https://docs.rs/{crate_name}/badge.svg)](https://docs.rs/{crate_name}/{normalized_version})",
+            build_crates_io_badge(crate_name, &normalized_version)
         );
         badges.push(crate_badges);
     }
@@ -374,7 +333,9 @@ fn main() {
     let payload = build_release_payload(
         &tag_prefix,
         &normalized_version,
+        &package_info.name,
         &language,
+        multi_language,
         release_label.as_deref(),
         release_notes,
     );
@@ -433,31 +394,42 @@ mod tests {
     use super::*;
 
     #[test]
-    fn release_title_uses_language_and_bare_semver() {
+    fn release_title_uses_layout_and_bare_semver() {
         assert_eq!(
-            build_release_name("Rust", "rust-v0.2.1", None),
+            build_release_name("web-search", "Rust", "rust_v0.2.1", true, None),
             "[Rust] 0.2.1"
         );
         assert_eq!(
-            build_release_name("JavaScript", "js_v1.2.3", None),
+            build_release_name("web-search-js", "JavaScript", "js_v1.2.3", true, None),
             "[JavaScript] 1.2.3"
+        );
+        assert_eq!(
+            build_release_name("web-search", "Rust", "rust_v0.2.1", false, None),
+            "web-search 0.2.1"
         );
     }
 
     #[test]
     fn release_title_defaults_empty_language_to_rust() {
-        assert_eq!(build_release_name(" ", "0.2.1", None), "[Rust] 0.2.1");
+        assert_eq!(
+            build_release_name("web-search", " ", "0.2.1", true, None),
+            "[Rust] 0.2.1"
+        );
     }
 
     #[test]
     fn release_label_remains_optional_suffix() {
         assert_eq!(
-            build_release_name("Rust", "0.2.1", Some("stable")),
+            build_release_name("web-search", "Rust", "0.2.1", true, Some("stable")),
             "[Rust] 0.2.1 (stable)"
         );
         assert_eq!(
-            build_release_name("Rust", "0.2.1", Some(" ")),
+            build_release_name("web-search", "Rust", "0.2.1", true, Some(" ")),
             "[Rust] 0.2.1"
+        );
+        assert_eq!(
+            build_release_name("web-search", "Rust", "0.2.1", false, Some("stable")),
+            "web-search 0.2.1 (stable)"
         );
     }
 
@@ -465,18 +437,34 @@ mod tests {
     fn release_tag_uses_prefix_with_normalized_semver() {
         assert_eq!(build_release_tag("rust-v", "0.2.1"), "rust-v0.2.1");
         assert_eq!(build_release_tag("rust_v", "rust-v0.2.1"), "rust_v0.2.1");
+        assert_eq!(build_release_tag("rust_v", "rust_v0.2.1"), "rust_v0.2.1");
         assert_eq!(build_release_tag("v", "v0.2.1"), "v0.2.1");
     }
 
     #[test]
+    fn crates_io_badge_links_to_bare_version_page() {
+        let badge = build_crates_io_badge("web-search", "rust_v0.2.1");
+
+        assert!(badge.contains("https://crates.io/crates/web-search/0.2.1"));
+        assert!(!badge.contains("rust_v0.2.1"));
+    }
+
+    #[test]
     fn release_payload_keeps_tag_prefix_out_of_release_name() {
-        let payload =
-            build_release_payload("rust-v", "0.2.1", "Rust", None, "release notes".to_string());
+        let payload = build_release_payload(
+            "rust_v",
+            "0.2.1",
+            "web-search",
+            "Rust",
+            true,
+            None,
+            "release notes".to_string(),
+        );
 
         assert_eq!(
             payload,
             ReleasePayload {
-                tag_name: "rust-v0.2.1".to_string(),
+                tag_name: "rust_v0.2.1".to_string(),
                 name: "[Rust] 0.2.1".to_string(),
                 body: "release notes".to_string(),
             }
