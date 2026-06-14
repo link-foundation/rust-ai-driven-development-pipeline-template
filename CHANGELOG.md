@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.1] - 2026-06-14
+
+### Fixed
+- Generate a GitHub Pages root redirect for deployed rustdoc output so the documentation site root no longer 404s.
+
 ## [0.19.0] - 2026-06-14
 
 ### Added
