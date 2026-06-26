@@ -7,11 +7,12 @@ This guide covers common CI/CD issues and their solutions for Rust projects usin
 1. [Release Jobs Skipped](#release-jobs-skipped)
 2. [Version Already Released (False Positive)](#version-already-released-false-positive)
 3. [Missing Committed Cargo.lock](#missing-committed-cargolock)
-4. [Crates.io Publishing Fails](#cratesio-publishing-fails)
-5. [Crate Package Too Large (HTTP 413)](#crate-package-too-large-http-413)
-6. [Docker Hub Publishing Fails](#docker-hub-publishing-fails)
-7. [Secret Configuration Issues](#secret-configuration-issues)
-8. [Multi-Language Repository Issues](#multi-language-repository-issues)
+4. [Transient Cargo Registry Download Failures](#transient-cargo-registry-download-failures)
+5. [Crates.io Publishing Fails](#cratesio-publishing-fails)
+6. [Crate Package Too Large (HTTP 413)](#crate-package-too-large-http-413)
+7. [Docker Hub Publishing Fails](#docker-hub-publishing-fails)
+8. [Secret Configuration Issues](#secret-configuration-issues)
+9. [Multi-Language Repository Issues](#multi-language-repository-issues)
 
 ---
 
@@ -127,6 +128,51 @@ Run the guard locally:
 
 ```bash
 rust-script scripts/check-cargo-lock.rs
+```
+
+---
+
+## Transient Cargo Registry Download Failures
+
+### Symptom
+Cargo fails while updating the crates.io registry or downloading a crate with a
+transient network error, for example:
+
+```
+curl failed
+[16] Error in the HTTP2 framing layer
+```
+
+### Root Cause
+GitHub-hosted runners occasionally hit transient registry, CDN, or HTTP/2
+transport failures. These errors can affect any workflow step that invokes
+Cargo, including `cargo install`, `cargo build`, `cargo test`, `cargo publish`,
+and `cargo metadata`.
+
+### How This Template Prevents It
+The workflow sets Cargo network options at top-level `env` so all Cargo commands
+inherit them:
+
+```yaml
+CARGO_NET_RETRY: '10'
+CARGO_HTTP_MULTIPLEXING: 'false'
+```
+
+`CARGO_NET_RETRY` increases retry attempts for network operations.
+`CARGO_HTTP_MULTIPLEXING=false` disables libcurl HTTP multiplexing, which avoids
+the HTTP/2 framing failure mode while keeping the rest of Cargo's registry
+behavior unchanged.
+
+### Solution
+If a downstream repository has copied an older workflow, add the same top-level
+environment variables near the existing Cargo settings:
+
+```yaml
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+  CARGO_NET_RETRY: '10'
+  CARGO_HTTP_MULTIPLEXING: 'false'
 ```
 
 ---
