@@ -271,6 +271,22 @@ cargo generate-lockfile
 git add Cargo.lock
 ```
 
+### Cargo Registry Network Hardening
+
+The release workflow sets Cargo network defaults at workflow scope so every
+Cargo command, from `cargo install rust-script` through release publishing,
+inherits them:
+
+```yaml
+CARGO_NET_RETRY: '10'
+CARGO_HTTP_MULTIPLEXING: 'false'
+```
+
+`CARGO_NET_RETRY` gives transient registry index and crate-download failures
+more chances to recover. `CARGO_HTTP_MULTIPLEXING=false` avoids libcurl HTTP/2
+multiplexing, which can fail on GitHub-hosted runners with errors such as
+`[16] Error in the HTTP2 framing layer`.
+
 ### Optional Docker Hub Publishing
 
 Projects that ship a Docker image can publish Docker Hub releases from the same Rust release workflow. Add a root `Dockerfile`, then configure:

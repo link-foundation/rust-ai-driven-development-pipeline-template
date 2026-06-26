@@ -236,6 +236,27 @@ fn cargo_lock_guard_blocks_cached_cargo_jobs() {
 }
 
 #[test]
+fn release_workflow_hardens_cargo_registry_networking() {
+    let workflow = release_workflow();
+    let env_start = workflow.find("\nenv:\n").unwrap();
+    let jobs_start = workflow.find("\njobs:\n").unwrap();
+    let global_env = &workflow[env_start..jobs_start];
+
+    assert!(
+        global_env.contains("CARGO_NET_RETRY: '10'"),
+        "top-level workflow env should retry transient Cargo registry failures"
+    );
+    assert!(
+        global_env.contains("CARGO_HTTP_MULTIPLEXING: 'false'"),
+        "top-level workflow env should disable HTTP multiplexing for Cargo downloads"
+    );
+    assert!(
+        global_env.contains("HTTP/2 framing"),
+        "workflow should document the transient failure mode this hardening targets"
+    );
+}
+
+#[test]
 fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible() {
     let workflow = release_workflow();
 
