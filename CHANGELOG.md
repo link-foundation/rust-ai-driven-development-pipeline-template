@@ -32,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.3] - 2026-06-26
+
+### Fixed
+- Hardened Cargo registry downloads in the CI/CD workflow with additional retries and disabled HTTP multiplexing to reduce transient HTTP/2 framing failures.
+
 ## [0.19.2] - 2026-06-14
 
 ### Fixed
