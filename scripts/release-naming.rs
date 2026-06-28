@@ -121,3 +121,13 @@ pub fn build_crates_io_badge(crate_name: &str, release_version: &str) -> String 
         badge_escape(&badge_version)
     )
 }
+
+pub fn build_docs_rs_badge(crate_name: &str, release_version: &str) -> String {
+    let crate_name = crate_name.trim();
+    let normalized_semver = normalize_release_version(release_version);
+
+    format!(
+        "[![Docs.rs](https://img.shields.io/badge/docs.rs-{}-blue)](https://docs.rs/{crate_name}/{normalized_semver})",
+        badge_escape(&normalized_semver)
+    )
+}

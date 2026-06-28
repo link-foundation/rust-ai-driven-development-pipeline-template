@@ -484,3 +484,38 @@ fn release_scripts_check_configured_release_artifacts() {
         "GitHub release notes should include Docker Hub badge support"
     );
 }
+
+#[test]
+fn github_release_notes_use_static_docs_rs_badge_for_versioned_artifacts() {
+    let release_script = fs::read_to_string(format!(
+        "{}/scripts/create-github-release.rs",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .unwrap();
+    let release_naming = fs::read_to_string(format!(
+        "{}/scripts/release-naming.rs",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .unwrap();
+
+    assert!(
+        release_script.contains("build_docs_rs_badge"),
+        "GitHub release creation should render docs.rs badges through the shared release helper"
+    );
+    assert!(
+        release_naming.contains("img.shields.io/badge/docs.rs"),
+        "GitHub release notes should use a static Shields.io docs.rs badge"
+    );
+    assert!(
+        release_naming.contains("https://docs.rs/{crate_name}/{normalized_semver}"),
+        "GitHub release notes should still link to the exact docs.rs version page"
+    );
+    assert!(
+        !release_script.contains("https://docs.rs/{crate_name}/badge.svg"),
+        "GitHub release notes should not use the live docs.rs status badge"
+    );
+    assert!(
+        !release_naming.contains("https://docs.rs/{crate_name}/badge.svg"),
+        "release badge helpers should not preserve the live docs.rs status badge"
+    );
+}

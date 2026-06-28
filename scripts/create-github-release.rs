@@ -42,7 +42,9 @@ const USAGE: &str = "Usage: rust-script scripts/create-github-release.rs --relea
 
 const GITHUB_RELEASE_BODY_MAX_CHARS: usize = 125_000;
 
-use release_naming::{build_crates_io_badge, build_release_name, build_release_tag};
+use release_naming::{
+    build_crates_io_badge, build_docs_rs_badge, build_release_name, build_release_tag,
+};
 #[cfg(not(test))]
 use release_naming::{
     is_multi_language_rust_root, normalize_release_version, tag_prefix_for_rust_root,
@@ -171,6 +173,14 @@ fn build_release_payload(
         ),
         body,
     }
+}
+
+fn build_crate_artifact_badges(crate_name: &str, release_version: &str) -> String {
+    format!(
+        "{} {}",
+        build_crates_io_badge(crate_name, release_version),
+        build_docs_rs_badge(crate_name, release_version)
+    )
 }
 
 fn is_existing_release_error(combined: &str) -> bool {
@@ -310,11 +320,7 @@ fn main() {
     let mut badges = Vec::new();
     if !package_info.name.trim().is_empty() {
         let crate_name = &package_info.name;
-        let crate_badges = format!(
-            "{} [![Docs.rs](https://docs.rs/{crate_name}/badge.svg)](https://docs.rs/{crate_name}/{normalized_version})",
-            build_crates_io_badge(crate_name, &normalized_version)
-        );
-        badges.push(crate_badges);
+        badges.push(build_crate_artifact_badges(crate_name, &normalized_version));
     }
     if let Some(url) = docker_hub_url {
         badges.push(docker_hub_badge(&url, &normalized_version));
@@ -447,6 +453,16 @@ mod tests {
 
         assert!(badge.contains("https://crates.io/crates/web-search/0.2.1"));
         assert!(!badge.contains("rust_v0.2.1"));
+    }
+
+    #[test]
+    fn release_note_artifact_badges_use_static_docs_rs_version_badge() {
+        let badges = build_crate_artifact_badges("web-search", "rust_v0.2.1");
+
+        assert!(badges.contains("https://img.shields.io/badge/docs.rs-0.2.1-blue"));
+        assert!(badges.contains("https://docs.rs/web-search/0.2.1"));
+        assert!(!badges.contains("https://docs.rs/web-search/badge.svg"));
+        assert!(!badges.contains("rust_v0.2.1"));
     }
 
     #[test]
