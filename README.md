@@ -4,7 +4,7 @@ A comprehensive template for AI-driven Rust development with full CI/CD pipeline
 
 [![CI/CD Pipeline](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/actions?workflow=CI%2FCD+Pipeline)
 [![Crates.io](https://img.shields.io/crates/v/example-sum-package-name?label=crates.io&style=flat)](https://crates.io/crates/example-sum-package-name)
-[![Docs.rs](https://docs.rs/example-sum-package-name/badge.svg)](https://docs.rs/example-sum-package-name)
+[![Docs.rs](https://img.shields.io/docsrs/example-sum-package-name?label=docs.rs&style=flat)](https://docs.rs/example-sum-package-name)
 [![Rust Version](https://img.shields.io/badge/rust-1.70%2B-blue.svg)](https://www.rust-lang.org/)
 [![Codecov](https://codecov.io/gh/link-foundation/rust-ai-driven-development-pipeline-template/branch/main/graph/badge.svg)](https://codecov.io/gh/link-foundation/rust-ai-driven-development-pipeline-template)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)

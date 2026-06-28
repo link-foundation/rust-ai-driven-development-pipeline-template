@@ -1,6 +1,6 @@
 use super::release_naming::{
-    build_crates_io_badge, build_release_name, build_release_tag, is_multi_language_rust_root,
-    normalize_release_version, tag_prefix_for_rust_root,
+    build_crates_io_badge, build_docs_rs_badge, build_release_name, build_release_tag,
+    is_multi_language_rust_root, normalize_release_version, tag_prefix_for_rust_root,
 };
 
 #[test]
@@ -59,5 +59,15 @@ fn crates_io_badge_links_to_exact_bare_version_page() {
 
     assert!(badge.contains("img.shields.io/badge/crates.io-v1.2.3-orange?logo=rust"));
     assert!(badge.contains("https://crates.io/crates/example-crate/1.2.3"));
+    assert!(!badge.contains("rust_v1.2.3"));
+}
+
+#[test]
+fn docs_rs_badge_links_to_exact_bare_version_page_without_live_status() {
+    let badge = build_docs_rs_badge("example-crate", "rust_v1.2.3");
+
+    assert!(badge.contains("img.shields.io/badge/docs.rs-1.2.3-blue"));
+    assert!(badge.contains("https://docs.rs/example-crate/1.2.3"));
+    assert!(!badge.contains("docs.rs/example-crate/badge.svg"));
     assert!(!badge.contains("rust_v1.2.3"));
 }
