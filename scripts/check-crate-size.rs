@@ -42,6 +42,11 @@ const MAX_CRATE_BYTES: u64 = 10 * 1024 * 1024;
 /// Warn once the archive grows past 80% of the limit so projects can react
 /// before a release is actually blocked.
 const WARN_CRATE_BYTES: u64 = MAX_CRATE_BYTES * 8 / 10;
+/// `cargo package` may contact the registry index while resolving package
+/// metadata, so retry it before treating a transient network failure as final.
+const CARGO_PACKAGE_MAX_ATTEMPTS: u8 = 3;
+#[cfg(not(test))]
+const CARGO_PACKAGE_RETRY_DELAY_SECONDS: u64 = 5;
 
 #[derive(Debug, PartialEq, Eq)]
 enum SizeStatus {
@@ -64,6 +69,33 @@ fn format_mib(size_bytes: u64) -> String {
     #[allow(clippy::cast_precision_loss)]
     let mib = size_bytes as f64 / (1024.0 * 1024.0);
     format!("{mib:.2} MiB ({size_bytes} bytes)")
+}
+
+fn run_cargo_package_with_retries<F, S>(
+    mut run_package: F,
+    max_attempts: u8,
+    mut wait_before_retry: S,
+) -> std::io::Result<bool>
+where
+    F: FnMut() -> std::io::Result<bool>,
+    S: FnMut(u8),
+{
+    let max_attempts = max_attempts.max(1);
+
+    for attempt in 1..=max_attempts {
+        if run_package()? {
+            return Ok(true);
+        }
+
+        if attempt < max_attempts {
+            eprintln!(
+                "::warning::cargo package failed on attempt {attempt}/{max_attempts}; retrying"
+            );
+            wait_before_retry(attempt);
+        }
+    }
+
+    Ok(false)
 }
 
 #[cfg(not(test))]
@@ -139,8 +171,22 @@ fn main() {
         cmd.current_dir(&rust_root);
     }
 
-    let status = cmd.status().expect("Failed to execute cargo package");
-    if !status.success() {
+    let package_succeeded = match run_cargo_package_with_retries(
+        || cmd.status().map(|status| status.success()),
+        CARGO_PACKAGE_MAX_ATTEMPTS,
+        |_| {
+            std::thread::sleep(std::time::Duration::from_secs(
+                CARGO_PACKAGE_RETRY_DELAY_SECONDS,
+            ))
+        },
+    ) {
+        Ok(success) => success,
+        Err(e) => {
+            eprintln!("::error::Failed to execute cargo package: {e}");
+            exit(1);
+        }
+    };
+    if !package_succeeded {
         eprintln!("::error::cargo package failed; cannot determine crate archive size");
         exit(1);
     }
@@ -230,6 +276,44 @@ mod tests {
     #[test]
     fn format_mib_is_human_readable() {
         assert_eq!(format_mib(MAX_CRATE_BYTES), "10.00 MiB (10485760 bytes)");
+    }
+
+    #[test]
+    fn cargo_package_is_retried_after_transient_failure() {
+        let mut attempts = 0;
+        let package_succeeded = run_cargo_package_with_retries(
+            || {
+                attempts += 1;
+                Ok(attempts == 2)
+            },
+            CARGO_PACKAGE_MAX_ATTEMPTS,
+            |_| {},
+        )
+        .unwrap();
+
+        assert!(package_succeeded);
+        assert_eq!(attempts, 2);
+    }
+
+    #[test]
+    fn cargo_package_failure_is_reported_after_all_retries() {
+        let mut attempts = 0;
+        let mut waits = 0;
+        let package_succeeded = run_cargo_package_with_retries(
+            || {
+                attempts += 1;
+                Ok(false)
+            },
+            CARGO_PACKAGE_MAX_ATTEMPTS,
+            |_| {
+                waits += 1;
+            },
+        )
+        .unwrap();
+
+        assert!(!package_succeeded);
+        assert_eq!(attempts, usize::from(CARGO_PACKAGE_MAX_ATTEMPTS));
+        assert_eq!(waits, usize::from(CARGO_PACKAGE_MAX_ATTEMPTS - 1));
     }
 
     #[test]
