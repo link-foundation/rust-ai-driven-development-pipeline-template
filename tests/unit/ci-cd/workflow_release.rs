@@ -33,6 +33,26 @@ fn job_block<'a>(workflow: &'a str, job_name: &str) -> &'a str {
     )
 }
 
+fn step_block<'a>(job: &'a str, step_name: &str) -> &'a str {
+    let marker = format!("      - name: {step_name}\n");
+    let start = job
+        .find(&marker)
+        .unwrap_or_else(|| panic!("could not find workflow step {step_name:?}"));
+    let body_start = start + marker.len();
+    let rest = &job[body_start..];
+
+    let next_step = rest
+        .lines()
+        .scan(0usize, |offset, line| {
+            let current_offset = *offset;
+            *offset += line.len() + 1;
+            Some((current_offset, line))
+        })
+        .find_map(|(offset, line)| line.starts_with("      - name: ").then_some(offset));
+
+    next_step.map_or_else(|| &job[start..], |end| &job[start..body_start + end])
+}
+
 fn workflow_job_names(workflow: &str) -> Vec<&str> {
     let marker = "jobs:\n";
     let start = workflow.find(marker).unwrap() + marker.len();
@@ -142,7 +162,7 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("version-check", 5),
         ("cargo-lock", 5),
         ("lint", 10),
-        ("test", 10),
+        ("test", 20),
         ("coverage", 15),
         ("build", 10),
         ("auto-release", 30),
@@ -166,6 +186,88 @@ fn release_workflow_jobs_have_explicit_timeouts() {
             "{job_name} should declare {expected:?}"
         );
     }
+}
+
+#[test]
+fn cargo_cache_keys_are_scoped_by_job() {
+    let workflow = release_workflow();
+
+    for (job_name, expected_key) in [
+        (
+            "lint",
+            "key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}",
+        ),
+        (
+            "coverage",
+            "key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}",
+        ),
+        (
+            "build",
+            "key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}",
+        ),
+    ] {
+        let job = job_block(&workflow, job_name);
+        assert!(
+            job.contains(expected_key),
+            "{job_name} should use a job-scoped cargo cache key"
+        );
+    }
+
+    let test = job_block(&workflow, "test");
+    assert!(
+        test.contains(
+            "key: ${{ runner.os }}-cargo-test-registry-${{ hashFiles('**/Cargo.lock') }}"
+        ),
+        "Windows test cache should use a test registry key"
+    );
+    assert!(
+        test.contains("key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}"),
+        "Unix test cache should use a test target key"
+    );
+    assert!(
+        !workflow.contains("key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}"),
+        "jobs should not share the old generic cargo cache key"
+    );
+}
+
+#[test]
+fn windows_test_cache_does_not_archive_target_directory() {
+    let workflow = release_workflow();
+    let test = job_block(&workflow, "test");
+
+    let windows_cache = step_block(test, "Cache cargo registry on Windows");
+    assert!(windows_cache.contains("if: runner.os == 'Windows'"));
+    assert!(windows_cache.contains("~/.cargo/registry"));
+    assert!(windows_cache.contains("~/.cargo/git"));
+    assert!(
+        !windows_cache.contains("\n            target\n"),
+        "Windows should not archive the large target directory during post-job cleanup"
+    );
+
+    let unix_cache = step_block(test, "Cache cargo registry and target on Unix");
+    assert!(unix_cache.contains("if: runner.os != 'Windows'"));
+    assert!(unix_cache.contains("~/.cargo/registry"));
+    assert!(unix_cache.contains("~/.cargo/git"));
+    assert!(unix_cache.contains("\n            target\n"));
+}
+
+#[test]
+fn coverage_upload_requires_token_and_reports_missing_token_as_notice() {
+    let workflow = release_workflow();
+    let coverage = job_block(&workflow, "coverage");
+    let upload = step_block(coverage, "Upload coverage to Codecov");
+
+    assert!(coverage.contains("CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}"));
+    assert!(upload.contains("if: env.CODECOV_TOKEN != ''"));
+    assert!(upload.contains("token: ${{ env.CODECOV_TOKEN }}"));
+    assert!(upload.contains("disable_search: true"));
+    assert!(upload.contains("fail_ci_if_error: true"));
+    assert!(!upload.contains("fail_ci_if_error: false"));
+
+    let skipped = step_block(coverage, "Report skipped Codecov upload");
+    assert!(skipped.contains("if: env.CODECOV_TOKEN == ''"));
+    assert!(skipped
+        .contains("::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured"));
 }
 
 #[test]
