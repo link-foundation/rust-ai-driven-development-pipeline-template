@@ -35,6 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.6] - 2026-07-03
+
+### Fixed
+- Avoid false-positive Rust CI failures by scoping Cargo cache keys per job, skipping `target` cache uploads on Windows tests, giving the test matrix cleanup headroom, and only running Codecov uploads when `CODECOV_TOKEN` is configured.
+
 ## [0.19.5] - 2026-07-03
 
 ### Fixed
