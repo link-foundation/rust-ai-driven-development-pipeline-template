@@ -36,6 +36,11 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -Dwarnings
+  # Provide Git's initial branch before actions/checkout runs git init so
+  # Git 2.54+ does not emit the upcoming Git 3.0 default-branch hint.
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
   # Harden Cargo registry index and crate downloads against transient network
   # flakes on GitHub-hosted runners, including curl HTTP/2 framing failures.
   CARGO_NET_RETRY: '10'
