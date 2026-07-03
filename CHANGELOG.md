@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.7] - 2026-07-03
+
+### Fixed
+- Suppress Git's default initial branch warning during release workflow checkout.
+
 ## [0.19.6] - 2026-07-03
 
 ### Fixed
