@@ -67,6 +67,13 @@ fn workflow_job_names(workflow: &str) -> Vec<&str> {
         .collect()
 }
 
+fn workflow_env_block(workflow: &str) -> &str {
+    let env_start = workflow.find("\nenv:\n").unwrap();
+    let jobs_start = workflow.find("\njobs:\n").unwrap();
+
+    &workflow[env_start..jobs_start]
+}
+
 #[test]
 fn documentation_deploy_is_independent_from_release_publication() {
     let workflow = release_workflow();
@@ -340,9 +347,7 @@ fn cargo_lock_guard_blocks_cached_cargo_jobs() {
 #[test]
 fn release_workflow_hardens_cargo_registry_networking() {
     let workflow = release_workflow();
-    let env_start = workflow.find("\nenv:\n").unwrap();
-    let jobs_start = workflow.find("\njobs:\n").unwrap();
-    let global_env = &workflow[env_start..jobs_start];
+    let global_env = workflow_env_block(&workflow);
 
     assert!(
         global_env.contains("CARGO_NET_RETRY: '10'"),
@@ -355,6 +360,36 @@ fn release_workflow_hardens_cargo_registry_networking() {
     assert!(
         global_env.contains("HTTP/2 framing"),
         "workflow should document the transient failure mode this hardening targets"
+    );
+}
+
+#[test]
+fn release_workflow_sets_git_initial_branch_before_checkout() {
+    let workflow = release_workflow();
+    let global_env = workflow_env_block(&workflow);
+
+    assert!(
+        global_env.contains("GIT_CONFIG_COUNT: '1'"),
+        "top-level workflow env should declare one Git runtime config entry"
+    );
+    assert!(
+        global_env.contains("GIT_CONFIG_KEY_0: init.defaultBranch"),
+        "top-level workflow env should set the Git init default branch key"
+    );
+    assert!(
+        global_env.contains("GIT_CONFIG_VALUE_0: main"),
+        "top-level workflow env should set Git's init default branch to main"
+    );
+
+    let git_config = workflow
+        .find("GIT_CONFIG_KEY_0: init.defaultBranch")
+        .expect("workflow should set Git's default initial branch");
+    let first_checkout = workflow
+        .find("uses: actions/checkout@v6")
+        .expect("workflow should use actions/checkout");
+    assert!(
+        git_config < first_checkout,
+        "Git runtime config should be available before checkout initializes the repository"
     );
 }
 
