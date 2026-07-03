@@ -34,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.5] - 2026-07-03
+
+### Fixed
+- Retry the crate-size `cargo package` step before reporting package-size guard failure so transient registry downloads do not fail releases immediately.
+
 ## [0.19.4] - 2026-06-28
 
 ### Fixed
