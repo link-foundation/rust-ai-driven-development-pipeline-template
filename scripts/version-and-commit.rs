@@ -862,19 +862,6 @@ fn main() {
     }
     println!("Committed version {}", new_version);
 
-    // Create tag
-    let tag_name = format!("{}{}", tag_prefix, new_version);
-    let tag_msg = match &description {
-        Some(desc) => format!("Release {}{}\n\n{}", tag_name, label_suffix, desc),
-        None => format!("Release {}{}", tag_name, label_suffix),
-    };
-
-    if let Err(e) = exec("git", &["tag", "-a", &tag_name, "-m", &tag_msg]) {
-        eprintln!("Error creating tag: {}", e);
-        exit(1);
-    }
-    println!("Created tag {}", tag_name);
-
     // Push changes and tag with retry (handles concurrent pushes in multi-workflow repos)
     let max_push_attempts = 3;
     for attempt in 1..=max_push_attempts {
@@ -901,6 +888,21 @@ fn main() {
             }
         }
     }
+
+    // Create tag only after the release commit is on the remote, so that a
+    // `pull --rebase` retry above can never leave the tag on an orphaned
+    // pre-rebase commit (see issue #94).
+    let tag_name = format!("{}{}", tag_prefix, new_version);
+    let tag_msg = match &description {
+        Some(desc) => format!("Release {}{}\n\n{}", tag_name, label_suffix, desc),
+        None => format!("Release {}{}", tag_name, label_suffix),
+    };
+
+    if let Err(e) = exec("git", &["tag", "-a", &tag_name, "-m", &tag_msg]) {
+        eprintln!("Error creating tag: {}", e);
+        exit(1);
+    }
+    println!("Created tag {}", tag_name);
 
     if let Err(e) = exec("git", &["push", "--tags"]) {
         eprintln!("Error pushing tags: {}", e);
