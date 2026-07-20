@@ -144,7 +144,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Run secretlint
-        run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint "**/*"
+        run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
 
   # === FRESH MERGE SIMULATION ===
   # Catches semantic merge conflicts: a pull request that is green in isolation but
