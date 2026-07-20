@@ -302,6 +302,15 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features
 
+      - name: Build documentation
+        # Fail-closed rustdoc gate: rustdoc-only lints (for example
+        # rustdoc::private_intra_doc_links) are not reported by clippy or
+        # `cargo test --doc`, so they must be caught here, before release,
+        # instead of in the post-release deploy-docs job.
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --no-deps --all-features
+
       - name: Check file size limit
         run: rust-script scripts/check-file-size.rs
 
@@ -886,6 +895,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build documentation
+        # Defense in depth: same fail-closed flags as the lint job's gate.
+        env:
+          RUSTDOCFLAGS: -D warnings
         run: cargo doc --no-deps --all-features
 
       - name: Generate Pages root index
