@@ -38,6 +38,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.9] - 2026-07-20
+
+### Fixed
+
+- `version-and-commit.rs` no longer reports "Local branch is behind remote" when the branch merely differs from (or is ahead of) `origin/<branch>`. It now counts `HEAD..origin/<branch>` and rebases only when actually behind, logging the real commit count (#95).
+
 ## [0.19.8] - 2026-07-20
 
 ### Fixed
