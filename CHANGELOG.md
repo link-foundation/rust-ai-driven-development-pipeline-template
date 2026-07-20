@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.8] - 2026-07-20
+
+### Fixed
+- `scripts/version-and-commit.rs`: create the release tag after the push-retry loop succeeds, so a `pull --rebase` retry can no longer leave the tag on an orphaned pre-rebase commit (#94)
+
 ## [0.19.7] - 2026-07-03
 
 ### Fixed
