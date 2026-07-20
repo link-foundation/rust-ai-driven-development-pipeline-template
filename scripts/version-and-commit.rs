@@ -729,11 +729,24 @@ fn main() {
     if let Err(e) = exec("git", &["fetch", "origin", &current_branch]) {
         eprintln!("Warning: Could not fetch origin/{}: {}", current_branch, e);
     } else {
-        let local = exec("git", &["rev-parse", "HEAD"]).unwrap_or_default();
-        let remote =
-            exec("git", &["rev-parse", &format!("origin/{}", current_branch)]).unwrap_or_default();
-        if !local.is_empty() && !remote.is_empty() && local != remote {
-            println!("Local branch is behind remote, rebasing...");
+        // Count the commits origin/<branch> has that HEAD does not. Being merely
+        // ahead of the remote is not being behind, and needs no rebase.
+        let behind: u32 = exec(
+            "git",
+            &[
+                "rev-list",
+                "--count",
+                &format!("HEAD..origin/{}", current_branch),
+            ],
+        )
+        .ok()
+        .and_then(|out| out.trim().parse().ok())
+        .unwrap_or(0);
+        if behind > 0 {
+            println!(
+                "Local branch is behind origin/{} by {} commit(s), rebasing...",
+                current_branch, behind
+            );
             if let Err(e) = exec("git", &["rebase", &format!("origin/{}", current_branch)]) {
                 eprintln!("Error rebasing onto origin/{}: {}", current_branch, e);
                 let _ = exec("git", &["rebase", "--abort"]);

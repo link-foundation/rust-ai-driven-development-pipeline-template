@@ -21,6 +21,7 @@ mod smoke_test_published_crate;
 #[allow(clippy::all, clippy::nursery, clippy::pedantic, dead_code)]
 #[path = "../../../scripts/version-and-commit.rs"]
 mod version_and_commit;
+mod version_and_commit_behind_check;
 mod version_and_commit_tag_order;
 mod workflow_release;
 mod workspace_manifest_resolution;
