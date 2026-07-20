@@ -189,6 +189,8 @@ jobs:
       )
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -215,7 +217,28 @@ jobs:
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features
 
+      # Warning-band annotations are limited to files this pull request changed,
+      # so unchanged files stop repeating the same warning on every run.
+      # The 1000-line hard limit still applies to the whole repository.
+      - name: Collect changed files
+        id: changed-files
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          {
+            echo 'files<<CHANGED_FILES_EOF'
+            if [ -n "$BASE_SHA" ] && git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+              git diff --name-only "$BASE_SHA" HEAD
+            else
+              # No usable base (e.g. workflow_dispatch): fall back to annotating every warning.
+              git ls-files
+            fi
+            echo 'CHANGED_FILES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Check file size limit
+        env:
+          CHANGED_FILES: ${{ steps.changed-files.outputs.files }}
         run: rust-script scripts/check-file-size.rs
 
   # === TEST ===

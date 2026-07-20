@@ -690,3 +690,40 @@ fn rust_script_is_installed_through_the_retrying_locked_helper() {
         "installer should retry transient registry failures with backoff"
     );
 }
+
+#[test]
+fn coverage_upload_uses_codecov_action_v7() {
+    let workflow = release_workflow();
+    let coverage = job_block(&workflow, "coverage");
+    let upload = step_block(coverage, "Upload coverage to Codecov");
+
+    assert!(
+        upload.contains("uses: codecov/codecov-action@v7"),
+        "Codecov upload must use v7 (v5 runs on Node 20 and is deprecated): {upload}"
+    );
+    assert!(
+        !workflow.contains("codecov/codecov-action@v5"),
+        "no workflow step may pin the deprecated codecov-action@v5"
+    );
+}
+
+#[test]
+fn file_size_check_only_annotates_changed_files() {
+    let workflow = release_workflow();
+    let lint = job_block(&workflow, "lint");
+    let collect = step_block(lint, "Collect changed files");
+    let check = step_block(lint, "Check file size limit");
+
+    assert!(
+        collect.contains("git diff --name-only"),
+        "changed files must be derived from the diff against the base commit: {collect}"
+    );
+    assert!(
+        check.contains("CHANGED_FILES: ${{ steps.changed-files.outputs.files }}"),
+        "file size check must receive the changed file list: {check}"
+    );
+    assert!(
+        lint.contains("fetch-depth: 0"),
+        "full history is required to diff against the base commit: {lint}"
+    );
+}
