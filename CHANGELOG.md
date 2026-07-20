@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.11] - 2026-07-20
+
+### Security
+- Added a top-level `permissions: contents: read` block to `.github/workflows/release.yml` so jobs no longer inherit the repository's default `GITHUB_TOKEN` scope; jobs that need write access already escalate explicitly
+
 ## [0.19.10] - 2026-07-20
 
 ### Changed
