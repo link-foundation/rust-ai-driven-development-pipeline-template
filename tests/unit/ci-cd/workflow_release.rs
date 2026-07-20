@@ -788,6 +788,43 @@ fn release_workflow_simulates_fresh_merge_and_scans_for_secrets() {
 }
 
 #[test]
+fn coverage_upload_uses_codecov_action_v7() {
+    let workflow = release_workflow();
+    let coverage = job_block(&workflow, "coverage");
+    let upload = step_block(coverage, "Upload coverage to Codecov");
+
+    assert!(
+        upload.contains("uses: codecov/codecov-action@v7"),
+        "Codecov upload must use v7 (v5 runs on Node 20 and is deprecated): {upload}"
+    );
+    assert!(
+        !workflow.contains("codecov/codecov-action@v5"),
+        "no workflow step may pin the deprecated codecov-action@v5"
+    );
+}
+
+#[test]
+fn file_size_check_only_annotates_changed_files() {
+    let workflow = release_workflow();
+    let lint = job_block(&workflow, "lint");
+    let collect = step_block(lint, "Collect changed files");
+    let check = step_block(lint, "Check file size limit");
+
+    assert!(
+        collect.contains("git diff --name-only"),
+        "changed files must be derived from the diff against the base commit: {collect}"
+    );
+    assert!(
+        check.contains("CHANGED_FILES: ${{ steps.changed-files.outputs.files }}"),
+        "file size check must receive the changed file list: {check}"
+    );
+    assert!(
+        lint.contains("fetch-depth: 0"),
+        "full history is required to diff against the base commit: {lint}"
+    );
+}
+
+#[test]
 fn rustdoc_warnings_are_gated_before_release_jobs() {
     let workflow = release_workflow();
 
