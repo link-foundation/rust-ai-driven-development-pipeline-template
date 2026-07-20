@@ -167,6 +167,9 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("detect-changes", 5),
         ("changelog", 10),
         ("version-check", 5),
+        ("secrets-scan", 10),
+        ("fresh-merge", 30),
+        ("docker-build", 60),
         ("cargo-lock", 5),
         ("lint", 10),
         ("test", 20),
@@ -413,8 +416,9 @@ fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible()
     );
     assert_eq!(
         workflow.matches("docker/build-push-action@v7").count(),
-        2,
-        "auto and manual release jobs should publish Docker Hub images when configured"
+        3,
+        "auto and manual release jobs should publish Docker Hub images when configured, \
+         plus the pull-request docker-build check"
     );
     assert!(
         workflow.contains("password: ${{ env.DOCKERHUB_TOKEN }}"),
@@ -688,6 +692,98 @@ fn rust_script_is_installed_through_the_retrying_locked_helper() {
     assert!(
         helper.contains("for attempt in 1 2 3"),
         "installer should retry transient registry failures with backoff"
+    );
+}
+
+/// Regression test for issue #100 (1):
+/// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/100>
+///
+/// `always()` runs a job even when the workflow run is cancelled, which is the exact
+/// opposite of what `!cancelled()` expresses. Combining them makes `!cancelled()` dead
+/// weight while reading as if cancellation still stopped the job.
+#[test]
+fn release_workflow_never_combines_always_with_not_cancelled() {
+    let workflow = release_workflow();
+
+    assert_eq!(
+        workflow.matches("always() && !cancelled()").count(),
+        0,
+        "always() && !cancelled() is self-contradictory; use !cancelled() alone"
+    );
+    assert_eq!(
+        workflow.matches("always()").count(),
+        0,
+        "no job should run after the workflow run is cancelled"
+    );
+    assert!(
+        workflow.contains("!cancelled()"),
+        "conditional jobs should still be guarded by !cancelled()"
+    );
+    // A bare leading `!` is a YAML tag indicator, so single-line guards must be wrapped
+    // in `${{ }}` (block scalars `if: |` are fine).
+    assert!(
+        !workflow.contains("if: !cancelled()"),
+        "single-line !cancelled() guards must be wrapped in ${{ }} to stay valid YAML"
+    );
+}
+
+/// Regression test for issue #100 (2): the Dockerfile must be exercised at
+/// pull-request stage, not only after `cargo publish` inside the release jobs.
+#[test]
+fn release_workflow_builds_docker_image_on_pull_requests() {
+    let workflow = release_workflow();
+    let job = job_block(&workflow, "docker-build");
+
+    assert!(
+        job.contains("github.event_name == 'pull_request'"),
+        "docker-build should gate on pull requests"
+    );
+    assert!(
+        job.contains("push: false"),
+        "docker-build must not push, so fork pull requests without registry credentials still work"
+    );
+    assert!(
+        job.contains("cache-from: type=gha"),
+        "docker-build should reuse the buildx layer cache"
+    );
+}
+
+/// Regression test for issue #100 (3): a pull request that is green in isolation can
+/// still break `main` (semantic merge conflict), and committed credentials must be flagged.
+#[test]
+fn release_workflow_simulates_fresh_merge_and_scans_for_secrets() {
+    let workflow = release_workflow();
+
+    assert!(
+        job_block(&workflow, "fresh-merge").contains("bash scripts/simulate-fresh-merge.sh"),
+        "fresh-merge job should run the merge simulation script"
+    );
+    assert!(
+        job_block(&workflow, "secrets-scan").contains("secretlint"),
+        "secrets-scan job should run secretlint"
+    );
+
+    let script = fs::read_to_string(format!(
+        "{}/scripts/simulate-fresh-merge.sh",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .unwrap();
+    assert!(
+        script.contains("set -euo pipefail"),
+        "merge simulation should fail fast on unexpected errors"
+    );
+    assert!(
+        script.contains("git merge --no-edit"),
+        "merge simulation should actually merge the head into the base tip"
+    );
+
+    assert!(
+        std::path::Path::new(&format!(
+            "{}/.secretlintrc.json",
+            env!("CARGO_MANIFEST_DIR")
+        ))
+        .exists(),
+        "secretlint requires a .secretlintrc config file to run"
     );
 }
 
