@@ -134,6 +134,93 @@ jobs:
           GITHUB_BASE_REF: ${{ github.base_ref }}
         run: rust-script scripts/check-version-modification.rs
 
+  # === SECRETS SCAN ===
+  # Language-agnostic credential scan; runs via npx so no Node dependency is committed.
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run secretlint
+        run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint "**/*"
+
+  # === FRESH MERGE SIMULATION ===
+  # Catches semantic merge conflicts: a pull request that is green in isolation but
+  # breaks the base branch once merged into its current tip.
+  fresh-merge:
+    name: Fresh Merge Simulation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [detect-changes]
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-fresh-merge-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-fresh-merge-
+
+      - name: Simulate fresh merge with base branch
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: bash scripts/simulate-fresh-merge.sh
+
+  # === DOCKER IMAGE BUILD CHECK ===
+  # Builds the image at pull-request stage without pushing, so a Dockerfile
+  # regression fails the pull request instead of producing a half-finished release
+  # (crate published, image missing). push: false also works for fork pull requests
+  # that have no registry credentials.
+  docker-build:
+    name: Docker Image Build Check
+    runs-on: ubuntu-latest
+    # The image compiles the crate from scratch; 30 minutes is not enough cold.
+    timeout-minutes: 60
+    needs: [detect-changes]
+    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check for Dockerfile
+        id: dockerfile
+        run: |
+          if [ -f Dockerfile ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "No Dockerfile at repository root; skipping image build check."
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image (no push)
+        if: steps.dockerfile.outputs.exists == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: app:pr-check
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   # === CARGO.LOCK GUARD ===
   # Binary crates must commit Cargo.lock so CI and release jobs resolve the same
   # dependency graph every run. This also prevents cache keys based on
@@ -144,7 +231,7 @@ jobs:
     timeout-minutes: 5
     needs: [detect-changes]
     if: |
-      always() && !cancelled() && (
+      !cancelled() && (
         github.event_name == 'push' ||
         github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.rs-changed == 'true' ||
@@ -173,11 +260,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [detect-changes, cargo-lock]
-    # Note: always() is required because detect-changes is skipped on workflow_dispatch,
-    # and without always(), this job would also be skipped even though its condition includes workflow_dispatch.
+    # Note: !cancelled() is required because detect-changes is skipped on workflow_dispatch,
+    # and without it, this job would also be skipped even though its condition includes workflow_dispatch.
     # See: https://github.com/actions/runner/issues/491
     if: |
-      always() && !cancelled() && (
+      !cancelled() && (
         needs.cargo-lock.result == 'success' && (
           github.event_name == 'push' ||
           github.event_name == 'workflow_dispatch' ||
@@ -225,11 +312,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     needs: [detect-changes, cargo-lock]
-    # Note: always() is required because detect-changes is skipped on workflow_dispatch,
-    # and without always(), this job would also be skipped even though its condition includes workflow_dispatch.
+    # Note: !cancelled() is required because detect-changes is skipped on workflow_dispatch,
+    # and without it, this job would also be skipped even though its condition includes workflow_dispatch.
     # See: https://github.com/actions/runner/issues/491
     if: |
-      always() && !cancelled() && (
+      !cancelled() && (
         needs.cargo-lock.result == 'success' && (
           github.event_name == 'push' ||
           github.event_name == 'workflow_dispatch' ||
@@ -288,7 +375,7 @@ jobs:
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     if: |
-      always() && !cancelled() && (
+      !cancelled() && (
         needs.cargo-lock.result == 'success' && (
           github.event_name == 'push' ||
           github.event_name == 'workflow_dispatch' ||
@@ -341,7 +428,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: [lint, test]
-    if: always() && !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success'
+    if: ${{ !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -377,9 +464,9 @@ jobs:
   auto-release:
     name: Auto Release
     needs: [lint, test, build]
-    # Note: always() ensures consistent behavior with other jobs that depend on jobs using always().
+    # Note: !cancelled() ensures consistent behavior with other jobs that depend on skipped jobs.
     if: |
-      always() && !cancelled() &&
+      !cancelled() &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
       needs.build.result == 'success'
@@ -558,10 +645,10 @@ jobs:
   manual-release:
     name: Instant Release
     needs: [lint, test, build]
-    # Note: always() is required to evaluate the condition when dependencies use always().
+    # Note: !cancelled() is required to evaluate the condition when dependencies may be skipped.
     # The build job ensures lint and test passed before this job runs.
     if: |
-      always() && !cancelled() &&
+      !cancelled() &&
       github.event_name == 'workflow_dispatch' &&
       github.event.inputs.release_mode == 'instant' &&
       needs.build.result == 'success'
