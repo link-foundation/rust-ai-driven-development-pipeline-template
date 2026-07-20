@@ -146,7 +146,7 @@ checksum = "7454e41ff9012c00d53cf7f475c5e3afa3b91b7c90568495495e8d9bf47a1055"
 
 [[package]]
 name = "example-sum-package-name"
-version = "0.19.10"
+version = "0.19.9"
 dependencies = [
  "clap",
  "lino-arguments",
