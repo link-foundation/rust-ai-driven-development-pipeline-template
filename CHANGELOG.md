@@ -44,6 +44,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.15] - 2026-07-20
+
+### Fixed
+- File-size warning annotations are now emitted only for files changed by the current pull request or push, so unchanged files stop repeating the same warning on every run. The 1000-line hard limit and the full baseline report remain repository-wide.
+
 ## [0.19.14] - 2026-07-20
 
 ### Fixed
