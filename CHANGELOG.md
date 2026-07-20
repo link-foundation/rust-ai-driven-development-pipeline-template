@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.10] - 2026-07-20
+
+### Changed
+- Bumped `codecov/codecov-action` from v5 to v7 in CI workflows
+
 ## [0.19.9] - 2026-07-20
 
 ### Fixed
