@@ -656,3 +656,37 @@ fn github_release_notes_use_static_docs_rs_badge_for_versioned_artifacts() {
         "release badge helpers should not preserve the live docs.rs status badge"
     );
 }
+
+#[test]
+fn rust_script_is_installed_through_the_retrying_locked_helper() {
+    let workflow = release_workflow();
+
+    assert!(
+        !workflow.contains("run: cargo install rust-script"),
+        "release workflow should not invoke bare `cargo install rust-script`; \
+         a registry blip would fail the release without retry or --locked"
+    );
+    assert!(
+        workflow.contains("run: ./scripts/install-rust-script.sh"),
+        "release workflow should install rust-script through scripts/install-rust-script.sh"
+    );
+
+    let helper = fs::read_to_string(format!(
+        "{}/scripts/install-rust-script.sh",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .unwrap();
+
+    assert!(
+        helper.contains("command -v rust-script"),
+        "installer should short-circuit when rust-script is already present"
+    );
+    assert!(
+        helper.contains("cargo install rust-script --locked"),
+        "installer should use --locked for reproducible installs"
+    );
+    assert!(
+        helper.contains("for attempt in 1 2 3"),
+        "installer should retry transient registry failures with backoff"
+    );
+}
