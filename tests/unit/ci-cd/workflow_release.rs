@@ -695,7 +695,8 @@ fn rust_script_is_installed_through_the_retrying_locked_helper() {
     );
 }
 
-/// Regression test for https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/100 (1).
+/// Regression test for issue #100 (1):
+/// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/100>
 ///
 /// `always()` runs a job even when the workflow run is cancelled, which is the exact
 /// opposite of what `!cancelled()` expresses. Combining them makes `!cancelled()` dead
