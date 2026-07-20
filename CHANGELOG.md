@@ -42,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.13] - 2026-07-20
+
+### Fixed
+- Gate `cargo doc --no-deps --all-features` with `RUSTDOCFLAGS: -D warnings` in the lint job so rustdoc-only lints fail before release, and keep the same fail-closed flags in the `deploy-docs` build step (#96)
+
 ## [0.19.12] - 2026-07-20
 
 ### Fixed

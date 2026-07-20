@@ -727,3 +727,38 @@ fn file_size_check_only_annotates_changed_files() {
         "full history is required to diff against the base commit: {lint}"
     );
 }
+
+#[test]
+fn rustdoc_warnings_are_gated_before_release_jobs() {
+    let workflow = release_workflow();
+
+    // The first `cargo doc` invocation must be the pre-release lint gate, not
+    // the post-build deploy-docs job. See issue #96.
+    let first_doc_build = workflow
+        .find("cargo doc")
+        .expect("release workflow should build documentation");
+    for release_job in ["auto-release", "manual-release", "deploy-docs"] {
+        let job_start = workflow
+            .find(&format!("  {release_job}:\n"))
+            .unwrap_or_else(|| panic!("missing job {release_job}"));
+        assert!(
+            first_doc_build < job_start,
+            "first `cargo doc` must run before the {release_job} job"
+        );
+    }
+
+    let lint = job_block(&workflow, "lint");
+    let lint_docs = step_block(lint, "Build documentation");
+    assert!(lint_docs.contains("RUSTDOCFLAGS: -D warnings"));
+    assert!(lint_docs.contains("cargo doc --no-deps --all-features"));
+}
+
+#[test]
+fn documentation_deploy_keeps_fail_closed_rustdoc_flags() {
+    let workflow = release_workflow();
+    let deploy_docs = job_block(&workflow, "deploy-docs");
+    let build_docs = step_block(deploy_docs, "Build documentation");
+
+    assert!(build_docs.contains("RUSTDOCFLAGS: -D warnings"));
+    assert!(build_docs.contains("cargo doc --no-deps --all-features"));
+}
