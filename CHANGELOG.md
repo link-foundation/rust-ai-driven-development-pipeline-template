@@ -41,6 +41,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.12] - 2026-07-20
+
+### Fixed
+- Release workflow no longer runs bare `cargo install rust-script`. All nine call sites now use `scripts/install-rust-script.sh`, which short-circuits when `rust-script` is already present, installs with `--locked` for reproducible builds, and retries up to 3 times with backoff so a transient crates.io failure does not fail a release.
+
 ## [0.19.11] - 2026-07-20
 
 ### Security
