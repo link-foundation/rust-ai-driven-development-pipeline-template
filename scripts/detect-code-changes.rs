@@ -16,7 +16,8 @@
 //! Excluded from code changes (don't require changelog fragments):
 //! - Markdown files (*.md) in any folder
 //! - changelog.d/ folder (changelog fragments)
-//! - docs/ folder (documentation)
+//! - dev/log/ folder (development logs)
+//! - docs/ folder (documentation, including case studies)
 //! - experiments/ folder (experimental scripts)
 //! - examples/ folder (example scripts)
 //!
@@ -28,8 +29,6 @@
 //! Outputs (written to GITHUB_OUTPUT):
 //!   - rs-changed: 'true' if any .rs files changed
 //!   - toml-changed: 'true' if any .toml files changed
-//!   - mjs-changed: 'true' if any .mjs files changed
-//!   - docs-changed: 'true' if any .md files changed
 //!   - workflow-changed: 'true' if any .github/workflows/ files changed
 //!   - any-code-changed: 'true' if any code files changed (excludes docs, changelog.d, experiments, examples)
 //!
@@ -169,7 +168,13 @@ fn is_excluded_from_code_changes(file_path: &str) -> bool {
     }
 
     // Exclude specific folders from code changes
-    let excluded_folders = ["changelog.d/", "docs/", "experiments/", "examples/"];
+    let excluded_folders = [
+        "changelog.d/",
+        "dev/log/",
+        "docs/",
+        "experiments/",
+        "examples/",
+    ];
 
     for folder in &excluded_folders {
         if file_path.starts_with(folder) {
@@ -188,6 +193,13 @@ fn code_change_pattern() -> Regex {
     Regex::new(r"(\.(rs|toml|mjs|js|yml|yaml)$|(^|/)Cargo\.lock$|^\.github/workflows/)").unwrap()
 }
 
+fn included_changed_files(changed_files: &[String]) -> Vec<&String> {
+    changed_files
+        .iter()
+        .filter(|file| !is_excluded_from_code_changes(file))
+        .collect()
+}
+
 fn main() {
     println!("Detecting file changes for CI/CD...\n");
 
@@ -203,26 +215,21 @@ fn main() {
     }
     println!();
 
+    // Apply the ignore policy once, before computing any job-gating output.
+    let included_files = included_changed_files(&changed_files);
+
     // Detect .rs file changes (Rust source)
-    let rs_changed = changed_files.iter().any(|f| f.ends_with(".rs"));
+    let rs_changed = included_files.iter().any(|f| f.ends_with(".rs"));
     set_output("rs-changed", if rs_changed { "true" } else { "false" });
 
     // Detect manifest/lockfile changes (Cargo.toml, Cargo.lock, etc.)
-    let toml_changed = changed_files
+    let toml_changed = included_files
         .iter()
         .any(|f| is_manifest_or_lockfile_change(f));
     set_output("toml-changed", if toml_changed { "true" } else { "false" });
 
-    // Detect .mjs file changes (scripts)
-    let mjs_changed = changed_files.iter().any(|f| f.ends_with(".mjs"));
-    set_output("mjs-changed", if mjs_changed { "true" } else { "false" });
-
-    // Detect documentation changes (any .md file)
-    let docs_changed = changed_files.iter().any(|f| f.ends_with(".md"));
-    set_output("docs-changed", if docs_changed { "true" } else { "false" });
-
     // Detect workflow changes
-    let workflow_changed = changed_files
+    let workflow_changed = included_files
         .iter()
         .any(|f| f.starts_with(".github/workflows/"));
     set_output(
@@ -231,16 +238,11 @@ fn main() {
     );
 
     // Detect code changes (excluding docs, changelog.d, experiments, examples folders, and markdown files)
-    let code_changed_files: Vec<&String> = changed_files
-        .iter()
-        .filter(|f| !is_excluded_from_code_changes(f))
-        .collect();
-
     println!("\nFiles considered as code changes:");
-    if code_changed_files.is_empty() {
+    if included_files.is_empty() {
         println!("  (none)");
     } else {
-        for file in &code_changed_files {
+        for file in &included_files {
             println!("  {}", file);
         }
     }
@@ -248,7 +250,7 @@ fn main() {
 
     // Check if any code files changed (.rs, .toml, Cargo.lock, .mjs, .yml, .yaml, or workflow files)
     let code_pattern = code_change_pattern();
-    let code_changed = code_changed_files.iter().any(|f| code_pattern.is_match(f));
+    let code_changed = included_files.iter().any(|f| code_pattern.is_match(f));
     set_output(
         "any-code-changed",
         if code_changed { "true" } else { "false" },
@@ -321,6 +323,32 @@ mod tests {
         repo
     }
 
+    fn create_single_change_merge_repo(file_path: &str) -> PathBuf {
+        let parent = temp_dir("excluded-event-matrix");
+        run_git(&parent, &["init", "-b", "main", "repo"]);
+
+        let repo = parent.join("repo");
+        run_git(&repo, &["config", "user.email", "test@example.com"]);
+        run_git(&repo, &["config", "user.name", "Test User"]);
+        fs::write(repo.join("README.md"), "# Test\n").unwrap();
+        run_git(&repo, &["add", "."]);
+        run_git(&repo, &["commit", "-m", "Initial commit"]);
+        run_git(&repo, &["checkout", "-b", "feature"]);
+
+        let changed_path = repo.join(file_path);
+        fs::create_dir_all(changed_path.parent().unwrap()).unwrap();
+        fs::write(&changed_path, "reproduction\n").unwrap();
+        run_git(&repo, &["add", file_path]);
+        run_git(&repo, &["commit", "-m", "Add excluded reproduction"]);
+        run_git(&repo, &["checkout", "main"]);
+        run_git(
+            &repo,
+            &["merge", "--no-ff", "feature", "-m", "Merge feature"],
+        );
+
+        repo
+    }
+
     #[test]
     fn cargo_lock_changes_count_as_manifest_and_code_changes() {
         let code_pattern = code_change_pattern();
@@ -329,6 +357,48 @@ mod tests {
             assert!(is_manifest_or_lockfile_change(path));
             assert!(code_pattern.is_match(path));
             assert!(!is_excluded_from_code_changes(path));
+        }
+    }
+
+    #[test]
+    fn excluded_paths_do_not_activate_any_job_gating_output() {
+        let excluded_files = [
+            "experiments/repro.rs",
+            "experiments/repro.mjs",
+            "experiments/repro.md",
+            "dev/log/trace.rs",
+            "dev/log/trace.mjs",
+            "dev/log/trace.md",
+            "docs/case-studies/issue-109/repro.rs",
+            "docs/case-studies/issue-109/repro.mjs",
+            "docs/case-studies/issue-109/repro.md",
+        ];
+
+        for file in excluded_files {
+            assert!(
+                is_excluded_from_code_changes(file),
+                "{file} should be excluded before outputs are computed"
+            );
+        }
+    }
+
+    #[test]
+    fn excluded_only_event_matrix_has_no_included_changes() {
+        for event_name in ["pull_request", "push"] {
+            for file_path in [
+                "experiments/repro.mjs",
+                "dev/log/repro.rs",
+                "docs/case-studies/issue-109/repro.md",
+            ] {
+                let repo = create_single_change_merge_repo(file_path);
+                let changed_files = get_changed_files_in_repo(&repo, event_name);
+
+                assert_eq!(changed_files, [file_path]);
+                assert!(
+                    included_changed_files(&changed_files).is_empty(),
+                    "{event_name} with only {file_path} must not activate job outputs"
+                );
+            }
         }
     }
 

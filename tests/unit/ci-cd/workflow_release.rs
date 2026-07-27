@@ -316,6 +316,27 @@ fn test_job_is_gated_by_detected_code_changes_not_changelog_result() {
 }
 
 #[test]
+fn change_gated_jobs_consult_detector_outputs_for_pull_requests_and_pushes() {
+    let workflow = release_workflow();
+
+    for job_name in ["cargo-lock", "lint", "test", "coverage"] {
+        let job = job_block(&workflow, job_name);
+        assert!(
+            !job.contains("github.event_name == 'push'"),
+            "{job_name} must not bypass excluded-path detection on pushes"
+        );
+        assert!(
+            job.contains("github.event_name == 'workflow_dispatch'"),
+            "{job_name} should continue to run when manually dispatched"
+        );
+        assert!(
+            job.contains("needs.detect-changes.outputs."),
+            "{job_name} should use detector outputs for PR and push events"
+        );
+    }
+}
+
+#[test]
 fn cargo_lock_guard_blocks_cached_cargo_jobs() {
     let workflow = release_workflow();
     let cargo_lock = job_block(&workflow, "cargo-lock");
