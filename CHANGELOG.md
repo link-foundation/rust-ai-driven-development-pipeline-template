@@ -45,6 +45,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.16] - 2026-07-27
+
+### Fixed
+
+- Keep excluded-only changes from activating change-gated CI jobs on pull requests and pushes.
+
 ## [0.19.15] - 2026-07-20
 
 ### Fixed
