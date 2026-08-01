@@ -24,4 +24,5 @@ mod version_and_commit;
 mod version_and_commit_behind_check;
 mod version_and_commit_tag_order;
 mod workflow_release;
+mod workflow_security;
 mod workspace_manifest_resolution;
