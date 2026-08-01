@@ -33,10 +33,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -Dwarnings
@@ -55,12 +51,20 @@ env:
   # Optional: set repository variable DOCKERHUB_IMAGE to namespace/image to publish Docker Hub releases.
   DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
 
+# Concurrency is intentionally job-scoped. Each read-only job cancels only its
+# superseded counterpart for the same ref, including on main. Jobs that can
+# mutate repositories, registries, releases, or Pages all use one shared FIFO
+# queue instead: a write that has started is never cancelled, and `queue: max`
+# preserves subsequent writes until they can execute one at a time.
 jobs:
   # === DETECT CHANGES - determines which jobs should run ===
   detect-changes:
     name: Detect Changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-detect-changes
+      cancel-in-progress: true
     if: github.event_name != 'workflow_dispatch'
     outputs:
       rs-changed: ${{ steps.changes.outputs.rs-changed }}
@@ -90,6 +94,9 @@ jobs:
     name: Changelog Fragment Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-changelog
+      cancel-in-progress: true
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -114,6 +121,9 @@ jobs:
     name: Version Modification Check
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-version-check
+      cancel-in-progress: true
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v6
@@ -139,6 +149,9 @@ jobs:
     name: Secrets Scan
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-secrets-scan
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v6
 
@@ -152,6 +165,9 @@ jobs:
     name: Fresh Merge Simulation
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-fresh-merge
+      cancel-in-progress: true
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -190,6 +206,9 @@ jobs:
     runs-on: ubuntu-latest
     # The image compiles the crate from scratch; 30 minutes is not enough cold.
     timeout-minutes: 60
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-docker-build
+      cancel-in-progress: true
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -228,6 +247,9 @@ jobs:
     name: Cargo.lock Guard
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-cargo-lock
+      cancel-in-progress: true
     needs: [detect-changes]
     if: |
       !cancelled() && (
@@ -256,6 +278,9 @@ jobs:
     name: Lint and Format Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-lint
+      cancel-in-progress: true
     needs: [detect-changes, cargo-lock]
     # Note: !cancelled() is required because detect-changes is skipped on workflow_dispatch,
     # and without it, this job would also be skipped even though its condition includes workflow_dispatch.
@@ -339,6 +364,9 @@ jobs:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}
+      cancel-in-progress: true
     needs: [detect-changes, cargo-lock]
     # Note: !cancelled() is required because detect-changes is skipped on workflow_dispatch,
     # and without it, this job would also be skipped even though its condition includes workflow_dispatch.
@@ -398,6 +426,9 @@ jobs:
     name: Code Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-coverage
+      cancel-in-progress: true
     needs: [detect-changes, cargo-lock]
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -453,6 +484,9 @@ jobs:
     name: Build Package
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-build
+      cancel-in-progress: true
     needs: [lint, test]
     if: ${{ !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' }}
     steps:
@@ -490,6 +524,10 @@ jobs:
   auto-release:
     name: Auto Release
     needs: [lint, test, build]
+    concurrency:
+      group: ${{ github.workflow }}-main-write
+      cancel-in-progress: false
+      queue: max
     # Note: !cancelled() ensures consistent behavior with other jobs that depend on skipped jobs.
     if: |
       !cancelled() &&
@@ -671,6 +709,10 @@ jobs:
   manual-release:
     name: Instant Release
     needs: [lint, test, build]
+    concurrency:
+      group: ${{ github.workflow }}-main-write
+      cancel-in-progress: false
+      queue: max
     # Note: !cancelled() is required to evaluate the condition when dependencies may be skipped.
     # The build job ensures lint and test passed before this job runs.
     if: |
@@ -708,7 +750,7 @@ jobs:
         env:
           BUMP_TYPE: ${{ github.event.inputs.bump_type }}
           DESCRIPTION: ${{ github.event.inputs.description }}
-        run: rust-script scripts/version-and-commit.rs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
+        run: rust-script scripts/version-and-commit.rs --bump-type "$BUMP_TYPE" --description "$DESCRIPTION"
 
       - name: Build release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
@@ -831,6 +873,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'changelog-pr'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: ${{ github.workflow }}-main-write
+      cancel-in-progress: false
+      queue: max
     permissions:
       contents: write
       pull-requests: write
@@ -849,7 +895,7 @@ jobs:
         env:
           BUMP_TYPE: ${{ github.event.inputs.bump_type }}
           DESCRIPTION: ${{ github.event.inputs.description }}
-        run: rust-script scripts/create-changelog-fragment.rs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
+        run: rust-script scripts/create-changelog-fragment.rs --bump-type "$BUMP_TYPE" --description "$DESCRIPTION"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
@@ -888,6 +934,10 @@ jobs:
   deploy-docs:
     name: Deploy Rust Documentation
     needs: [build]
+    concurrency:
+      group: ${{ github.workflow }}-main-write
+      cancel-in-progress: false
+      queue: max
     if: |
       !cancelled() &&
       needs.build.result == 'success' && (
