@@ -103,9 +103,14 @@ fn workflow_run_blocks_do_not_interpolate_untrusted_contexts() {
     }
 }
 
-/// Write-capable jobs share a non-cancelling FIFO queue, while superseded read-only
-/// checks are cancelled independently. This keeps a started publication intact without
-/// making newer checks wait behind the whole older workflow run.
+/// Write-capable jobs share a non-cancelling concurrency group, while superseded
+/// read-only checks are cancelled independently. This keeps a started publication
+/// intact without making newer checks wait behind the whole older workflow run.
+///
+/// Regression test for issue #113:
+/// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/113>
+///
+/// GitHub Actions concurrency accepts only `group` and `cancel-in-progress`.
 #[test]
 fn release_workflow_separates_check_and_write_concurrency() {
     let workflow = release_workflow();
@@ -147,7 +152,6 @@ fn release_workflow_separates_check_and_write_concurrency() {
         "    concurrency:\n",
         "      group: ${{ github.workflow }}-main-write\n",
         "      cancel-in-progress: false\n",
-        "      queue: max\n",
     );
     for job_name in [
         "auto-release",
@@ -157,7 +161,12 @@ fn release_workflow_separates_check_and_write_concurrency() {
     ] {
         assert!(
             job_block(&workflow, job_name).contains(write_concurrency),
-            "write-capable job {job_name} should use the shared non-cancelling FIFO queue"
+            "write-capable job {job_name} should use the shared non-cancelling concurrency group"
         );
     }
+
+    assert!(
+        !workflow.contains("\n      queue:"),
+        "GitHub Actions concurrency does not support a queue key"
+    );
 }

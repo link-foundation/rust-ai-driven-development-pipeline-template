@@ -53,9 +53,9 @@ env:
 
 # Concurrency is intentionally job-scoped. Each read-only job cancels only its
 # superseded counterpart for the same ref, including on main. Jobs that can
-# mutate repositories, registries, releases, or Pages all use one shared FIFO
-# queue instead: a write that has started is never cancelled, and `queue: max`
-# preserves subsequent writes until they can execute one at a time.
+# mutate repositories, registries, releases, or Pages all use one shared
+# concurrency group instead. A write that has started is never cancelled, and
+# GitHub retains at most one pending run for the group.
 jobs:
   # === DETECT CHANGES - determines which jobs should run ===
   detect-changes:
@@ -527,7 +527,6 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
-      queue: max
     # Note: !cancelled() ensures consistent behavior with other jobs that depend on skipped jobs.
     if: |
       !cancelled() &&
@@ -712,7 +711,6 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
-      queue: max
     # Note: !cancelled() is required to evaluate the condition when dependencies may be skipped.
     # The build job ensures lint and test passed before this job runs.
     if: |
@@ -876,7 +874,6 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
-      queue: max
     permissions:
       contents: write
       pull-requests: write
@@ -937,7 +934,6 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
-      queue: max
     if: |
       !cancelled() &&
       needs.build.result == 'success' && (
