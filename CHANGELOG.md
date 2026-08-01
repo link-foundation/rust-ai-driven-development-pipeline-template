@@ -47,6 +47,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.18] - 2026-08-01
+
+### Fixed
+- Remove the unsupported `queue` key from release workflow concurrency blocks so the workflow passes GitHub Actions schema validation
+
 ## [0.19.17] - 2026-08-01
 
 ### Security
