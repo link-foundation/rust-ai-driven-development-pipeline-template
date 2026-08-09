@@ -976,6 +976,12 @@ jobs:
             > target/doc/index.html
           touch target/doc/.nojekyll
 
+      - name: Add desktop download page
+        run: |
+          mkdir -p target/doc/download
+          sed 's#__REPOSITORY__#${{ github.repository }}#g' \
+            docs/download/index.html > target/doc/download/index.html
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
 
