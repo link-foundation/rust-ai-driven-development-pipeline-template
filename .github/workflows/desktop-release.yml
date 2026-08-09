@@ -79,9 +79,9 @@ jobs:
           OUTPUT_DIR: desktop-dist
         run: |
           set -euo pipefail
-          mapfile -t assets < <(find "$OUTPUT_DIR" -type f -size +0c -print)
-          [ ${#assets[@]} -gt 0 ] || { echo "No non-empty desktop assets were produced" >&2; exit 1; }
-          printf 'Verified %s\n' "${assets[@]}"
+          first_asset="$(find "$OUTPUT_DIR" -type f -size +0c -print -quit)"
+          [ -n "$first_asset" ] || { echo "No non-empty desktop assets were produced" >&2; exit 1; }
+          find "$OUTPUT_DIR" -type f -size +0c -print | sed 's/^/Verified /'
           # Electron apps must retain a signature envelope. Use
           # electron-builder --mac ... -c.mac.identity=- and set
           # CSC_FOR_PULL_REQUEST=true on the ad-hoc path.

@@ -33,6 +33,10 @@ fn desktop_release_is_opt_in_and_runs_a_six_target_dry_run() {
 fn published_assets_are_verified_attested_and_finalized() {
     let workflow = workflow();
     assert!(workflow.contains("find \"$OUTPUT_DIR\" -type f -size +0c"));
+    assert!(
+        !workflow.contains("mapfile -t assets"),
+        "macOS ships Bash 3, which does not provide mapfile"
+    );
     assert!(workflow.contains("actions/attest@v4"));
     assert!(workflow.contains("SHA256SUMS.txt"));
     assert!(workflow.contains("BUILD-PROVENANCE.txt"));
