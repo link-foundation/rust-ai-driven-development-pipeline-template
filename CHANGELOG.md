@@ -52,6 +52,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.23] - 2026-08-09
+
+### Fixed
+- Reuse the GitHub Actions layer cache for release Docker builds and allow enough time for cold-cache releases to finish.
+
 ## [0.19.22] - 2026-08-09
 
 ### Added
