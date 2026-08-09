@@ -10,6 +10,15 @@ fn release_workflow() -> String {
     .replace("\r\n", "\n")
 }
 
+fn security_workflow() -> String {
+    fs::read_to_string(format!(
+        "{}/.github/workflows/security.yml",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .expect("security workflow should exist")
+    .replace("\r\n", "\n")
+}
+
 fn workflow_files() -> Vec<PathBuf> {
     let workflow_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".github/workflows");
     let mut paths = fs::read_dir(workflow_dir)
@@ -169,4 +178,35 @@ fn release_workflow_separates_check_and_write_concurrency() {
         !workflow.contains("\n      queue:"),
         "GitHub Actions concurrency does not support a queue key"
     );
+}
+
+/// Regression test for issue #115:
+/// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/115>
+#[test]
+fn security_workflow_scans_rust_actions_and_pull_request_dependencies() {
+    let workflow = security_workflow();
+    let header = workflow.split("\njobs:\n").next().unwrap();
+
+    assert!(header.contains("branches: [main]"));
+    assert!(header.contains("pull_request:"));
+    assert!(header.contains("schedule:"));
+    assert!(header.contains("cron: '0 6 * * 1'"));
+    assert!(header.contains("permissions:\n  contents: read"));
+
+    let codeql = job_block(&workflow, "codeql");
+    assert!(codeql.contains("timeout-minutes: 30"));
+    assert!(codeql.contains("security-events: write"));
+    assert!(codeql.contains("language: [rust, actions]"));
+    assert!(codeql.contains("uses: github/codeql-action/init@v4"));
+    assert!(codeql.contains("language: ${{ matrix.language }}"));
+    assert!(codeql.contains("uses: github/codeql-action/autobuild@v4"));
+    assert!(codeql.contains("uses: github/codeql-action/analyze@v4"));
+
+    let dependency_review = job_block(&workflow, "dependency-review");
+    assert!(dependency_review.contains("if: github.event_name == 'pull_request'"));
+    assert!(dependency_review.contains("timeout-minutes: 10"));
+    assert!(dependency_review.contains("pull-requests: write"));
+    assert!(dependency_review.contains("uses: actions/dependency-review-action@v5"));
+    assert!(dependency_review.contains("fail-on-severity: high"));
+    assert!(dependency_review.contains("comment-summary-in-pr: on-failure"));
 }
