@@ -51,6 +51,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.22] - 2026-08-09
+
+### Added
+
+- Add an opt-in six-platform desktop release workflow with checksums, build provenance, PR dry runs, and a GitHub Pages `/download` page.
+
 ## [0.19.21] - 2026-08-09
 
 ### Fixed
