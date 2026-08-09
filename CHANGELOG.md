@@ -50,6 +50,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.21] - 2026-08-09
+
+### Fixed
+- Surface timed-out jobs as pipeline failures on main instead of leaving silently cancelled workflow runs.
+
 ## [0.19.20] - 2026-08-09
 
 ### Added
