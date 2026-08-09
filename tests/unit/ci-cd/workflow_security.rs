@@ -230,6 +230,8 @@ fn links_workflow_checks_documentation_with_archive_fallback() {
     assert!(header.contains("'**.md'"));
     assert!(header.contains("'**.html'"));
     assert!(header.contains("'.github/workflows/links.yml'"));
+    assert!(header.contains("'.lycheeignore'"));
+    assert!(header.contains("'scripts/check-web-archive.mjs'"));
     assert!(header.contains("permissions:\n  contents: read"));
 
     let link_checker = job_block(&workflow, "link-checker");
@@ -251,4 +253,8 @@ fn links_workflow_checks_documentation_with_archive_fallback() {
     .expect("Wayback Machine fallback helper should exist");
     assert!(archive_helper.contains("https://archive.org/wayback/available?url="));
     assert!(archive_helper.contains("setOutput('all_archived'"));
+
+    let ignored_links = fs::read_to_string(format!("{}/.lycheeignore", env!("CARGO_MANIFEST_DIR")))
+        .expect("lychee ignore file should exist");
+    assert!(ignored_links.contains("https://docs\\.rs/example-sum-package-name"));
 }

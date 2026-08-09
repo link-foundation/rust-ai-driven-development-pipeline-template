@@ -8,12 +8,16 @@ on:
       - '**.md'
       - '**.html'
       - '.github/workflows/links.yml'
+      - '.lycheeignore'
+      - 'scripts/check-web-archive.mjs'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - '**.md'
       - '**.html'
       - '.github/workflows/links.yml'
+      - '.lycheeignore'
+      - 'scripts/check-web-archive.mjs'
   workflow_dispatch:
 
 # Least-privilege default; jobs escalate individually when needed.

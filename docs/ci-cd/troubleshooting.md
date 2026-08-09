@@ -318,7 +318,7 @@ curl -fsSL "https://hub.docker.com/v2/repositories/NAMESPACE/REPOSITORY/tags/VER
 | Secret Name | Purpose | Where to Get |
 |------------|---------|--------------|
 | `CARGO_REGISTRY_TOKEN` or `CARGO_TOKEN` | Publish to crates.io | https://crates.io/settings/tokens |
-| `DOCKERHUB_TOKEN` | Publish to Docker Hub when `DOCKERHUB_IMAGE` is configured | https://app.docker.com/settings/personal-access-tokens |
+| `DOCKERHUB_TOKEN` | Publish to Docker Hub when `DOCKERHUB_IMAGE` is configured | https://docs.docker.com/security/access-tokens/ |
 | `GITHUB_TOKEN` | Create GitHub releases | Automatic (provided by GitHub) |
 
 ### Organization vs Repository Secrets
