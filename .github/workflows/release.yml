@@ -536,7 +536,8 @@ jobs:
       github.ref == 'refs/heads/main' &&
       needs.build.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Covers the crate build, publish, smoke test, and a cold Docker build.
+    timeout-minutes: 60
     env:
       DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -679,6 +680,8 @@ jobs:
           push: true
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Create GitHub Release
         if: |
@@ -721,7 +724,8 @@ jobs:
       github.event.inputs.release_mode == 'instant' &&
       needs.build.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Covers the crate build, publish, smoke test, and a cold Docker build.
+    timeout-minutes: 60
     env:
       DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -848,6 +852,8 @@ jobs:
           push: true
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Create GitHub Release
         if: |

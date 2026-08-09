@@ -11,6 +11,7 @@ mod desktop_release_resolve;
 #[allow(clippy::all, clippy::nursery, clippy::pedantic, dead_code)]
 #[path = "../../../scripts/detect-code-changes.rs"]
 mod detect_code_changes;
+mod issue_119;
 #[path = "../../../scripts/release-naming.rs"]
 mod release_naming;
 mod release_naming_tests;
