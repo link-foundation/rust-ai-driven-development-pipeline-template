@@ -19,6 +19,15 @@ fn security_workflow() -> String {
     .replace("\r\n", "\n")
 }
 
+fn links_workflow() -> String {
+    fs::read_to_string(format!(
+        "{}/.github/workflows/links.yml",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .expect("broken-link workflow should exist")
+    .replace("\r\n", "\n")
+}
+
 fn workflow_files() -> Vec<PathBuf> {
     let workflow_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".github/workflows");
     let mut paths = fs::read_dir(workflow_dir)
@@ -209,4 +218,43 @@ fn security_workflow_scans_rust_actions_and_pull_request_dependencies() {
     assert!(dependency_review.contains("uses: actions/dependency-review-action@v5"));
     assert!(dependency_review.contains("fail-on-severity: high"));
     assert!(dependency_review.contains("comment-summary-in-pr: on-failure"));
+}
+
+/// Regression test for issue #116:
+/// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/116>
+#[test]
+fn links_workflow_checks_documentation_with_archive_fallback() {
+    let workflow = links_workflow();
+    let header = workflow.split("\njobs:\n").next().unwrap();
+
+    assert!(header.contains("'**.md'"));
+    assert!(header.contains("'**.html'"));
+    assert!(header.contains("'.github/workflows/links.yml'"));
+    assert!(header.contains("'.lycheeignore'"));
+    assert!(header.contains("'scripts/check-web-archive.mjs'"));
+    assert!(header.contains("permissions:\n  contents: read"));
+
+    let link_checker = job_block(&workflow, "link-checker");
+    assert!(link_checker.contains("timeout-minutes: 10"));
+    assert!(link_checker.contains("cancel-in-progress: true"));
+    assert!(link_checker.contains("uses: lycheeverse/lychee-action@v2"));
+    assert!(link_checker.contains("--exclude-path docs/case-studies"));
+    assert!(!link_checker.contains("examples/universal-app/index.html"));
+    assert!(link_checker.contains("fail: false"));
+    assert!(link_checker.contains("output: lychee/out.md"));
+    assert!(link_checker.contains("node scripts/check-web-archive.mjs"));
+    assert!(link_checker.contains("steps.lychee.outputs.exit_code != 0"));
+    assert!(link_checker.contains("steps.webarchive.outputs.all_archived != 'true'"));
+
+    let archive_helper = fs::read_to_string(format!(
+        "{}/scripts/check-web-archive.mjs",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .expect("Wayback Machine fallback helper should exist");
+    assert!(archive_helper.contains("https://archive.org/wayback/available?url="));
+    assert!(archive_helper.contains("setOutput('all_archived'"));
+
+    let ignored_links = fs::read_to_string(format!("{}/.lycheeignore", env!("CARGO_MANIFEST_DIR")))
+        .expect("lychee ignore file should exist");
+    assert!(ignored_links.contains("https://docs\\.rs/example-sum-package-name"));
 }
