@@ -7,6 +7,7 @@ mod check_crate_size;
 mod check_file_size;
 #[path = "../../../scripts/create-github-release.rs"]
 mod create_github_release;
+mod desktop_release_resolve;
 #[allow(clippy::all, clippy::nursery, clippy::pedantic, dead_code)]
 #[path = "../../../scripts/detect-code-changes.rs"]
 mod detect_code_changes;
@@ -23,6 +24,7 @@ mod smoke_test_published_crate;
 mod version_and_commit;
 mod version_and_commit_behind_check;
 mod version_and_commit_tag_order;
+mod workflow_desktop_release;
 mod workflow_release;
 mod workflow_security;
 mod workspace_manifest_resolution;
