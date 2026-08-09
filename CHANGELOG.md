@@ -49,6 +49,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.20] - 2026-08-09
+
+### Added
+
+- Check Markdown and HTML links in CI, with Wayback Machine fallback guidance.
+
 ## [0.19.19] - 2026-08-09
 
 ### Added
