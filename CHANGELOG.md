@@ -48,6 +48,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.19] - 2026-08-09
+
+### Added
+
+- Add CodeQL analysis for Rust and GitHub Actions workflows, plus dependency review for pull requests.
+
 ## [0.19.18] - 2026-08-01
 
 ### Fixed
