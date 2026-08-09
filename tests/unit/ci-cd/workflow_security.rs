@@ -122,8 +122,8 @@ fn workflow_run_blocks_do_not_interpolate_untrusted_contexts() {
 }
 
 /// Write-capable jobs share a non-cancelling concurrency group, while superseded
-/// read-only checks are cancelled independently. This keeps a started publication
-/// intact without making newer checks wait behind the whole older workflow run.
+/// read-only checks are cancelled independently outside main. Main checks must not
+/// be cancelled, or the terminal status gate cannot distinguish them from timeouts.
 ///
 /// Regression test for issue #113:
 /// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/113>
@@ -154,16 +154,17 @@ fn release_workflow_separates_check_and_write_concurrency() {
         let expected_group =
             format!("group: ${{{{ github.workflow }}}}-${{{{ github.ref }}}}-{job_name}");
         assert!(
-            job.contains(&expected_group) && job.contains("cancel-in-progress: true"),
-            "read-only job {job_name} should cancel its superseded instance"
+            job.contains(&expected_group)
+                && job.contains("cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}"),
+            "read-only job {job_name} should cancel superseded instances only off main"
         );
     }
 
     let test = job_block(&workflow, "test");
     assert!(
         test.contains("group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}")
-            && test.contains("cancel-in-progress: true"),
-        "each test matrix lane should cancel only its own superseded instance"
+            && test.contains("cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}"),
+        "each test matrix lane should cancel only its own superseded instance off main"
     );
 
     let write_concurrency = concat!(
