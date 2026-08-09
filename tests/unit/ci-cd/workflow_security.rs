@@ -243,4 +243,12 @@ fn links_workflow_checks_documentation_with_archive_fallback() {
     assert!(link_checker.contains("node scripts/check-web-archive.mjs"));
     assert!(link_checker.contains("steps.lychee.outputs.exit_code != 0"));
     assert!(link_checker.contains("steps.webarchive.outputs.all_archived != 'true'"));
+
+    let archive_helper = fs::read_to_string(format!(
+        "{}/scripts/check-web-archive.mjs",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .expect("Wayback Machine fallback helper should exist");
+    assert!(archive_helper.contains("https://archive.org/wayback/available?url="));
+    assert!(archive_helper.contains("setOutput('all_archived'"));
 }
