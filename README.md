@@ -311,6 +311,23 @@ The `deploy-docs` job in `.github/workflows/release.yml` publishes `cargo doc --
 
 Before the first run on `main`, open **Settings → Pages** of the new repository and set **Source = GitHub Actions**. This is a one-time manual step and cannot be configured from a workflow. The `deploy-docs` job will then provision the Pages site on its first run.
 
+### Optional desktop releases
+
+Set the repository variable `DESKTOP_RELEASE_ENABLED` to `true` to enable
+`.github/workflows/desktop-release.yml`. Pull requests then dry-run a six-target
+matrix; successful releases publish the non-empty files produced by
+`scripts/package-desktop.sh`, SLSA provenance attestations, `SHA256SUMS.txt`, and
+`BUILD-PROVENANCE.txt`. The same Pages site exposes the latest assets at
+`/download/` using the GitHub Releases API.
+
+The included packaging hook builds the example Rust executable. Desktop
+applications should replace its implementation while retaining the
+`<target-label> <output-directory>` interface. For electron-builder 26 macOS
+ad-hoc builds, pass `-c.mac.identity=-`, retain `CSC_FOR_PULL_REQUEST=true` for
+the PR dry run, and emit an app with
+`Contents/_CodeSignature/CodeResources`; the workflow smoke test rejects an
+unwrapped `.app` directory.
+
 If this step is skipped, the first `deploy-docs` run fails on `actions/deploy-pages@v5` with `Error: Get Pages site failed.` / `Error: Failed to create deployment`. Flip the Pages source as described above and re-run the failed job; no workflow changes are required.
 
 ## Scripts Reference
