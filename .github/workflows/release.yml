@@ -52,7 +52,9 @@ env:
   DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
 
 # Concurrency is intentionally job-scoped. Each read-only job cancels only its
-# superseded counterpart for the same ref, including on main. Jobs that can
+# superseded counterpart for the same non-main ref. Main checks are not
+# cancelled, so a cancelled main job is always exceptional and the terminal
+# status gate can safely report it as a failure. Jobs that can
 # mutate repositories, registries, releases, or Pages all use one shared
 # concurrency group instead. A write that has started is never cancelled, and
 # GitHub retains at most one pending run for the group.
@@ -64,7 +66,7 @@ jobs:
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-detect-changes
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     if: github.event_name != 'workflow_dispatch'
     outputs:
       rs-changed: ${{ steps.changes.outputs.rs-changed }}
@@ -96,7 +98,7 @@ jobs:
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-changelog
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -123,7 +125,7 @@ jobs:
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-version-check
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v6
@@ -151,7 +153,7 @@ jobs:
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-secrets-scan
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -167,7 +169,7 @@ jobs:
     timeout-minutes: 30
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-fresh-merge
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -208,7 +210,7 @@ jobs:
     timeout-minutes: 60
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-docker-build
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
@@ -249,7 +251,7 @@ jobs:
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-cargo-lock
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes]
     if: |
       !cancelled() && (
@@ -280,7 +282,7 @@ jobs:
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-lint
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes, cargo-lock]
     # Note: !cancelled() is required because detect-changes is skipped on workflow_dispatch,
     # and without it, this job would also be skipped even though its condition includes workflow_dispatch.
@@ -366,7 +368,7 @@ jobs:
     timeout-minutes: 20
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes, cargo-lock]
     # Note: !cancelled() is required because detect-changes is skipped on workflow_dispatch,
     # and without it, this job would also be skipped even though its condition includes workflow_dispatch.
@@ -428,7 +430,7 @@ jobs:
     timeout-minutes: 15
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-coverage
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [detect-changes, cargo-lock]
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -486,7 +488,7 @@ jobs:
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-build
-      cancel-in-progress: true
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     needs: [lint, test]
     if: ${{ !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' }}
     steps:
@@ -995,3 +997,36 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+
+  # === PIPELINE STATUS ===
+  # GitHub reports jobs killed by timeout-minutes as cancelled. Observe every
+  # job so a timeout on main becomes a visible failure instead of a grey run.
+  pipeline-status:
+    name: Pipeline Status
+    needs:
+      - detect-changes
+      - changelog
+      - version-check
+      - secrets-scan
+      - fresh-merge
+      - docker-build
+      - cargo-lock
+      - lint
+      - test
+      - coverage
+      - build
+      - auto-release
+      - manual-release
+      - changelog-pr
+      - deploy-docs
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check aggregate pipeline status
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+          IS_MAIN: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+        run: bash scripts/check-pipeline-status.sh

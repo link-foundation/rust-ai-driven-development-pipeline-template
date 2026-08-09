@@ -179,6 +179,7 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("manual-release", 30),
         ("changelog-pr", 10),
         ("deploy-docs", 15),
+        ("pipeline-status", 5),
     ];
 
     let actual_jobs = workflow_job_names(&workflow);
@@ -721,7 +722,8 @@ fn rust_script_is_installed_through_the_retrying_locked_helper() {
 ///
 /// `always()` runs a job even when the workflow run is cancelled, which is the exact
 /// opposite of what `!cancelled()` expresses. Combining them makes `!cancelled()` dead
-/// weight while reading as if cancellation still stopped the job.
+/// weight while reading as if cancellation still stopped the job. The terminal status
+/// observer is the sole intentional exception: it must see cancelled dependencies.
 #[test]
 fn release_workflow_never_combines_always_with_not_cancelled() {
     let workflow = release_workflow();
@@ -733,9 +735,10 @@ fn release_workflow_never_combines_always_with_not_cancelled() {
     );
     assert_eq!(
         workflow.matches("always()").count(),
-        0,
-        "no job should run after the workflow run is cancelled"
+        1,
+        "only the terminal pipeline-status observer should use always()"
     );
+    assert!(job_block(&workflow, "pipeline-status").contains("if: always()"));
     assert!(
         workflow.contains("!cancelled()"),
         "conditional jobs should still be guarded by !cancelled()"
@@ -746,6 +749,89 @@ fn release_workflow_never_combines_always_with_not_cancelled() {
         !workflow.contains("if: !cancelled()"),
         "single-line !cancelled() guards must be wrapped in ${{ }} to stay valid YAML"
     );
+}
+
+/// Regression test for issue #118: every job must feed the terminal observer, or a
+/// timeout in an omitted job can still leave the workflow with a grey cancelled result.
+#[test]
+fn pipeline_status_gate_covers_every_other_job() {
+    let workflow = release_workflow();
+    let job_names = workflow_job_names(&workflow);
+    let gate = job_block(&workflow, "pipeline-status");
+
+    assert_eq!(job_names.last(), Some(&"pipeline-status"));
+    assert!(gate.contains("bash scripts/check-pipeline-status.sh"));
+    assert!(gate.contains("NEEDS_JSON: ${{ toJSON(needs) }}"));
+    assert!(gate.contains("github.ref == 'refs/heads/main' && github.event_name == 'push'"));
+
+    let needs = gate
+        .split("needs:")
+        .nth(1)
+        .expect("pipeline-status should declare needs")
+        .split("steps:")
+        .next()
+        .expect("pipeline-status needs block");
+    for job_name in job_names {
+        if job_name != "pipeline-status" {
+            assert!(
+                needs
+                    .lines()
+                    .any(|line| line.trim() == format!("- {job_name}")),
+                "pipeline-status does not need {job_name}"
+            );
+        }
+    }
+}
+
+/// Exercise the policy over every relevant upstream conclusion instead of only
+/// asserting on workflow text.
+#[cfg(unix)]
+#[test]
+fn pipeline_status_script_handles_all_conclusions() {
+    let cases = [
+        (
+            "success",
+            r#"{"test":{"result":"success"},"docs":{"result":"skipped"}}"#,
+            "true",
+            true,
+        ),
+        (
+            "failure",
+            r#"{"test":{"result":"failure"}}"#,
+            "false",
+            false,
+        ),
+        (
+            "cancelled on main",
+            r#"{"test":{"result":"cancelled"}}"#,
+            "true",
+            false,
+        ),
+        (
+            "cancelled off main",
+            r#"{"test":{"result":"cancelled"}}"#,
+            "false",
+            true,
+        ),
+    ];
+
+    for (name, needs_json, is_main, should_succeed) in cases {
+        let output = std::process::Command::new("bash")
+            .arg("scripts/check-pipeline-status.sh")
+            .current_dir(env!("CARGO_MANIFEST_DIR"))
+            .env("NEEDS_JSON", needs_json)
+            .env("IS_MAIN", is_main)
+            .output()
+            .expect("run pipeline status script");
+
+        assert_eq!(
+            output.status.success(),
+            should_succeed,
+            "{name}: stdout={} stderr={}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
 }
 
 /// Regression test for issue #100 (2): the Dockerfile must be exercised at
