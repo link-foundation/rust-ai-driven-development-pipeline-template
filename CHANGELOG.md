@@ -54,6 +54,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.25] - 2026-08-12
+
+### Fixed
+
+- Prevent the Web Archive helper from reporting successful Lychee redirects as broken links.
+
+### Fixed
+
+- Fail broken-link checks for dead live URLs even when Wayback snapshots are available.
+
 ## [0.19.24] - 2026-08-12
 
 ### Fixed
