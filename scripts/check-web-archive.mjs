@@ -24,6 +24,7 @@
  */
 
 import { readFileSync, appendFileSync, existsSync } from 'fs';
+import { pathToFileURL } from 'url';
 
 const WAYBACK_API = 'https://archive.org/wayback/available?url=';
 
@@ -48,7 +49,20 @@ function setOutput(name, value) {
  * @param {string} content - The markdown content from lychee
  * @returns {string[]} Array of broken URLs
  */
-function extractBrokenUrls(content) {
+export function extractBrokenUrls(content) {
+  const errorsHeading = /^## Errors per input\s*$/m;
+  const errorsMatch = errorsHeading.exec(content);
+  let errorContent = content;
+
+  if (errorsMatch) {
+    const sectionStart = errorsMatch.index + errorsMatch[0].length;
+    const nextHeading = /^## (?!#).*$/m.exec(content.slice(sectionStart));
+    const sectionEnd = nextHeading
+      ? sectionStart + nextHeading.index
+      : content.length;
+    errorContent = content.slice(sectionStart, sectionEnd);
+  }
+
   const urls = [];
 
   // Match lines with error status codes or ERROR markers followed by URLs
@@ -57,7 +71,7 @@ function extractBrokenUrls(content) {
     /\[(?:4\d\d|5\d\d|ERROR|TIMEOUT|UNKNOWN)\]\s+(https?:\/\/[^\s)]+)/gi;
   let match;
 
-  while ((match = urlPattern.exec(content)) !== null) {
+  while ((match = urlPattern.exec(errorContent)) !== null) {
     const url = match[1].trim();
     if (url && !urls.includes(url)) {
       urls.push(url);
@@ -69,7 +83,7 @@ function extractBrokenUrls(content) {
   const linePattern = /^\s*(?:\*|-)\s+.*?(https?:\/\/[^\s|)>\]]+)/gm;
   let lineMatch;
 
-  while ((lineMatch = linePattern.exec(content)) !== null) {
+  while ((lineMatch = linePattern.exec(errorContent)) !== null) {
     const url = lineMatch[1].trim().replace(/[.,;!?]+$/, '');
     if (url && !urls.includes(url) && url.startsWith('http')) {
       urls.push(url);
@@ -257,7 +271,12 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error('Unexpected error:', error);
-  process.exit(1);
-});
+if (
+  process.argv[1] &&
+  pathToFileURL(process.argv[1]).href === import.meta.url
+) {
+  main().catch((error) => {
+    console.error('Unexpected error:', error);
+    process.exit(1);
+  });
+}

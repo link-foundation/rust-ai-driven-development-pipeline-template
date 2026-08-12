@@ -10,6 +10,7 @@ on:
       - '.github/workflows/links.yml'
       - '.lycheeignore'
       - 'scripts/check-web-archive.mjs'
+      - 'scripts/check-web-archive.test.mjs'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -18,6 +19,7 @@ on:
       - '.github/workflows/links.yml'
       - '.lycheeignore'
       - 'scripts/check-web-archive.mjs'
+      - 'scripts/check-web-archive.test.mjs'
   workflow_dispatch:
 
 # Least-privilege default; jobs escalate individually when needed.
@@ -45,6 +47,9 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
+
+      - name: Test Web Archive report parser
+        run: node --test scripts/check-web-archive.test.mjs
 
       - name: Check links with lychee
         id: lychee
