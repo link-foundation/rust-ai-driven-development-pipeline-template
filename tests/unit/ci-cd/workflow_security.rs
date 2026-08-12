@@ -233,12 +233,14 @@ fn links_workflow_checks_documentation_with_archive_fallback() {
     assert!(header.contains("'.github/workflows/links.yml'"));
     assert!(header.contains("'.lycheeignore'"));
     assert!(header.contains("'scripts/check-web-archive.mjs'"));
+    assert!(header.contains("'scripts/check-web-archive.test.mjs'"));
     assert!(header.contains("permissions:\n  contents: read"));
 
     let link_checker = job_block(&workflow, "link-checker");
     assert!(link_checker.contains("timeout-minutes: 10"));
     assert!(link_checker.contains("cancel-in-progress: true"));
     assert!(link_checker.contains("uses: lycheeverse/lychee-action@v2"));
+    assert!(link_checker.contains("node --test scripts/check-web-archive.test.mjs"));
     assert!(link_checker.contains("--exclude-path docs/case-studies"));
     assert!(!link_checker.contains("examples/universal-app/index.html"));
     assert!(link_checker.contains("fail: false"));
