@@ -177,6 +177,8 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("build", 10),
         ("auto-release", 60),
         ("manual-release", 60),
+        ("docker-publish", 60),
+        ("docker-merge-manifest", 10),
         ("changelog-pr", 10),
         ("deploy-docs", 15),
         ("pipeline-status", 5),
@@ -429,18 +431,12 @@ fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible()
     assert_eq!(
         workflow.matches("docker/login-action@v4").count(),
         2,
-        "auto and manual release jobs should log in to Docker Hub when configured"
-    );
-    assert_eq!(
-        workflow.matches("docker/metadata-action@v6").count(),
-        2,
-        "auto and manual release jobs should derive Docker tags for Docker Hub"
+        "architecture publication and manifest merging should log in to Docker Hub"
     );
     assert_eq!(
         workflow.matches("docker/build-push-action@v7").count(),
-        3,
-        "auto and manual release jobs should publish Docker Hub images when configured, \
-         plus the pull-request docker-build check"
+        2,
+        "the workflow should have one matrix publication step plus the pull-request build check"
     );
     assert!(
         workflow.contains("password: ${{ env.DOCKERHUB_TOKEN }}"),
@@ -454,16 +450,13 @@ fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible()
     let auto_wait = auto_release
         .find("- name: Wait for Crate availability on Crates.io")
         .expect("auto release should wait for the crate");
-    let auto_docker = auto_release
-        .find("- name: Publish Docker image to Docker Hub")
-        .expect("auto release should publish the Docker image");
     let auto_github_release = auto_release
         .find("- name: Create GitHub Release")
         .expect("auto release should create a GitHub release");
 
     assert!(
-        auto_publish < auto_wait && auto_wait < auto_docker && auto_docker < auto_github_release,
-        "auto release should publish crates.io first, then Docker Hub, then GitHub release"
+        auto_publish < auto_wait && auto_wait < auto_github_release,
+        "auto release should publish and verify crates.io before creating the GitHub release"
     );
 
     let manual_release = job_block(&workflow, "manual-release");
@@ -473,19 +466,18 @@ fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible()
     let manual_wait = manual_release
         .find("- name: Wait for Crate availability on Crates.io")
         .expect("manual release should wait for the crate");
-    let manual_docker = manual_release
-        .find("- name: Publish Docker image to Docker Hub")
-        .expect("manual release should publish the Docker image");
     let manual_github_release = manual_release
         .find("- name: Create GitHub Release")
         .expect("manual release should create a GitHub release");
 
     assert!(
-        manual_publish < manual_wait
-            && manual_wait < manual_docker
-            && manual_docker < manual_github_release,
-        "manual release should publish crates.io first, then Docker Hub, then GitHub release"
+        manual_publish < manual_wait && manual_wait < manual_github_release,
+        "manual release should publish and verify crates.io before creating the GitHub release"
     );
+
+    let docker_publish = job_block(&workflow, "docker-publish");
+    assert!(docker_publish.contains("needs: [auto-release, manual-release]"));
+    assert!(docker_publish.contains("push-by-digest=true"));
 }
 
 #[test]
