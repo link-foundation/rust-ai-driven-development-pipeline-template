@@ -526,6 +526,9 @@ jobs:
   auto-release:
     name: Auto Release
     needs: [lint, test, build]
+    outputs:
+      docker_enabled: ${{ steps.dockerhub.outputs.enabled }}
+      release_version: ${{ steps.release-metadata.outputs.version }}
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
@@ -636,52 +639,22 @@ jobs:
             exit 0
           fi
 
-          if [ -z "$DOCKERHUB_USERNAME" ] || [ -z "$DOCKERHUB_TOKEN" ]; then
-            echo "::error::Docker Hub publishing requires DOCKERHUB_USERNAME and DOCKERHUB_TOKEN"
-            echo "Set DOCKERHUB_USERNAME as a repository variable or secret, and DOCKERHUB_TOKEN as a secret."
-            exit 1
-          fi
-
           echo "enabled=true" >> "$GITHUB_OUTPUT"
           echo "docker_hub_url=https://hub.docker.com/r/${DOCKERHUB_IMAGE}" >> "$GITHUB_OUTPUT"
 
-      - name: Log in to Docker Hub
-        if: steps.dockerhub.outputs.enabled == 'true'
-        uses: docker/login-action@v4
-        with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ env.DOCKERHUB_TOKEN }}
-
-      # Resilient buildx boot: pre-pull the pinned BuildKit image with retries
-      # and a pull-through registry-mirror fallback so a transient Docker Hub
-      # outage at boot does not take the publish job down. See issue #69 and
-      # docs/case-studies/issue-69/README.md.
-      - name: Set up Docker Buildx
-        if: steps.dockerhub.outputs.enabled == 'true'
-        uses: ./.github/actions/setup-buildx-resilient
-
-      - name: Extract Docker metadata
-        if: steps.dockerhub.outputs.enabled == 'true'
-        id: docker-meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.DOCKERHUB_IMAGE }}
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ steps.current_version.outputs.version }}
-          labels: |
-            org.opencontainers.image.version=${{ steps.current_version.outputs.version }}
-
-      - name: Publish Docker image to Docker Hub
-        if: steps.dockerhub.outputs.enabled == 'true'
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.docker-meta.outputs.tags }}
-          labels: ${{ steps.docker-meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Resolve release metadata
+        id: release-metadata
+        if: |
+          steps.check.outputs.should_release == 'true' && (
+            steps.check.outputs.crate_published == 'true' ||
+            steps.publish-crate.outputs.publish_result == 'success'
+          )
+        run: |
+          release_version="${{ steps.version.outputs.new_version }}"
+          if [ -z "$release_version" ]; then
+            release_version="${{ steps.current_version.outputs.version }}"
+          fi
+          echo "version=$release_version" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         if: |
@@ -693,14 +666,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_HUB_URL: ${{ steps.dockerhub.outputs.docker_hub_url }}
         run: |
-          # Use new_version from version-and-commit when available (tag-checked), else fall back to Cargo.toml version
-          RELEASE_VERSION="${{ steps.version.outputs.new_version }}"
-          if [ -z "$RELEASE_VERSION" ]; then
-            RELEASE_VERSION="${{ steps.current_version.outputs.version }}"
-          fi
-
           release_args=(
-            --release-version "$RELEASE_VERSION"
+            --release-version "${{ steps.release-metadata.outputs.version }}"
             --repository "${{ github.repository }}"
           )
           if [ -n "$DOCKER_HUB_URL" ]; then
@@ -713,6 +680,9 @@ jobs:
   manual-release:
     name: Instant Release
     needs: [lint, test, build]
+    outputs:
+      docker_enabled: ${{ steps.dockerhub.outputs.enabled }}
+      release_version: ${{ steps.version.outputs.new_version }}
     concurrency:
       group: ${{ github.workflow }}-main-write
       cancel-in-progress: false
@@ -808,52 +778,8 @@ jobs:
             exit 0
           fi
 
-          if [ -z "$DOCKERHUB_USERNAME" ] || [ -z "$DOCKERHUB_TOKEN" ]; then
-            echo "::error::Docker Hub publishing requires DOCKERHUB_USERNAME and DOCKERHUB_TOKEN"
-            echo "Set DOCKERHUB_USERNAME as a repository variable or secret, and DOCKERHUB_TOKEN as a secret."
-            exit 1
-          fi
-
           echo "enabled=true" >> "$GITHUB_OUTPUT"
           echo "docker_hub_url=https://hub.docker.com/r/${DOCKERHUB_IMAGE}" >> "$GITHUB_OUTPUT"
-
-      - name: Log in to Docker Hub
-        if: steps.dockerhub.outputs.enabled == 'true'
-        uses: docker/login-action@v4
-        with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ env.DOCKERHUB_TOKEN }}
-
-      # Resilient buildx boot: pre-pull the pinned BuildKit image with retries
-      # and a pull-through registry-mirror fallback so a transient Docker Hub
-      # outage at boot does not take the publish job down. See issue #69 and
-      # docs/case-studies/issue-69/README.md.
-      - name: Set up Docker Buildx
-        if: steps.dockerhub.outputs.enabled == 'true'
-        uses: ./.github/actions/setup-buildx-resilient
-
-      - name: Extract Docker metadata
-        if: steps.dockerhub.outputs.enabled == 'true'
-        id: docker-meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.DOCKERHUB_IMAGE }}
-          tags: |
-            type=raw,value=latest
-            type=raw,value=${{ steps.version.outputs.new_version }}
-          labels: |
-            org.opencontainers.image.version=${{ steps.version.outputs.new_version }}
-
-      - name: Publish Docker image to Docker Hub
-        if: steps.dockerhub.outputs.enabled == 'true'
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.docker-meta.outputs.tags }}
-          labels: ${{ steps.docker-meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Create GitHub Release
         if: |
@@ -872,6 +798,112 @@ jobs:
             release_args+=(--docker-hub-url "$DOCKER_HUB_URL")
           fi
           rust-script scripts/create-github-release.rs "${release_args[@]}"
+
+  # Build each architecture on a native runner. Publishing by digest lets both
+  # builds run in parallel without racing to update a shared image tag.
+  docker-publish:
+    name: Publish Docker / ${{ matrix.platform }}
+    needs: [auto-release, manual-release]
+    if: |
+      !cancelled() &&
+      (needs.auto-release.result == 'success' || needs.manual-release.result == 'success') &&
+      (needs.auto-release.outputs.docker_enabled == 'true' || needs.manual-release.outputs.docker_enabled == 'true')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      RELEASE_VERSION: ${{ needs.auto-release.outputs.release_version || needs.manual-release.outputs.release_version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: v${{ env.RELEASE_VERSION }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: ./.github/actions/setup-buildx-resilient
+
+      - name: Build and push architecture digest
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          labels: org.opencontainers.image.version=${{ env.RELEASE_VERSION }}
+          outputs: type=image,name=${{ env.DOCKERHUB_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v6
+        with:
+          name: docker-digest-${{ strategy.job-index }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  docker-merge-manifest:
+    name: Publish Docker manifest
+    needs: [auto-release, manual-release, docker-publish]
+    if: |
+      !cancelled() &&
+      needs.docker-publish.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      RELEASE_VERSION: ${{ needs.auto-release.outputs.release_version || needs.manual-release.outputs.release_version }}
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v7
+        with:
+          path: /tmp/digests
+          pattern: docker-digest-*
+          merge-multiple: true
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Create multi-architecture manifest
+        working-directory: /tmp/digests
+        run: |
+          mapfile -t digests < <(printf '${DOCKERHUB_IMAGE}@sha256:%s\n' *)
+          docker buildx imagetools create \
+            --tag "${DOCKERHUB_IMAGE}:latest" \
+            --tag "${DOCKERHUB_IMAGE}:${RELEASE_VERSION}" \
+            "${digests[@]}"
+
+      - name: Verify manifest platforms
+        run: |
+          manifest="$(docker buildx imagetools inspect "${DOCKERHUB_IMAGE}:${RELEASE_VERSION}")"
+          grep -F 'linux/amd64' <<< "$manifest"
+          grep -F 'linux/arm64' <<< "$manifest"
 
   # === MANUAL CHANGELOG PR ===
   changelog-pr:
@@ -1023,6 +1055,8 @@ jobs:
       - build
       - auto-release
       - manual-release
+      - docker-publish
+      - docker-merge-manifest
       - changelog-pr
       - deploy-docs
     if: always()
