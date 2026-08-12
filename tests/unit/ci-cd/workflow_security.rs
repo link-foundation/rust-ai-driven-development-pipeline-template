@@ -245,7 +245,6 @@ fn links_workflow_checks_documentation_with_archive_fallback() {
     assert!(link_checker.contains("output: lychee/out.md"));
     assert!(link_checker.contains("node scripts/check-web-archive.mjs"));
     assert!(link_checker.contains("steps.lychee.outputs.exit_code != 0"));
-    assert!(link_checker.contains("steps.webarchive.outputs.all_archived != 'true'"));
 
     let archive_helper = fs::read_to_string(format!(
         "{}/scripts/check-web-archive.mjs",
@@ -258,4 +257,22 @@ fn links_workflow_checks_documentation_with_archive_fallback() {
     let ignored_links = fs::read_to_string(format!("{}/.lycheeignore", env!("CARGO_MANIFEST_DIR")))
         .expect("lychee ignore file should exist");
     assert!(ignored_links.contains("https://docs\\.rs/example-sum-package-name"));
+}
+
+/// Regression test for issue #125:
+/// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/125>
+///
+/// An available archive is replacement guidance; it does not repair the broken
+/// live link in the repository. Every nonzero Lychee result must therefore fail.
+#[test]
+fn links_workflow_fails_for_every_broken_live_link() {
+    let workflow = links_workflow();
+    let link_checker = job_block(&workflow, "link-checker");
+
+    assert!(link_checker.contains(
+        "- name: Fail if broken links were found\n        if: always() && steps.lychee.outputs.exit_code != 0"
+    ));
+    assert!(!link_checker.contains(
+        "steps.lychee.outputs.exit_code != 0 && steps.webarchive.outputs.all_archived != 'true'"
+    ));
 }
