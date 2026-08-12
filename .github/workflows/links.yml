@@ -80,18 +80,19 @@ jobs:
         env:
           LYCHEE_OUTPUT: lychee/out.md
 
-      - name: Fail if broken links found and no web archive fallback
-        if: steps.lychee.outputs.exit_code != 0 && steps.webarchive.outputs.all_archived != 'true'
+      - name: Fail if broken links were found
+        if: always() && steps.lychee.outputs.exit_code != 0
         run: |
-          echo "::error::Broken links were detected with no Web Archive fallback available."
+          echo "::error::Broken live links were detected."
           echo ""
           echo "What happened:"
           echo "  lychee found one or more broken links in the *.md and *.html files of this repository."
-          echo "  The Web Archive (Wayback Machine) check found no archived versions for some of them."
+          echo "  A Web Archive snapshot is a suggested replacement; it does not fix the broken source link."
           echo ""
           echo "How to fix:"
           echo "  1. Review the 'Check links with lychee' step above for a full list of broken links."
-          echo "  2. For links marked with a '::notice::' annotation above, a Web Archive version exists."
+          echo "  2. Review the Web Archive step when it ran. For links marked with a '::notice::' annotation,"
+          echo "     a Web Archive version exists."
           echo "     Replace those broken links with the suggested archive.org URL."
           echo "  3. For links with no archive version, either:"
           echo "     a. Find an updated URL that points to the same or equivalent content."
