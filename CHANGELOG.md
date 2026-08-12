@@ -53,6 +53,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.24] - 2026-08-12
+
+### Fixed
+- Publish native `linux/amd64` and `linux/arm64` Docker images without delaying the GitHub Release on registry work.
+
 ## [0.19.23] - 2026-08-09
 
 ### Fixed
