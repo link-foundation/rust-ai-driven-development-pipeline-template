@@ -12,6 +12,7 @@ mod desktop_release_resolve;
 #[path = "../../../scripts/detect-code-changes.rs"]
 mod detect_code_changes;
 mod issue_119;
+mod issue_127;
 #[path = "../../../scripts/release-naming.rs"]
 mod release_naming;
 mod release_naming_tests;
