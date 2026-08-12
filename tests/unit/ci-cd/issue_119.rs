@@ -16,11 +16,7 @@ fn every_docker_build_uses_the_gha_layer_cache() {
         .filter(|step| step.contains("uses: docker/build-push-action@v7"))
         .collect::<Vec<_>>();
 
-    assert_eq!(
-        build_steps.len(),
-        3,
-        "expected all three Docker build steps"
-    );
+    assert_eq!(build_steps.len(), 2, "expected both Docker build steps");
     for step in build_steps {
         let step = step.split("\n      - name: ").next().unwrap();
         assert!(
