@@ -12,6 +12,23 @@ permissions:
   contents: read
 
 jobs:
+  cargo-audit:
+    name: Cargo audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-cargo-audit
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit@0.22.2
+
+      - name: Audit committed Cargo.lock
+        run: cargo audit --file Cargo.lock
+
   codeql:
     name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-latest
