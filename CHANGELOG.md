@@ -56,6 +56,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.27] - 2026-08-16
+
+### Added
+
+- Audit the committed `Cargo.lock` for RustSec advisories on pull requests, pushes to `main`, and weekly scheduled security runs.
+
 ## [0.19.26] - 2026-08-16
 
 ### Fixed
