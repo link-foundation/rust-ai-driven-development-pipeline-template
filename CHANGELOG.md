@@ -55,6 +55,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.19.26] - 2026-08-16
+
+### Fixed
+
+- Suppress the reviewed Node.js `DEP0005` warning emitted by `actions/download-artifact@v8` without hiding unrelated warnings.
+
 ## [0.19.25] - 2026-08-12
 
 ### Fixed
