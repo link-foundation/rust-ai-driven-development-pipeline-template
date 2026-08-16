@@ -221,6 +221,32 @@ fn security_workflow_scans_rust_actions_and_pull_request_dependencies() {
     assert!(dependency_review.contains("comment-summary-in-pr: on-failure"));
 }
 
+/// Regression test for issue #132:
+/// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/132>
+///
+/// Dependency review only examines changes introduced by a pull request. A separate
+/// audit of the committed lockfile is required so advisories published after a
+/// dependency was merged also fail pushes and scheduled security runs.
+#[test]
+fn security_workflow_audits_the_committed_cargo_lock() {
+    let workflow = security_workflow();
+    let header = workflow.split("\njobs:\n").next().unwrap();
+    let audit = job_block(&workflow, "cargo-audit");
+
+    assert!(header.contains("push:\n    branches: [main]"));
+    assert!(header.contains("pull_request:"));
+    assert!(header.contains("schedule:"));
+    assert!(audit.contains("name: Cargo audit"));
+    assert!(audit.contains("timeout-minutes: 10"));
+    assert!(audit.contains("uses: actions/checkout@v6"));
+    assert!(audit.contains("tool: cargo-audit@0.22.2"));
+    assert!(audit.contains("run: cargo audit --file Cargo.lock"));
+    assert!(
+        !audit.contains("if: github.event_name == 'pull_request'"),
+        "the lockfile audit must also run on pushes and scheduled events"
+    );
+}
+
 /// Regression test for issue #116:
 /// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/116>
 #[test]
