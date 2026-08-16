@@ -125,10 +125,14 @@ jobs:
       attestations: write
     steps:
       - uses: actions/download-artifact@v8
+        env:
+          NODE_OPTIONS: --disable-warning=DEP0005
         with:
           pattern: desktop-assets-*
           path: release-assets
       - uses: actions/download-artifact@v8
+        env:
+          NODE_OPTIONS: --disable-warning=DEP0005
         with:
           pattern: desktop-checksums-*
           path: checksums

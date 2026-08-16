@@ -10,6 +10,31 @@ fn workflow() -> String {
 }
 
 #[test]
+fn download_artifact_v8_steps_suppress_only_the_reviewed_buffer_warning() {
+    let workflow = workflow();
+    let download_steps = workflow
+        .split("\n      - ")
+        .filter(|step| step.contains("uses: actions/download-artifact@v8"))
+        .collect::<Vec<_>>();
+
+    assert_eq!(
+        download_steps.len(),
+        2,
+        "expected both desktop artifact download steps"
+    );
+    for step in download_steps {
+        assert!(
+            step.contains("env:\n          NODE_OPTIONS: --disable-warning=DEP0005"),
+            "every download-artifact v8 step must suppress only DEP0005"
+        );
+        assert!(
+            !step.contains("--no-warnings"),
+            "download steps must not hide unrelated Node.js warnings"
+        );
+    }
+}
+
+#[test]
 fn desktop_release_is_opt_in_and_runs_a_six_target_dry_run() {
     let workflow = workflow();
     assert!(workflow.contains("vars.DESKTOP_RELEASE_ENABLED == 'true'"));
