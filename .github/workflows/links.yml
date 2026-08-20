@@ -11,6 +11,7 @@ on:
       - '.lycheeignore'
       - 'scripts/check-web-archive.mjs'
       - 'scripts/check-web-archive.test.mjs'
+      - 'scripts/fixtures/lychee-report.md'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
@@ -20,6 +21,7 @@ on:
       - '.lycheeignore'
       - 'scripts/check-web-archive.mjs'
       - 'scripts/check-web-archive.test.mjs'
+      - 'scripts/fixtures/lychee-report.md'
   workflow_dispatch:
 
 # Least-privilege default; jobs escalate individually when needed.
@@ -67,6 +69,7 @@ jobs:
             --max-retries 3
             --timeout 30
             --exclude-path docs/case-studies
+            --exclude-path scripts/fixtures
             './**/*.md'
             './**/*.html'
           # Don't fail the workflow immediately - we want to check web archive first

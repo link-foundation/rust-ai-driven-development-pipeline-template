@@ -42,55 +42,84 @@ function setOutput(name, value) {
 }
 
 /**
- * Extract broken URLs from lychee markdown output
+ * Extract the "Errors per input" section of a lychee markdown report.
+ *
+ * Everything after it - most importantly "## Redirects per input" - describes
+ * links that resolved successfully, so scanning the whole report would make
+ * redirected links look broken. Legacy reports that have no such heading are
+ * scanned in full; the entry pattern below only matches bullets that carry a
+ * status marker, so redirect lines cannot leak in.
+ * @param {string} content - The markdown content from lychee
+ * @returns {string} The errors section, or the whole report when there is none
+ */
+export function extractErrorsSection(content) {
+  const lines = content.split('\n');
+  const start = lines.findIndex((line) =>
+    /^#+\s+Errors per input\s*$/.test(line)
+  );
+  if (start === -1) {
+    return content;
+  }
+  const heading = /^(#+)\s/.exec(lines[start])[1].length;
+  const section = [];
+  for (const line of lines.slice(start + 1)) {
+    const next = /^(#+)\s/.exec(line);
+    if (next && next[1].length <= heading) {
+      break; // a sibling or parent heading ends the errors section
+    }
+    section.push(line);
+  }
+  return section.join('\n');
+}
+
+/**
+ * Extract broken links from lychee markdown output.
  * Lychee markdown format includes lines like:
- *   * [404] https://example.com/broken-link
- *   * [ERROR] https://another-broken.com
+ *   * [404] <https://example.com/broken-link> (at 1:1) | Rejected status code: 404
+ *   * [ERROR] <file:///repo/missing.yml> (at 15:12) | File not found
+ *   * [ERROR] <error:> (at 10:49) | Cannot resolve root-relative link '/favicon.svg'
+ * @param {string} content - The markdown content from lychee
+ * @returns {{urls: string[], others: string[]}} Broken http(s) URLs, and broken
+ *   links that cannot be looked up in the Wayback Machine (missing local files,
+ *   unresolvable root-relative links, ...)
+ */
+export function extractBrokenLinks(content) {
+  const section = extractErrorsSection(content);
+  const urls = [];
+  const others = [];
+
+  // One bullet per broken link; the status marker is always present. Matching
+  // the marker instead of an `https?://` prefix is what keeps non-HTTP errors
+  // from being silently dropped.
+  const entryPattern =
+    /^\s*(?:\*|-)\s+\[(?:4\d\d|5\d\d|ERROR|TIMEOUT|UNKNOWN)\]\s+<?([^\s>|)]+)>?/gim;
+  let match;
+
+  while ((match = entryPattern.exec(section)) !== null) {
+    const link = match[1].trim().replace(/[.,;!?]+$/, '');
+    if (!link) {
+      continue;
+    }
+    if (/^https?:\/\//i.test(link)) {
+      if (!urls.includes(link)) {
+        urls.push(link);
+      }
+    } else if (!others.includes(link)) {
+      others.push(link);
+    }
+  }
+
+  return { urls, others };
+}
+
+/**
+ * Extract broken http(s) URLs from lychee markdown output.
+ * Kept for callers that only care about links the Wayback Machine can answer.
  * @param {string} content - The markdown content from lychee
  * @returns {string[]} Array of broken URLs
  */
 export function extractBrokenUrls(content) {
-  const errorsHeading = /^## Errors per input\s*$/m;
-  const errorsMatch = errorsHeading.exec(content);
-  let errorContent = content;
-
-  if (errorsMatch) {
-    const sectionStart = errorsMatch.index + errorsMatch[0].length;
-    const nextHeading = /^## (?!#).*$/m.exec(content.slice(sectionStart));
-    const sectionEnd = nextHeading
-      ? sectionStart + nextHeading.index
-      : content.length;
-    errorContent = content.slice(sectionStart, sectionEnd);
-  }
-
-  const urls = [];
-
-  // Match lines with error status codes or ERROR markers followed by URLs
-  // Lychee output format: [STATUS_CODE] URL or bullet points with links
-  const urlPattern =
-    /\[(?:4\d\d|5\d\d|ERROR|TIMEOUT|UNKNOWN)\]\s+(https?:\/\/[^\s)]+)/gi;
-  let match;
-
-  while ((match = urlPattern.exec(errorContent)) !== null) {
-    const url = match[1].trim();
-    if (url && !urls.includes(url)) {
-      urls.push(url);
-    }
-  }
-
-  // Also match plain URL lines in broken sections
-  // Lychee sometimes outputs: `[ERROR] url | description`
-  const linePattern = /^\s*(?:\*|-)\s+.*?(https?:\/\/[^\s|)>\]]+)/gm;
-  let lineMatch;
-
-  while ((lineMatch = linePattern.exec(errorContent)) !== null) {
-    const url = lineMatch[1].trim().replace(/[.,;!?]+$/, '');
-    if (url && !urls.includes(url) && url.startsWith('http')) {
-      urls.push(url);
-    }
-  }
-
-  return urls;
+  return extractBrokenLinks(content).urls;
 }
 
 /**
@@ -173,12 +202,35 @@ async function main() {
   }
 
   const content = readFileSync(lycheeOutput, 'utf-8');
-  const brokenUrls = extractBrokenUrls(content);
+  const { urls: brokenUrls, others: unarchivableLinks } =
+    extractBrokenLinks(content);
+
+  if (unarchivableLinks.length > 0) {
+    // Missing local files and unresolvable root-relative links have no Wayback
+    // equivalent. Reporting `all_archived=true` for them turned a real lychee
+    // failure into a green run (issue #136).
+    console.log(
+      `\u2717 ${unarchivableLinks.length} broken link(s) cannot be checked against the Web Archive:`
+    );
+    for (const link of unarchivableLinks) {
+      console.log(`  ${link}`);
+      console.log(
+        '::error title=Broken link - not recoverable from the Web Archive::' +
+          `Broken link detected: ${link}\n` +
+          'It is not an http(s) URL (missing file, unresolvable relative link, ...),\n' +
+          'so the Wayback Machine cannot provide a fallback.\n' +
+          'How to fix: correct the path, restore the missing file, or pass --root-dir\n' +
+          'to lychee so root-relative links resolve.'
+      );
+    }
+    console.log('');
+  }
 
   if (brokenUrls.length === 0) {
     console.log('No broken URLs found in lychee output.');
-    setOutput('all_archived', 'true');
-    process.exit(0);
+    const clean = unarchivableLinks.length === 0;
+    setOutput('all_archived', clean ? 'true' : 'false');
+    process.exit(clean ? 0 : 1);
   }
 
   console.log(
@@ -252,7 +304,8 @@ async function main() {
     }
   }
 
-  const allArchived = withoutArchive.length === 0;
+  const allArchived =
+    withoutArchive.length === 0 && unarchivableLinks.length === 0;
   setOutput('all_archived', allArchived ? 'true' : 'false');
 
   if (!allArchived) {
