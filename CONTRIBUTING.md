@@ -85,7 +85,23 @@ Thank you for your interest in contributing! This document provides guidelines a
    cargo test test_name
    ```
 
-   CI caps each test-matrix job at 10 minutes. Rust's built-in `cargo test` runner does not provide a portable global per-test timeout, so wrap long-running network, IO, or async tests with explicit test-level deadlines. If a repository adopts `cargo nextest`, configure runner deadlines with options such as `--slow-timeout` and `--leak-timeout`.
+   Rust's built-in `cargo test` runner does not provide a portable global per-test timeout, so wrap long-running network, IO, or async tests with explicit test-level deadlines. If a repository adopts `cargo nextest`, configure runner deadlines with options such as `--slow-timeout` and `--leak-timeout`.
+
+   **`timeout-minutes` is a backstop, never the deadline.** GitHub reports a job killed by `timeout-minutes` as `cancelled`, not `failed`. On a pull request that is indistinguishable from a run superseded by `cancel-in-progress`, so a genuine timeout produces no failure anywhere. Long steps therefore own their own deadline:
+
+   ```yaml
+   test:
+     timeout-minutes: 30            # backstop
+     steps:
+       - name: Run tests
+         env:
+           TEST_BUDGET_SECONDS: 900  # <= 70% of the cap
+         run: >-
+           bash scripts/run-with-budget-warning.sh "$TEST_BUDGET_SECONDS" "Test suite"
+           cargo test --all-features
+   ```
+
+   `scripts/run-with-budget-warning.sh` warns at 70% of the budget, terminates the command's whole process group when the budget expires, and exits `124` with a `::error` annotation naming the budget -- so the job reports `failure` with a message you can act on. The budget must stay at or below `MAX_BUDGET_SHARE_PERCENT` (70%) of `timeout-minutes`, because the remainder pays for unbudgeted setup: checkout, toolchain install, cache restore. `tests/unit/ci-cd/issue_135.rs` enforces that invariant, so raising a budget means raising `timeout-minutes` too.
 
 5. **Add a changelog fragment**
 

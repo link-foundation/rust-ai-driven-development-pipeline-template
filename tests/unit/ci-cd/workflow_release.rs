@@ -172,7 +172,9 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("docker-build", 60),
         ("cargo-lock", 5),
         ("lint", 10),
-        ("test", 20),
+        // Raised from 20 so the step budgets in the test job stay at or below the
+        // 70% share the invariant in issue_135.rs enforces. See issue #135.
+        ("test", 30),
         ("coverage", 15),
         ("build", 10),
         ("auto-release", 60),

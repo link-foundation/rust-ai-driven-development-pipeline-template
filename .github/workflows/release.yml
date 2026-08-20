@@ -196,7 +196,10 @@ jobs:
       - name: Simulate fresh merge with base branch
         env:
           GITHUB_BASE_REF: ${{ github.base_ref }}
-        run: bash scripts/simulate-fresh-merge.sh
+          FRESH_MERGE_BUDGET_SECONDS: 1200
+        run: >-
+          bash scripts/run-with-budget-warning.sh "$FRESH_MERGE_BUDGET_SECONDS" "Fresh merge simulation"
+          bash scripts/simulate-fresh-merge.sh
 
   # === DOCKER IMAGE BUILD CHECK ===
   # Builds the image at pull-request stage without pushing, so a Dockerfile
@@ -207,6 +210,10 @@ jobs:
     name: Docker Image Build Check
     runs-on: ubuntu-latest
     # The image compiles the crate from scratch; 30 minutes is not enough cold.
+    # The build step is a `uses:` action, so it cannot be wrapped in
+    # scripts/run-with-budget-warning.sh; docker/build-push-action owns its own
+    # process and there is no shell command to budget. This job is therefore an
+    # accepted exemption from the budget invariant (see tests/unit/ci-cd/issue_135.rs).
     timeout-minutes: 60
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-docker-build
@@ -365,7 +372,9 @@ jobs:
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    # Backstop only. The budgeted steps below own the real deadline; see
+    # scripts/run-with-budget-warning.sh for why that distinction matters.
+    timeout-minutes: 30
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -417,10 +426,20 @@ jobs:
             ${{ runner.os }}-cargo-test-
 
       - name: Run tests
-        run: cargo test --all-features --verbose
+        shell: bash
+        env:
+          TEST_BUDGET_SECONDS: 900
+        run: >-
+          bash scripts/run-with-budget-warning.sh "$TEST_BUDGET_SECONDS" "Test suite"
+          cargo test --all-features --verbose
 
       - name: Run doc tests
-        run: cargo test --doc --verbose
+        shell: bash
+        env:
+          DOC_TEST_BUDGET_SECONDS: 300
+        run: >-
+          bash scripts/run-with-budget-warning.sh "$DOC_TEST_BUDGET_SECONDS" "Doc tests"
+          cargo test --doc --verbose
 
   # === CODE COVERAGE ===
   # Generate and upload code coverage using cargo-llvm-cov
@@ -465,7 +484,11 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Generate code coverage
-        run: cargo llvm-cov --all-features --lcov --output-path lcov.info
+        env:
+          COVERAGE_BUDGET_SECONDS: 600
+        run: >-
+          bash scripts/run-with-budget-warning.sh "$COVERAGE_BUDGET_SECONDS" "Code coverage"
+          cargo llvm-cov --all-features --lcov --output-path lcov.info
 
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''
