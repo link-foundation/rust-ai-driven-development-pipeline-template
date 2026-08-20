@@ -29,7 +29,7 @@ if [[ -n "$cancelled" ]]; then
     echo "::error::Pipeline has cancelled jobs on main: ${cancelled}. A job killed by 'timeout-minutes' is reported as cancelled, which would otherwise hide the failure."
     status=1
   else
-    echo "::warning::Cancelled jobs: ${cancelled}. On a non-default ref this is usually a superseded run."
+    echo "::warning::Cancelled jobs: ${cancelled}. On a non-default ref this is usually a superseded run — open each job and search for 'has exceeded the maximum execution time' to rule out a real timeout. Steps wrapped in scripts/run-with-budget-warning.sh report a real timeout as a failure instead, which is why long steps carry their own budget."
   fi
 fi
 
