@@ -14,6 +14,9 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
+// Every use of `Command` here drives the shell script, which the tests only
+// exercise on non-Windows; an unconditional import would trip `-D warnings`.
+#[cfg(not(windows))]
 use std::process::Command;
 
 /// A step budget may consume at most this share of its job's `timeout-minutes`.
