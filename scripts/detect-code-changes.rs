@@ -21,6 +21,12 @@
 //! - experiments/ folder (experimental scripts)
 //! - examples/ folder (example scripts)
 //!
+//! Paths are matched relative to the Rust package root, which is detected with
+//! scripts/rust-paths.rs. `git diff --name-only` prints repository-root-relative
+//! paths, so in a multi-language repository (`rust/Cargo.toml`) the `rust/`
+//! prefix is stripped before matching and files of other languages
+//! (for example `python/pyproject.toml`) are not treated as Rust changes.
+//!
 //! Usage: rust-script scripts/detect-code-changes.rs
 //!
 //! Environment variables (set by GitHub Actions):
@@ -43,6 +49,9 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 use std::process::Command;
+
+#[path = "rust-paths.rs"]
+mod rust_paths;
 
 fn exec_in(command: &str, args: &[&str], current_dir: Option<&Path>) -> String {
     let mut process = Command::new(command);
@@ -161,11 +170,65 @@ fn get_changed_files_in_repo(repo_path: &Path, event_name: &str) -> Vec<String> 
         .collect()
 }
 
-fn is_excluded_from_code_changes(file_path: &str) -> bool {
+/// Package path prefix relative to the repository root.
+///
+/// `git diff --name-only` always prints repository-root-relative paths, while
+/// the exclusion list below is expressed relative to the Rust package root.
+/// In a multi-language repository (`rust/Cargo.toml`) this returns `"rust/"`;
+/// in a single-package one it returns `""`.
+fn path_prefix() -> String {
+    match rust_paths::get_rust_root(None, false) {
+        Ok(root) if root != "." && !root.is_empty() => {
+            format!("{}/", root.trim_end_matches('/'))
+        }
+        _ => String::new(),
+    }
+}
+
+/// Shared folders that belong to no single language and therefore stay in scope
+/// even in a multi-language repository.
+const SHARED_TOP_LEVEL_FOLDERS: [&str; 2] = [".github/", "scripts/"];
+
+/// Map a repository-root-relative path to a Rust-package-relative one.
+///
+/// Returns `None` when the file belongs to another language of a
+/// multi-language repository (for example `python/pyproject.toml`), so that
+/// such a change is not reported as a Rust change.
+fn package_relative_path<'a>(prefix: &str, file_path: &'a str) -> Option<&'a str> {
+    if prefix.is_empty() {
+        return Some(file_path);
+    }
+
+    if let Some(relative) = file_path.strip_prefix(prefix) {
+        return Some(relative);
+    }
+
+    if SHARED_TOP_LEVEL_FOLDERS
+        .iter()
+        .any(|folder| file_path.starts_with(folder))
+    {
+        return Some(file_path);
+    }
+
+    // Repository-root files (no directory component) stay in scope.
+    if !file_path.contains('/') {
+        return Some(file_path);
+    }
+
+    None
+}
+
+fn is_excluded_from_code_changes(prefix: &str, file_path: &str) -> bool {
     // Exclude markdown files in any folder
     if file_path.ends_with(".md") {
         return true;
     }
+
+    // Files of another language in a multi-language repository are not
+    // Rust changes.
+    let Some(relative) = package_relative_path(prefix, file_path) else {
+        return true;
+    };
 
     // Exclude specific folders from code changes
     let excluded_folders = [
@@ -176,13 +239,9 @@ fn is_excluded_from_code_changes(file_path: &str) -> bool {
         "examples/",
     ];
 
-    for folder in &excluded_folders {
-        if file_path.starts_with(folder) {
-            return true;
-        }
-    }
-
-    false
+    excluded_folders
+        .iter()
+        .any(|folder| relative.starts_with(folder))
 }
 
 fn is_manifest_or_lockfile_change(file_path: &str) -> bool {
@@ -193,10 +252,10 @@ fn code_change_pattern() -> Regex {
     Regex::new(r"(\.(rs|toml|mjs|js|yml|yaml)$|(^|/)Cargo\.lock$|^\.github/workflows/)").unwrap()
 }
 
-fn included_changed_files(changed_files: &[String]) -> Vec<&String> {
+fn included_changed_files<'a>(prefix: &str, changed_files: &'a [String]) -> Vec<&'a String> {
     changed_files
         .iter()
-        .filter(|file| !is_excluded_from_code_changes(file))
+        .filter(|file| !is_excluded_from_code_changes(prefix, file))
         .collect()
 }
 
@@ -216,7 +275,11 @@ fn main() {
     println!();
 
     // Apply the ignore policy once, before computing any job-gating output.
-    let included_files = included_changed_files(&changed_files);
+    let prefix = path_prefix();
+    if !prefix.is_empty() {
+        println!("Multi-language layout detected, Rust package prefix: {prefix}\n");
+    }
+    let included_files = included_changed_files(&prefix, &changed_files);
 
     // Detect .rs file changes (Rust source)
     let rs_changed = included_files.iter().any(|f| f.ends_with(".rs"));
@@ -356,7 +419,7 @@ mod tests {
         for path in ["Cargo.lock", "rust/Cargo.lock"] {
             assert!(is_manifest_or_lockfile_change(path));
             assert!(code_pattern.is_match(path));
-            assert!(!is_excluded_from_code_changes(path));
+            assert!(!is_excluded_from_code_changes("", path));
         }
     }
 
@@ -376,7 +439,7 @@ mod tests {
 
         for file in excluded_files {
             assert!(
-                is_excluded_from_code_changes(file),
+                is_excluded_from_code_changes("", file),
                 "{file} should be excluded before outputs are computed"
             );
         }
@@ -395,11 +458,82 @@ mod tests {
 
                 assert_eq!(changed_files, [file_path]);
                 assert!(
-                    included_changed_files(&changed_files).is_empty(),
+                    included_changed_files("", &changed_files).is_empty(),
                     "{event_name} with only {file_path} must not activate job outputs"
                 );
             }
         }
+    }
+
+    #[test]
+    fn multi_language_layout_excludes_prefixed_folders() {
+        // Repository-root-relative paths in the rust/Cargo.toml layout.
+        for file in [
+            "rust/examples/demo.rs",
+            "rust/changelog.d/20260101_fix.md",
+            "rust/docs/guide.rs",
+            "rust/experiments/repro.rs",
+            "rust/dev/log/trace.rs",
+        ] {
+            assert!(
+                is_excluded_from_code_changes("rust/", file),
+                "{file} should be excluded in the multi-language layout"
+            );
+        }
+
+        for file in ["rust/src/lib.rs", "rust/Cargo.toml", "rust/Cargo.lock"] {
+            assert!(
+                !is_excluded_from_code_changes("rust/", file),
+                "{file} is a Rust source change and must not be excluded"
+            );
+        }
+    }
+
+    #[test]
+    fn multi_language_layout_keeps_shared_and_root_paths_in_scope() {
+        for file in [
+            ".github/workflows/release.yml",
+            "scripts/detect-code-changes.rs",
+            "Makefile",
+        ] {
+            assert_eq!(package_relative_path("rust/", file), Some(file));
+            assert!(!is_excluded_from_code_changes("rust/", file));
+        }
+    }
+
+    #[test]
+    fn multi_language_layout_ignores_other_language_changes() {
+        for file in [
+            "python/pyproject.toml",
+            "csharp/src/App.csproj",
+            "js/index.js",
+        ] {
+            assert_eq!(package_relative_path("rust/", file), None);
+            assert!(
+                is_excluded_from_code_changes("rust/", file),
+                "{file} belongs to another language and is not a Rust change"
+            );
+        }
+    }
+
+    #[test]
+    fn examples_only_pull_request_activates_no_output_in_multi_language_layout() {
+        let repo = create_single_change_merge_repo("rust/examples/demo.rs");
+        let changed_files = get_changed_files_in_repo(&repo, "pull_request");
+
+        assert_eq!(changed_files, ["rust/examples/demo.rs"]);
+        assert!(
+            included_changed_files("rust/", &changed_files).is_empty(),
+            "an examples-only pull request must not set any-code-changed"
+        );
+        // Without the prefix (single-package layout) the same path is code.
+        assert!(!included_changed_files("", &changed_files).is_empty());
+    }
+
+    #[test]
+    fn path_prefix_is_empty_in_a_single_package_checkout() {
+        // The template itself is a single-package repository (Cargo.toml in root).
+        assert_eq!(path_prefix(), "");
     }
 
     #[test]
@@ -421,7 +555,7 @@ mod tests {
         let code_pattern = code_change_pattern();
         let code_changed = changed_files
             .iter()
-            .filter(|file| !is_excluded_from_code_changes(file))
+            .filter(|file| !is_excluded_from_code_changes("", file))
             .any(|file| code_pattern.is_match(file));
         assert!(
             code_changed,
