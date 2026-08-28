@@ -916,7 +916,7 @@ jobs:
       - name: Create multi-architecture manifest
         working-directory: /tmp/digests
         run: |
-          mapfile -t digests < <(printf '${DOCKERHUB_IMAGE}@sha256:%s\n' *)
+          mapfile -t digests < <(printf "${DOCKERHUB_IMAGE}@sha256:%s\n" *)
           docker buildx imagetools create \
             --tag "${DOCKERHUB_IMAGE}:latest" \
             --tag "${DOCKERHUB_IMAGE}:${RELEASE_VERSION}" \
