@@ -15,6 +15,7 @@ mod issue_119;
 mod issue_127;
 mod issue_135;
 mod issue_141;
+mod issue_143;
 #[path = "../../../scripts/release-naming.rs"]
 mod release_naming;
 mod release_naming_tests;
@@ -28,6 +29,15 @@ mod smoke_test_published_crate;
 mod version_and_commit;
 mod version_and_commit_behind_check;
 mod version_and_commit_tag_order;
+#[allow(
+    clippy::all,
+    clippy::nursery,
+    clippy::pedantic,
+    dead_code,
+    unused_imports
+)]
+#[path = "../../../scripts/wait-for-crate.rs"]
+mod wait_for_crate;
 mod workflow_desktop_release;
 mod workflow_release;
 mod workflow_security;
