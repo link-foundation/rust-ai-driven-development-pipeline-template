@@ -1,6 +1,10 @@
 name: Desktop Release
 
-on:
+# zizmor: ignore[dangerous-triggers] - `workflow_run` is only used to react to
+# the CI/CD Pipeline finishing on `main`; every job runs with `contents: read`,
+# checks out either the default branch or a published release tag, and never
+# checks out the triggering run's head commit, so no untrusted code is executed.
+on: # zizmor: ignore[dangerous-triggers]
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_run:
@@ -31,6 +35,8 @@ jobs:
       should_build: ${{ steps.release.outputs.should_build }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Resolve release tag
         id: release
         env:
@@ -65,15 +71,21 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           ref: ${{ github.event_name != 'pull_request' && needs.resolve.outputs.tag || '' }}
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
       - name: Package desktop application
         env:
           DESKTOP_RELEASE_TAG: ${{ github.event_name == 'pull_request' && 'dry-run' || needs.resolve.outputs.tag }}
           # electron-builder 26 requires both values for certificate-free PR builds:
           CSC_FOR_PULL_REQUEST: 'true'
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: bash scripts/package-desktop.sh "${{ matrix.label }}" desktop-dist
+          MATRIX_LABEL: ${{ matrix.label }}
+        run: bash scripts/package-desktop.sh "$MATRIX_LABEL" desktop-dist
       - name: Smoke test release assets
         env:
           OUTPUT_DIR: desktop-dist
@@ -91,6 +103,8 @@ jobs:
             }
           done < <(find "$OUTPUT_DIR" -type d -name '*.app' -print)
       - name: Create checksum fragment
+        env:
+          MATRIX_LABEL: ${{ matrix.label }}
         run: |
           set -euo pipefail
           cd desktop-dist
@@ -98,7 +112,7 @@ jobs:
             find . -type f -print0 | sort -z | xargs -0 sha256sum
           else
             find . -type f -exec shasum -a 256 {} +
-          fi | sed 's#  \./#  #' > "SHA256SUMS-${{ matrix.label }}.partial"
+          fi | sed 's#  \./#  #' > "SHA256SUMS-$MATRIX_LABEL.partial"
       - name: Upload packaged assets
         uses: actions/upload-artifact@v7
         with:
@@ -140,6 +154,9 @@ jobs:
       - name: Consolidate release metadata
         env:
           TAG: ${{ needs.resolve.outputs.tag }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
           cat checksums/*.partial | sort -k2 > SHA256SUMS.txt
@@ -147,11 +164,11 @@ jobs:
             echo 'Desktop build provenance'
             echo '========================'
             echo 'Status     : complete'
-            echo 'Repository : ${{ github.repository }}'
+            echo "Repository : $REPOSITORY"
             echo "Release tag: $TAG"
             echo 'Targets    : linux-x64 linux-arm64 macos-x64 macos-arm64 windows-x64 windows-arm64'
-            echo 'Attestation: verify each asset with gh attestation verify <file> --repo ${{ github.repository }}'
-            echo 'Run        : ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+            echo "Attestation: verify each asset with gh attestation verify <file> --repo $REPOSITORY"
+            echo "Run        : $SERVER_URL/$REPOSITORY/actions/runs/$RUN_ID"
           } > BUILD-PROVENANCE.txt
       - name: Attest build provenance
         uses: actions/attest@v4
@@ -163,9 +180,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.resolve.outputs.tag }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
           mapfile -d '' assets < <(find release-assets -type f ! -name '*.partial' -print0)
           [ ${#assets[@]} -gt 0 ] || { echo 'No release assets were downloaded' >&2; exit 1; }
           gh release upload "$TAG" "${assets[@]}" SHA256SUMS.txt BUILD-PROVENANCE.txt \
-            --repo "${{ github.repository }}" --clobber
+            --repo "$REPOSITORY" --clobber

@@ -76,10 +76,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -104,10 +109,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -130,10 +140,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -156,6 +171,8 @@ jobs:
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Run secretlint
         run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
@@ -175,11 +192,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
         with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
           components: rustfmt, clippy
 
       - name: Cache cargo registry
@@ -222,6 +243,8 @@ jobs:
     if: github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true'
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Check for Dockerfile
         id: dockerfile
@@ -270,9 +293,15 @@ jobs:
       )
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -307,11 +336,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
         with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
           components: rustfmt, clippy
 
       - name: Install rust-script
@@ -398,9 +431,15 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
 
       - name: Cache cargo registry on Windows
         if: runner.os == 'Windows'
@@ -463,10 +502,15 @@ jobs:
       )
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
         with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
           components: llvm-tools-preview
 
       - name: Cache cargo registry
@@ -481,7 +525,11 @@ jobs:
             ${{ runner.os }}-cargo-coverage-
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
+        uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
+        with:
+          # The `cargo-llvm-cov` ref is what supplied the tool name; once
+          # pinned to a hash the input has to be restated explicitly.
+          tool: cargo-llvm-cov
 
       - name: Generate code coverage
         env:
@@ -492,7 +540,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           token: ${{ env.CODECOV_TOKEN }}
           files: lcov.info
@@ -516,9 +564,15 @@ jobs:
     if: ${{ !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -570,13 +624,20 @@ jobs:
     permissions:
       contents: write
     steps:
+      # This job pushes the version bump commit and tag back to `main`, so the
+      # checkout credentials have to stay in `.git/config` (no
+      # `persist-credentials: false` here, unlike every read-only checkout).
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -688,10 +749,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_HUB_URL: ${{ steps.dockerhub.outputs.docker_hub_url }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           release_args=(
             --release-version "${{ steps.release-metadata.outputs.version }}"
-            --repository "${{ github.repository }}"
+            --repository "$REPOSITORY"
           )
           if [ -n "$DOCKER_HUB_URL" ]; then
             release_args+=(--docker-hub-url "$DOCKER_HUB_URL")
@@ -725,13 +787,20 @@ jobs:
     permissions:
       contents: write
     steps:
+      # This job pushes the version bump commit and tag back to `main`, so the
+      # checkout credentials have to stay in `.git/config` (no
+      # `persist-credentials: false` here, unlike every read-only checkout).
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -812,10 +881,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_HUB_URL: ${{ steps.dockerhub.outputs.docker_hub_url }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           release_args=(
             --release-version "${{ steps.version.outputs.new_version }}"
-            --repository "${{ github.repository }}"
+            --repository "$REPOSITORY"
           )
           if [ -n "$DOCKER_HUB_URL" ]; then
             release_args+=(--docker-hub-url "$DOCKER_HUB_URL")
@@ -848,6 +918,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           ref: v${{ env.RELEASE_VERSION }}
 
       - name: Log in to Docker Hub
@@ -857,7 +928,10 @@ jobs:
           password: ${{ env.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: ./.github/actions/setup-buildx-resilient
+        # The `$/` self-repository form zizmor prefers is rejected by actionlint
+        # 1.7.7 ("ref is missing"), which also gates this repository; switch once
+        # actionlint understands the July 2026 syntax.
+        uses: ./.github/actions/setup-buildx-resilient # zizmor: ignore[self-repository]
 
       - name: Build and push architecture digest
         id: build
@@ -943,10 +1017,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -958,7 +1037,7 @@ jobs:
         run: rust-script scripts/create-changelog-fragment.rs --bump-type "$BUMP_TYPE" --description "$DESCRIPTION"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v8
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'chore: add changelog for manual ${{ github.event.inputs.bump_type }} release'
@@ -1015,10 +1094,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           ref: main
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
 
       - name: Build documentation
         # Defense in depth: same fail-closed flags as the lint job's gate.
@@ -1038,9 +1122,11 @@ jobs:
           touch target/doc/.nojekyll
 
       - name: Add desktop download page
+        env:
+          REPOSITORY: ${{ github.repository }}
         run: |
           mkdir -p target/doc/download
-          sed 's#__REPOSITORY__#${{ github.repository }}#g' \
+          sed "s#__REPOSITORY__#$REPOSITORY#g" \
             docs/download/index.html > target/doc/download/index.html
 
       - name: Configure GitHub Pages
@@ -1087,6 +1173,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Check aggregate pipeline status
         env:

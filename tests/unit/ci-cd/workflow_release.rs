@@ -895,8 +895,9 @@ fn coverage_upload_uses_codecov_action_v7() {
     let upload = step_block(coverage, "Upload coverage to Codecov");
 
     assert!(
-        upload.contains("uses: codecov/codecov-action@v7"),
-        "Codecov upload must use v7 (v5 runs on Node 20 and is deprecated): {upload}"
+        upload.contains("codecov/codecov-action@") && upload.contains("# v7"),
+        "Codecov upload must use v7 (v5 runs on Node 20 and is deprecated), hash-pinned with the \
+         version in a trailing comment: {upload}"
     );
     assert!(
         !workflow.contains("codecov/codecov-action@v5"),
