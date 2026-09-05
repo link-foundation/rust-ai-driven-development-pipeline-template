@@ -323,11 +323,16 @@ curl -fsSL "https://hub.docker.com/v2/repositories/NAMESPACE/REPOSITORY/tags/VER
 
 ### Organization vs Repository Secrets
 
-If using organization secrets with different names, map them in your workflow:
+If using organization secrets with different names, map them on the step that
+publishes — not in the workflow-level `env:`, which is inherited by every job,
+including the `pull_request` jobs that compile and run code from the branch
+under review:
 ```yaml
-env:
-  # Map organization secret to the expected variable name
-  CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
+- name: Publish to Crates.io
+  env:
+    # Map organization secret to the expected variable name
+    CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_TOKEN }}
+  run: rust-script scripts/publish-crate.rs
 ```
 
 ### Checking Secret Values
