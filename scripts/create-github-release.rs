@@ -28,11 +28,10 @@ use std::path::Path;
 #[cfg(not(test))]
 use std::process::{exit, Command, Stdio};
 
-#[cfg(not(test))]
+// Declared unconditionally: `rust-script --test` builds this file as its own
+// crate root, where a `super::` re-import would resolve to nothing. See #150.
 #[path = "release-naming.rs"]
 mod release_naming;
-#[cfg(test)]
-use super::release_naming;
 #[cfg(not(test))]
 #[path = "rust-paths.rs"]
 mod rust_paths;

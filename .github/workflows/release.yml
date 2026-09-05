@@ -483,6 +483,63 @@ jobs:
           bash scripts/run-with-budget-warning.sh "$DOC_TEST_BUDGET_SECONDS" "Doc tests"
           cargo test --doc --verbose
 
+  # === RELEASE SCRIPT TESTS ===
+  # `cargo test` only builds the library crate, so the inline `#[cfg(test)]`
+  # suites in scripts/*.rs — including the regression guard on
+  # rebase-before-stage ordering in version-and-commit.rs — never execute
+  # unless a job runs `rust-script --test` on them explicitly.
+  script-tests:
+    name: Release Script Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-script-tests
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    needs: [detect-changes, cargo-lock]
+    # Note: !cancelled() is required because detect-changes is skipped on workflow_dispatch,
+    # and without it, this job would also be skipped even though its condition includes workflow_dispatch.
+    # See: https://github.com/actions/runner/issues/491
+    if: |
+      !cancelled() && (
+        needs.cargo-lock.result == 'success' && (
+          github.event_name == 'workflow_dispatch' ||
+          needs.detect-changes.outputs.any-code-changed == 'true' ||
+          needs.detect-changes.outputs.rs-changed == 'true' ||
+          needs.detect-changes.outputs.toml-changed == 'true' ||
+          needs.detect-changes.outputs.workflow-changed == 'true'
+        )
+      )
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          # The `stable` ref is what supplied the action's default toolchain;
+          # once pinned to a hash the input has to be restated explicitly.
+          toolchain: stable
+
+      - name: Install rust-script
+        run: ./scripts/install-rust-script.sh
+
+      - name: Cache cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-script-tests-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-script-tests-
+
+      - name: Run release script unit tests
+        # Every script carrying a `#[cfg(test)]` module is built as its own test
+        # harness. Failures are collected rather than short-circuited so one
+        # broken suite does not hide the state of the others.
+        run: bash scripts/test-scripts.sh
+
   # === CODE COVERAGE ===
   # Generate and upload code coverage using cargo-llvm-cov
   coverage:
@@ -563,8 +620,8 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-build
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
-    needs: [lint, test]
-    if: ${{ !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' }}
+    needs: [lint, test, script-tests]
+    if: ${{ !cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' && needs.script-tests.result == 'success' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -1163,6 +1220,7 @@ jobs:
       - cargo-lock
       - lint
       - test
+      - script-tests
       - coverage
       - build
       - auto-release

@@ -30,6 +30,11 @@
 //! ureq = "2"
 //! ```
 
+// `rust-script --test` builds this file as a test harness, where `main` is not
+// the entry point, so helpers and imports reachable only from `main` look
+// unused. The real (non-test) build still denies both.
+#![cfg_attr(test, allow(dead_code, unused_imports))]
+
 use std::env;
 use std::fs;
 use std::process::exit;
