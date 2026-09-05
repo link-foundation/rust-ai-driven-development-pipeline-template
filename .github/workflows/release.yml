@@ -45,9 +45,12 @@ env:
   # flakes on GitHub-hosted runners, including curl HTTP/2 framing failures.
   CARGO_NET_RETRY: '10'
   CARGO_HTTP_MULTIPLEXING: 'false'
-  # Support both CARGO_REGISTRY_TOKEN (cargo's native env var) and CARGO_TOKEN (for backwards compatibility)
-  CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
-  CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+  # The crates.io credentials are deliberately *not* declared here. A
+  # workflow-level `env:` is inherited by every job, including the
+  # `pull_request` jobs that compile and run branch code (`build.rs`, proc
+  # macros, tests), so a workflow-level publish token is readable by any branch
+  # pull request. They are declared on the two publish steps instead, which are
+  # the only steps that need them.
   # Optional: set repository variable DOCKERHUB_IMAGE to namespace/image to publish Docker Hub releases.
   DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
 

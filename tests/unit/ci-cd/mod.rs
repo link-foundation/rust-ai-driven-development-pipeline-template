@@ -17,6 +17,7 @@ mod issue_135;
 mod issue_141;
 mod issue_143;
 mod issue_147;
+mod issue_149;
 #[path = "../../../scripts/release-naming.rs"]
 mod release_naming;
 mod release_naming_tests;
