@@ -5,6 +5,12 @@ mod check_cargo_lock;
 mod check_crate_size;
 #[path = "../../../scripts/check-file-size.rs"]
 mod check_file_size;
+// create-github-release.rs declares its own `release_naming` module, because
+// `rust-script --test` builds it as a standalone crate root with no sibling to
+// borrow (issue #150). Loading release-naming.rs twice here is the price of
+// that; the sibling `mod release_naming` below is what release_naming_tests.rs
+// exercises directly.
+#[allow(clippy::duplicate_mod)]
 #[path = "../../../scripts/create-github-release.rs"]
 mod create_github_release;
 mod desktop_release_resolve;
@@ -18,6 +24,7 @@ mod issue_141;
 mod issue_143;
 mod issue_147;
 mod issue_149;
+mod issue_150;
 #[path = "../../../scripts/release-naming.rs"]
 mod release_naming;
 mod release_naming_tests;

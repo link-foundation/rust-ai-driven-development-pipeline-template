@@ -83,7 +83,17 @@ Thank you for your interest in contributing! This document provides guidelines a
 
    # Run a specific test
    cargo test test_name
+
+   # Run the inline test suites of the rust-scripts under scripts/
+   ./scripts/test-scripts.sh
    ```
+
+   `cargo test` only builds the library crate, so it does not run the `#[cfg(test)]`
+   suites that live inside `scripts/*.rs`. Run `./scripts/test-scripts.sh` before
+   touching anything under `scripts/`; it builds each script as its own test harness
+   under the same `RUSTFLAGS: -Dwarnings` the pipeline sets, which is where a helper
+   that only `main` reaches shows up as dead code. The `script-tests` job runs the
+   same script, and `build` -- and therefore every release -- is gated on it.
 
    Rust's built-in `cargo test` runner does not provide a portable global per-test timeout, so wrap long-running network, IO, or async tests with explicit test-level deadlines. If a repository adopts `cargo nextest`, configure runner deadlines with options such as `--slow-timeout` and `--leak-timeout`.
 

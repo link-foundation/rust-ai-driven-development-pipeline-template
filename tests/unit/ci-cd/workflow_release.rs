@@ -175,6 +175,9 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         // Raised from 20 so the step budgets in the test job stay at or below the
         // 70% share the invariant in issue_135.rs enforces. See issue #135.
         ("test", 30),
+        // Compiles and runs every scripts/*.rs test harness from scratch; the
+        // cargo-install of rust-script dominates a cold run. See issue #150.
+        ("script-tests", 20),
         ("coverage", 15),
         ("build", 10),
         ("auto-release", 60),

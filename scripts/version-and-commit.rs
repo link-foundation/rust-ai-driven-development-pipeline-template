@@ -23,6 +23,11 @@
 //! serde_json = "1"
 //! ```
 
+// `rust-script --test` builds this file as a test harness, where `main` is not
+// the entry point, so every helper reachable only from `main` looks unused.
+// The real (non-test) build still denies dead code.
+#![cfg_attr(test, allow(dead_code))]
+
 #[cfg(not(test))]
 use chrono::Utc;
 use regex::Regex;
