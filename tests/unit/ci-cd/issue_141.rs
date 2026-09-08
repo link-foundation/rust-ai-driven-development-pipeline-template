@@ -40,7 +40,7 @@ fn workflows_are_linted_by_actionlint() {
     let workflows = workflow("workflows.yml");
 
     assert!(
-        workflows.contains("docker://rhysd/actionlint:"),
+        workflows.contains("uses: docker://rhysd/actionlint@"),
         "workflows.yml must run actionlint from its Docker image, which bundles shellcheck; \
          a native binary without shellcheck on PATH silently skips the shell checks"
     );
@@ -50,24 +50,40 @@ fn workflows_are_linted_by_actionlint() {
     );
 }
 
-/// `macos-15-intel` and `windows-11-arm` are real hosted runners that
-/// actionlint 1.7.7 does not know about. Without this configuration the check
-/// would fail on false positives and get disabled.
+/// `macos-15-intel` and `windows-11-arm` are real hosted runners. actionlint
+/// 1.7.7 did not know them, which is why a `.github/actionlint.yaml` allowlist
+/// used to suppress the false positives; 1.7.12 knows both labels, so the
+/// suppression is gone and the pin must never silently fall back to a version
+/// that would need it again (issue #160).
 #[test]
-fn actionlint_knows_the_runner_labels_used_by_desktop_release() {
-    let config = fs::read_to_string(format!(
-        "{}/.github/actionlint.yaml",
-        env!("CARGO_MANIFEST_DIR")
-    ))
-    .expect("actionlint configuration should exist");
-    let desktop = workflow("desktop-release.yml");
+fn actionlint_is_pinned_to_a_version_that_knows_the_runner_labels() {
+    let workflows = workflow("workflows.yml");
 
-    for label in ["macos-15-intel", "windows-11-arm"] {
-        if desktop.contains(label) {
-            assert!(
-                config.contains(&format!("- {label}")),
-                "actionlint.yaml must declare the {label} runner label used by desktop-release.yml"
-            );
-        }
-    }
+    assert!(
+        workflows.contains("rhysd/actionlint@sha256:"),
+        "the actionlint image must be pinned by digest (issue #165: the unpinned-images \
+         audit only runs in the pedantic persona, and a mutable tag is arbitrary code \
+         execution in a job that holds credentials)"
+    );
+    assert!(
+        workflows.contains("# v1.7.12"),
+        "the digest pin must carry a human-readable version comment"
+    );
+    assert!(
+        !std::path::Path::new(&format!(
+            "{}/.github/actionlint.yaml",
+            env!("CARGO_MANIFEST_DIR")
+        ))
+        .exists(),
+        "the runner-label allowlist must stay deleted: its labels are known to \
+         actionlint 1.7.12, and a stale suppression file hides real unknown-label \
+         reports from future bumps"
+    );
+
+    let desktop = workflow("desktop-release.yml");
+    assert!(
+        desktop.contains("macos-15-intel") && desktop.contains("windows-11-arm"),
+        "this regression test is keyed on desktop-release.yml using the labels that \
+         needed the allowlist; if they disappear from the workflow, revisit the pin"
+    );
 }
