@@ -107,6 +107,150 @@ publish = false
     assert!(error.contains("No publishable workspace members"));
 }
 
+// --- issue #155: manifest values must be read from the right table ----------
+//
+// `version = "1.0"` under `[dependencies.serde]` is serde's version. A
+// table-blind first-match regex publishes it as the crate's version whenever
+// the real `[package].version` is missing or inherited from the workspace.
+
+#[test]
+fn an_inherited_version_fails_loudly_instead_of_publishing_a_dependency_version() {
+    let repo = temp_dir("inherited-version");
+    fs::create_dir_all(&repo).unwrap();
+    let manifest = repo.join("Cargo.toml");
+    fs::write(
+        &manifest,
+        r#"[package]
+name = "member"
+version.workspace = true
+
+[dependencies.serde]
+version = "1.0"
+features = ["derive"]
+"#,
+    )
+    .unwrap();
+
+    let error = read_package_info(&manifest).unwrap_err();
+
+    assert!(
+        error.contains("inherited from the workspace"),
+        "an inherited version must be rejected loudly, got: {error}"
+    );
+    assert!(
+        !error.contains("1.0"),
+        "the error must not echo the dependency's version, got: {error}"
+    );
+}
+
+#[test]
+fn the_inline_table_form_of_an_inherited_version_is_rejected_too() {
+    let repo = temp_dir("inherited-version-inline");
+    fs::create_dir_all(&repo).unwrap();
+    let manifest = repo.join("Cargo.toml");
+    fs::write(
+        &manifest,
+        r#"[package]
+name = "member"
+version = { workspace = true }
+"#,
+    )
+    .unwrap();
+
+    let error = read_package_info(&manifest).unwrap_err();
+    assert!(
+        error.contains("inherited from the workspace"),
+        "got: {error}"
+    );
+}
+
+#[test]
+fn a_workspace_package_table_before_the_package_table_does_not_win() {
+    let repo = temp_dir("workspace-package-first");
+    fs::create_dir_all(&repo).unwrap();
+    let manifest = repo.join("Cargo.toml");
+    fs::write(
+        &manifest,
+        r#"[workspace.package]
+version = "9.9.9"
+
+[package]
+name = "crate"
+version = "1.2.3"
+"#,
+    )
+    .unwrap();
+
+    let info = read_package_info(&manifest).unwrap();
+    assert_eq!(info.version, "1.2.3", "the [package] version must win");
+}
+
+#[test]
+fn a_dependency_table_version_is_never_read_as_the_package_version() {
+    let repo = temp_dir("dependency-table");
+    fs::create_dir_all(&repo).unwrap();
+    let manifest = repo.join("Cargo.toml");
+    fs::write(
+        &manifest,
+        r#"[package]
+name = "crate"
+version = "2.0.0"
+
+[dependencies.serde]
+version = "0.5.0"
+"#,
+    )
+    .unwrap();
+
+    let info = read_package_info(&manifest).unwrap();
+    assert_eq!(info.version, "2.0.0");
+    assert_eq!(info.name, "crate");
+}
+
+#[test]
+fn a_name_from_another_table_is_never_read_as_the_package_name() {
+    let repo = temp_dir("foreign-name");
+    fs::create_dir_all(&repo).unwrap();
+    let manifest = repo.join("Cargo.toml");
+    fs::write(
+        &manifest,
+        r#"[metadata]
+name = "wrong"
+
+[package]
+name = "right"
+version = "1.0.0"
+"#,
+    )
+    .unwrap();
+
+    let info = read_package_info(&manifest).unwrap();
+    assert_eq!(info.name, "right");
+}
+
+#[test]
+fn a_missing_package_version_fails_instead_of_guessing() {
+    let repo = temp_dir("missing-version");
+    fs::create_dir_all(&repo).unwrap();
+    let manifest = repo.join("Cargo.toml");
+    fs::write(
+        &manifest,
+        r#"[package]
+name = "crate"
+
+[dependencies]
+serde = "1.0"
+"#,
+    )
+    .unwrap();
+
+    let error = read_package_info(&manifest).unwrap_err();
+    assert!(
+        error.contains("literal `version`"),
+        "a missing version must be an error, not a dependency version, got: {error}"
+    );
+}
+
 #[test]
 fn path_helpers_match_repository_layout() {
     assert_eq!(get_cargo_toml_path("."), PathBuf::from("./Cargo.toml"));
