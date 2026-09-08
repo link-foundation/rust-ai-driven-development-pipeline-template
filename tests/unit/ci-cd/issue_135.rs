@@ -213,12 +213,20 @@ fn cancelled_job_warning_points_at_the_timeout_annotation() {
 
 #[cfg(not(windows))]
 fn run_budget_script(args: &[&str]) -> std::process::Output {
-    Command::new("bash")
+    run_budget_script_with_env(&[], args)
+}
+
+#[cfg(not(windows))]
+fn run_budget_script_with_env(env: &[(&str, &str)], args: &[&str]) -> std::process::Output {
+    let mut command = Command::new("bash");
+    command
         .arg(repo_path("scripts/run-with-budget-warning.sh"))
         .args(args)
-        .env("BUDGET_GRACE_SECONDS", "1")
-        .output()
-        .expect("budget script should run")
+        .env("BUDGET_GRACE_SECONDS", "1");
+    for (key, value) in env {
+        command.env(key, value);
+    }
+    command.output().expect("budget script should run")
 }
 
 #[test]
@@ -265,6 +273,107 @@ fn a_missing_command_is_a_usage_error() {
 fn a_non_numeric_budget_is_a_usage_error() {
     let output = run_budget_script(&["twenty", "Bad budget", "true"]);
     assert_eq!(output.status.code(), Some(2));
+}
+
+// --- issue #153: the budget must be measured by a clock, not by polls -------
+//
+// The loop used to count poll iterations (`elapsed=$(( elapsed + POLL_SECONDS ))`).
+// A non-integer BUDGET_POLL_SECONDS aborted the arithmetic every iteration while
+// the loop kept running with `elapsed` frozen at 0, so the budget never expired
+// and the job cap fired first -- reported as 'cancelled', hiding the failure.
+
+#[test]
+#[cfg(not(windows))]
+fn a_fractional_poll_interval_still_expires_the_budget() {
+    let output = run_budget_script_with_env(
+        &[("BUDGET_POLL_SECONDS", "0.5")],
+        &["2", "Half-second polls", "sleep", "60"],
+    );
+    assert_eq!(output.status.code(), Some(124));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("::error title=Half-second polls exceeded its execution budget::"),
+        "a fractional poll interval must not stop the budget from expiring, got: {stdout}"
+    );
+}
+
+#[test]
+#[cfg(not(windows))]
+fn a_non_numeric_poll_interval_is_a_usage_error_not_a_silent_never_expiring_budget() {
+    // Under the old counter arithmetic this configuration silently ran to the
+    // child's own completion (exit 0 here) with the budget frozen at zero.
+    let output = run_budget_script_with_env(
+        &[("BUDGET_POLL_SECONDS", "abc")],
+        &["1", "Bad poll", "true"],
+    );
+    assert_eq!(output.status.code(), Some(2));
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("BUDGET_POLL_SECONDS"),
+        "the usage error must name the knob that was rejected, got: {stderr}"
+    );
+}
+
+#[test]
+#[cfg(not(windows))]
+fn a_zero_or_malformed_poll_interval_is_a_usage_error() {
+    for poll in ["0", "0.0", "0.5.5", ".5", "1.", "-1"] {
+        let output = run_budget_script_with_env(
+            &[("BUDGET_POLL_SECONDS", poll)],
+            &["1", "Bad poll", "true"],
+        );
+        assert_eq!(
+            output.status.code(),
+            Some(2),
+            "BUDGET_POLL_SECONDS={poll} should be rejected as a usage error"
+        );
+    }
+}
+
+#[test]
+#[cfg(not(windows))]
+fn the_timeout_annotation_reports_the_measured_overrun() {
+    // A coarse 2s poll against a 1s budget: the budget is detected on the next
+    // poll, and the annotation must report the real elapsed time, not just the
+    // configured budget.
+    let output = run_budget_script_with_env(
+        &[("BUDGET_POLL_SECONDS", "2")],
+        &["1", "Coarse polls", "sleep", "60"],
+    );
+    assert_eq!(output.status.code(), Some(124));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("ran for 2s against its 1s budget"),
+        "the error annotation should report the measured elapsed time against \
+         the configured budget, got: {stdout}"
+    );
+}
+
+#[test]
+#[cfg(not(windows))]
+fn every_arithmetic_knob_is_validated_before_the_loop() {
+    // All three knobs land in bash arithmetic; a non-integer in any of them
+    // aborts the expression and leaves the loop with a frozen clock.
+    for (key, value) in [
+        ("BUDGET_POLL_SECONDS", "fast"),
+        ("BUDGET_WARN_PERCENT", "seventy"),
+        ("BUDGET_GRACE_SECONDS", "1.5"),
+    ] {
+        let output = run_budget_script_with_env(
+            &[(key, value)],
+            &["5", "Bad knob", "true"],
+        );
+        assert_eq!(
+            output.status.code(),
+            Some(2),
+            "{key}={value} should be rejected before the loop starts"
+        );
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(
+            stderr.contains(key),
+            "the rejection should name {key}, got: {stderr}"
+        );
+    }
 }
 
 /// `cargo test` and `cargo nextest` spawn a process tree. Terminating only the
