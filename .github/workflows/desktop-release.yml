@@ -187,3 +187,29 @@ jobs:
           [ ${#assets[@]} -gt 0 ] || { echo 'No release assets were downloaded' >&2; exit 1; }
           gh release upload "$TAG" "${assets[@]}" SHA256SUMS.txt BUILD-PROVENANCE.txt \
             --repo "$REPOSITORY" --clobber
+
+  # Terminal status gate (issue #156): GitHub reports jobs killed by
+  # timeout-minutes as cancelled. Observe every other job so a timeout becomes
+  # a visible failure instead of a grey run, while a run that was superseded by
+  # a newer commit is recognised as expected churn.
+  pipeline-status:
+    name: Pipeline Status
+    needs:
+      - resolve
+      - build
+      - finalize
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check aggregate pipeline status
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+          IS_MAIN: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          RUN_SHA: ${{ github.sha }}
+          BRANCH_REF: ${{ github.ref_name }}
+        run: bash scripts/check-pipeline-status.sh

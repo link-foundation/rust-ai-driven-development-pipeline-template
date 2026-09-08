@@ -785,41 +785,72 @@ fn pipeline_status_gate_covers_every_other_job() {
 #[cfg(unix)]
 #[test]
 fn pipeline_status_script_handles_all_conclusions() {
-    let cases = [
+    // Issue #156: a cancelled job on main is a hidden timeout only when this
+    // run was still the branch head; a superseded run's cancellation is churn.
+    let cases: [(&str, &str, &str, &[(&str, &str)], bool); 6] = [
         (
             "success",
             r#"{"test":{"result":"success"},"docs":{"result":"skipped"}}"#,
             "true",
+            &[],
             true,
         ),
         (
             "failure",
             r#"{"test":{"result":"failure"}}"#,
             "false",
+            &[],
             false,
         ),
         (
             "cancelled on main",
             r#"{"test":{"result":"cancelled"}}"#,
             "true",
+            &[],
             false,
         ),
         (
             "cancelled off main",
             r#"{"test":{"result":"cancelled"}}"#,
             "false",
+            &[],
             true,
+        ),
+        (
+            "cancelled on main but superseded by a newer commit",
+            r#"{"test":{"result":"cancelled"}}"#,
+            "true",
+            &[
+                ("RUN_SHA", "0000000000000000000000000000000000000000"),
+                ("BRANCH_REF", "main"),
+                ("BRANCH_HEAD_SHA", "1111111111111111111111111111111111111111"),
+            ],
+            true,
+        ),
+        (
+            "cancelled on main while still the branch head",
+            r#"{"test":{"result":"cancelled"}}"#,
+            "true",
+            &[
+                ("RUN_SHA", "1111111111111111111111111111111111111111"),
+                ("BRANCH_REF", "main"),
+                ("BRANCH_HEAD_SHA", "1111111111111111111111111111111111111111"),
+            ],
+            false,
         ),
     ];
 
-    for (name, needs_json, is_main, should_succeed) in cases {
-        let output = std::process::Command::new("bash")
+    for (name, needs_json, is_main, extra_env, should_succeed) in cases {
+        let mut command = std::process::Command::new("bash");
+        command
             .arg("scripts/check-pipeline-status.sh")
             .current_dir(env!("CARGO_MANIFEST_DIR"))
             .env("NEEDS_JSON", needs_json)
-            .env("IS_MAIN", is_main)
-            .output()
-            .expect("run pipeline status script");
+            .env("IS_MAIN", is_main);
+        for (key, value) in extra_env {
+            command.env(key, value);
+        }
+        let output = command.output().expect("run pipeline status script");
 
         assert_eq!(
             output.status.success(),

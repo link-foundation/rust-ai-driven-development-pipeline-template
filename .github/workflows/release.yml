@@ -1247,4 +1247,8 @@ jobs:
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
           IS_MAIN: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          # Used to tell a cancelled-but-superseded run (expected churn) from a
+          # cancelled run that was still the branch head (a hidden timeout).
+          RUN_SHA: ${{ github.sha }}
+          BRANCH_REF: ${{ github.ref_name }}
         run: bash scripts/check-pipeline-status.sh
