@@ -271,8 +271,11 @@ jobs:
           push: false
           load: true
           tags: app:pr-check
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # An explicit scope keeps this build's layers separate from the
+          # release publication builds: unscoped GHA caches share the single
+          # default `buildkit` key and overwrite each other.
+          cache-from: type=gha,scope=docker-image
+          cache-to: type=gha,mode=max,scope=docker-image
 
   # === CARGO.LOCK GUARD ===
   # Binary crates must commit Cargo.lock so CI and release jobs resolve the same
@@ -1001,8 +1004,11 @@ jobs:
           platforms: ${{ matrix.platform }}
           labels: org.opencontainers.image.version=${{ env.RELEASE_VERSION }}
           outputs: type=image,name=${{ env.DOCKERHUB_IMAGE }},push-by-digest=true,name-canonical=true,push=true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # The two matrix legs must not overwrite each other's exported
+          # layers: unscoped GHA caches share the single default `buildkit`
+          # key, so the second build evicts the first's cache.
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
 
       - name: Export digest
         run: |

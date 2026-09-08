@@ -852,6 +852,47 @@ fn release_workflow_builds_docker_image_on_pull_requests() {
     );
 }
 
+/// Regression test for issue #154:
+/// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/154>
+///
+/// Unscoped `type=gha` cache entries all land in the default `buildkit` scope,
+/// so the pull-request image build and each docker-publish matrix leg evict and
+/// overwrite each other's exported layers. Every GHA cache reference must pin an
+/// explicit scope.
+#[test]
+fn release_workflow_scopes_every_gha_buildx_cache() {
+    let workflow = release_workflow();
+
+    for line in workflow.lines().filter(|line| {
+        line.trim_start().starts_with("cache-from: type=gha")
+            || line.trim_start().starts_with("cache-to: type=gha")
+    }) {
+        assert!(
+            line.contains("scope="),
+            "GHA buildx cache reference lacks an explicit scope, so it shares \
+             the default 'buildkit' scope with unrelated builds:\n{line}"
+        );
+    }
+
+    let docker_build = job_block(&workflow, "docker-build");
+    assert!(
+        docker_build.contains("cache-from: type=gha,scope=docker-image")
+            && docker_build
+                .contains("cache-to: type=gha,mode=max,scope=docker-image"),
+        "the pull-request image build should use a dedicated scope"
+    );
+
+    let docker_publish = job_block(&workflow, "docker-publish");
+    assert!(
+        docker_publish
+            .contains("cache-from: type=gha,scope=${{ matrix.platform }}")
+            && docker_publish
+                .contains("cache-to: type=gha,mode=max,scope=${{ matrix.platform }}"),
+        "each docker-publish matrix leg should scope its cache by platform so \
+         the legs do not overwrite each other"
+    );
+}
+
 /// Regression test for issue #100 (3): a pull request that is green in isolation can
 /// still break `main` (semantic merge conflict), and committed credentials must be flagged.
 #[test]

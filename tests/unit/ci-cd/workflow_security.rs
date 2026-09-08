@@ -240,7 +240,12 @@ fn security_workflow_audits_the_committed_cargo_lock() {
     assert!(audit.contains("timeout-minutes: 10"));
     assert!(audit.contains("uses: actions/checkout@v6"));
     assert!(audit.contains("tool: cargo-audit@0.22.2"));
-    assert!(audit.contains("run: cargo audit --file Cargo.lock"));
+    assert!(
+        audit.contains("run: cargo audit --file Cargo.lock --deny warnings"),
+        "`unmaintained`, `unsound` and `yanked` findings are warnings that do \
+         not move cargo-audit's exit status; without --deny warnings a yanked \
+         release ships with a green audit (issue #164)"
+    );
     assert!(
         !audit.contains("if: github.event_name == 'pull_request'"),
         "the lockfile audit must also run on pushes and scheduled events"
