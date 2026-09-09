@@ -11,6 +11,8 @@
 # Environment:
 #   GITHUB_BASE_REF - base branch name (set automatically for pull_request events)
 #   FRESH_MERGE_CHECKS - optional space-separated override of the commands to run
+#   FRESH_MERGE_FETCH_ATTEMPTS - retries for the base fetch before giving up (default 5)
+#   FRESH_MERGE_RETRY_DELAY_SECONDS - base of the linear backoff between fetch attempts (default 5)
 set -euo pipefail
 
 BASE_REF="${GITHUB_BASE_REF:-main}"
@@ -19,8 +21,46 @@ if [ -z "${GITHUB_BASE_REF:-}" ]; then
   echo "GITHUB_BASE_REF is not set; assuming base branch '${BASE_REF}'"
 fi
 
+FRESH_MERGE_FETCH_ATTEMPTS="${FRESH_MERGE_FETCH_ATTEMPTS:-5}"
+FRESH_MERGE_RETRY_DELAY_SECONDS="${FRESH_MERGE_RETRY_DELAY_SECONDS:-5}"
+
+case "$FRESH_MERGE_FETCH_ATTEMPTS" in
+  '' | *[!0-9]*)
+    echo "FRESH_MERGE_FETCH_ATTEMPTS must be a positive integer, got: ${FRESH_MERGE_FETCH_ATTEMPTS}" >&2
+    exit 2
+    ;;
+esac
+case "$FRESH_MERGE_RETRY_DELAY_SECONDS" in
+  '' | *[!0-9]*)
+    echo "FRESH_MERGE_RETRY_DELAY_SECONDS must be a non-negative integer number of seconds, got: ${FRESH_MERGE_RETRY_DELAY_SECONDS}" >&2
+    exit 2
+    ;;
+esac
+
+# The script runs under `set -e`, so a single failed fetch used to abort the
+# whole job before any check ran. GitHub's fetch endpoint does shed load, and a
+# CI address range sees that more than a laptop does, so retry with linear
+# backoff and only fail once the attempts are exhausted.
+fetch_with_retry() {
+  local attempt
+  for attempt in $(seq 1 "${FRESH_MERGE_FETCH_ATTEMPTS}"); do
+    if git fetch --no-tags origin "${BASE_REF}"; then
+      if [ "${attempt}" -gt 1 ]; then
+        echo "Fetched origin/${BASE_REF} on attempt ${attempt} of ${FRESH_MERGE_FETCH_ATTEMPTS}."
+      fi
+      return 0
+    fi
+    if [ "${attempt}" -lt "${FRESH_MERGE_FETCH_ATTEMPTS}" ]; then
+      echo "::warning::git fetch of origin/${BASE_REF} failed (attempt ${attempt} of ${FRESH_MERGE_FETCH_ATTEMPTS}); retrying in $(( FRESH_MERGE_RETRY_DELAY_SECONDS * attempt ))s..."
+      sleep $(( FRESH_MERGE_RETRY_DELAY_SECONDS * attempt ))
+    fi
+  done
+  echo "::error::Could not fetch origin/${BASE_REF} after ${FRESH_MERGE_FETCH_ATTEMPTS} attempts. The merge simulation needs the current base tip: without it no check runs at all. Check connectivity to the remote and that the base branch '${BASE_REF}' still exists there." >&2
+  return 1
+}
+
 echo "Fetching origin/${BASE_REF}..."
-git fetch --no-tags origin "${BASE_REF}"
+fetch_with_retry
 
 BASE_SHA="$(git rev-parse "origin/${BASE_REF}")"
 HEAD_SHA="$(git rev-parse HEAD)"

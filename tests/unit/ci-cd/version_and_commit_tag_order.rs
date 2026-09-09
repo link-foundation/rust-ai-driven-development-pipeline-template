@@ -23,8 +23,10 @@ fn tag_is_created_after_the_push_retry_loop() {
     let tag = source
         .find(r#"&["tag", "-a", &tag_name, "-m", &tag_msg]"#)
         .expect("tag creation not found");
+    // Issue #162: exactly the release tag is pushed -- `push --tags` would
+    // publish unrelated local tags too.
     let push_tags = source
-        .find(r#"&["push", "--tags"]"#)
+        .find(r#"&["push", "origin", &tag_name]"#)
         .expect("tag push not found");
 
     assert!(
@@ -32,4 +34,8 @@ fn tag_is_created_after_the_push_retry_loop() {
         "tag must be created after the push-retry rebase, not before"
     );
     assert!(tag < push_tags, "tag must be created before it is pushed");
+    assert!(
+        !source.contains(r#"&["push", "--tags"]"#),
+        "the tag push must name the release tag, not every local tag"
+    );
 }

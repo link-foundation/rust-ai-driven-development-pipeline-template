@@ -240,7 +240,12 @@ fn security_workflow_audits_the_committed_cargo_lock() {
     assert!(audit.contains("timeout-minutes: 10"));
     assert!(audit.contains("uses: actions/checkout@v6"));
     assert!(audit.contains("tool: cargo-audit@0.22.2"));
-    assert!(audit.contains("run: cargo audit --file Cargo.lock"));
+    assert!(
+        audit.contains("run: cargo audit --file Cargo.lock --deny warnings"),
+        "`unmaintained`, `unsound` and `yanked` findings are warnings that do \
+         not move cargo-audit's exit status; without --deny warnings a yanked \
+         release ships with a green audit (issue #164)"
+    );
     assert!(
         !audit.contains("if: github.event_name == 'pull_request'"),
         "the lockfile audit must also run on pushes and scheduled events"
@@ -260,6 +265,8 @@ fn links_workflow_checks_documentation_with_archive_fallback() {
     assert!(header.contains("'.lycheeignore'"));
     assert!(header.contains("'scripts/check-web-archive.mjs'"));
     assert!(header.contains("'scripts/check-web-archive.test.mjs'"));
+    assert!(header.contains("'scripts/recheck-broken-links.mjs'"));
+    assert!(header.contains("'scripts/recheck-broken-links.test.mjs'"));
     assert!(header.contains("permissions:\n  contents: read"));
 
     let link_checker = job_block(&workflow, "link-checker");
@@ -267,6 +274,7 @@ fn links_workflow_checks_documentation_with_archive_fallback() {
     assert!(link_checker.contains("cancel-in-progress: true"));
     assert!(link_checker.contains("uses: lycheeverse/lychee-action@v2"));
     assert!(link_checker.contains("node --test scripts/check-web-archive.test.mjs"));
+    assert!(link_checker.contains("node --test scripts/recheck-broken-links.test.mjs"));
     assert!(link_checker.contains("--exclude-path docs/case-studies"));
     assert!(!link_checker.contains("examples/universal-app/index.html"));
     assert!(link_checker.contains("fail: false"));
@@ -289,18 +297,47 @@ fn links_workflow_checks_documentation_with_archive_fallback() {
 
 /// Regression test for issue #125:
 /// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/125>
+/// and issue #168:
+/// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/168>
 ///
 /// An available archive is replacement guidance; it does not repair the broken
-/// live link in the repository. Every nonzero Lychee result must therefore fail.
+/// live link in the repository, so every nonzero Lychee result must fail the
+/// job. The one exception is the re-check (#168): a link that never answered
+/// lychee but answers the re-check is not broken. The `!= 'true'` form is
+/// load-bearing -- a skipped re-check leaves the output empty, and only the
+/// `!=` comparison fails safe.
 #[test]
 fn links_workflow_fails_for_every_broken_live_link() {
     let workflow = links_workflow();
     let link_checker = job_block(&workflow, "link-checker");
 
-    assert!(link_checker.contains(
-        "- name: Fail if broken links were found\n        if: always() && steps.lychee.outputs.exit_code != 0"
-    ));
-    assert!(!link_checker.contains(
-        "steps.lychee.outputs.exit_code != 0 && steps.webarchive.outputs.all_archived != 'true'"
-    ));
+    let fail_step = step_block(link_checker, "Fail if broken links were found");
+    assert!(fail_step.contains("always() &&"));
+    assert!(fail_step.contains("steps.lychee.outputs.exit_code != 0"));
+    assert!(
+        fail_step.contains("steps.recheck.outputs.all_recovered != 'true'"),
+        "the re-check verdict must gate the failure step"
+    );
+    assert!(
+        !workflow.contains("all_recovered == 'false'"),
+        "an empty output (skipped re-check) must keep failing the run"
+    );
+
+    let archive_step = step_block(link_checker, "Check broken links against Web Archive");
+    assert!(archive_step.contains("steps.lychee.outputs.exit_code != 0"));
+    assert!(archive_step.contains("steps.recheck.outputs.all_recovered != 'true'"));
+    assert!(
+        archive_step.contains("RECOVERED_URLS: lychee/recovered.txt"),
+        "the Wayback lookup must skip the URLs the re-check recovered"
+    );
+}
+
+fn step_block<'a>(job: &'a str, step_name: &str) -> &'a str {
+    let marker = format!("- name: {step_name}\n");
+    let start = job
+        .find(&marker)
+        .unwrap_or_else(|| panic!("step {step_name:?} should exist"));
+    let rest = &job[start + marker.len()..];
+    let end = rest.find("\n      - name: ").unwrap_or(rest.len());
+    &rest[..end]
 }

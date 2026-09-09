@@ -165,6 +165,11 @@ fn release_workflow_jobs_have_explicit_timeouts() {
     let workflow = release_workflow();
     let expected_timeouts = [
         ("detect-changes", 5),
+        // Docs validation (issue #161): required documents and their sections.
+        ("validate-docs", 5),
+        // Probes the publish credentials before the matrix spends a minute
+        // (issues #163 and #167).
+        ("release-preflight", 5),
         ("changelog", 10),
         ("version-check", 5),
         ("secrets-scan", 10),
@@ -481,7 +486,7 @@ fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible()
     );
 
     let docker_publish = job_block(&workflow, "docker-publish");
-    assert!(docker_publish.contains("needs: [auto-release, manual-release]"));
+    assert!(docker_publish.contains("needs: [auto-release, manual-release, release-preflight]"));
     assert!(docker_publish.contains("push-by-digest=true"));
 }
 
@@ -785,41 +790,80 @@ fn pipeline_status_gate_covers_every_other_job() {
 #[cfg(unix)]
 #[test]
 fn pipeline_status_script_handles_all_conclusions() {
-    let cases = [
+    /// (case name, `NEEDS_JSON`, `IS_MAIN`, extra env, expected success)
+    type StatusCase<'a> = (&'a str, &'a str, &'a str, &'a [(&'a str, &'a str)], bool);
+    // Issue #156: a cancelled job on main is a hidden timeout only when this
+    // run was still the branch head; a superseded run's cancellation is churn.
+    let cases: [StatusCase; 6] = [
         (
             "success",
             r#"{"test":{"result":"success"},"docs":{"result":"skipped"}}"#,
             "true",
+            &[],
             true,
         ),
         (
             "failure",
             r#"{"test":{"result":"failure"}}"#,
             "false",
+            &[],
             false,
         ),
         (
             "cancelled on main",
             r#"{"test":{"result":"cancelled"}}"#,
             "true",
+            &[],
             false,
         ),
         (
             "cancelled off main",
             r#"{"test":{"result":"cancelled"}}"#,
             "false",
+            &[],
             true,
+        ),
+        (
+            "cancelled on main but superseded by a newer commit",
+            r#"{"test":{"result":"cancelled"}}"#,
+            "true",
+            &[
+                ("RUN_SHA", "0000000000000000000000000000000000000000"),
+                ("BRANCH_REF", "main"),
+                (
+                    "BRANCH_HEAD_SHA",
+                    "1111111111111111111111111111111111111111",
+                ),
+            ],
+            true,
+        ),
+        (
+            "cancelled on main while still the branch head",
+            r#"{"test":{"result":"cancelled"}}"#,
+            "true",
+            &[
+                ("RUN_SHA", "1111111111111111111111111111111111111111"),
+                ("BRANCH_REF", "main"),
+                (
+                    "BRANCH_HEAD_SHA",
+                    "1111111111111111111111111111111111111111",
+                ),
+            ],
+            false,
         ),
     ];
 
-    for (name, needs_json, is_main, should_succeed) in cases {
-        let output = std::process::Command::new("bash")
+    for (name, needs_json, is_main, extra_env, should_succeed) in cases {
+        let mut command = std::process::Command::new("bash");
+        command
             .arg("scripts/check-pipeline-status.sh")
             .current_dir(env!("CARGO_MANIFEST_DIR"))
             .env("NEEDS_JSON", needs_json)
-            .env("IS_MAIN", is_main)
-            .output()
-            .expect("run pipeline status script");
+            .env("IS_MAIN", is_main);
+        for (key, value) in extra_env {
+            command.env(key, value);
+        }
+        let output = command.output().expect("run pipeline status script");
 
         assert_eq!(
             output.status.success(),
@@ -849,6 +893,44 @@ fn release_workflow_builds_docker_image_on_pull_requests() {
     assert!(
         job.contains("cache-from: type=gha"),
         "docker-build should reuse the buildx layer cache"
+    );
+}
+
+/// Regression test for issue #154:
+/// <https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/issues/154>
+///
+/// Unscoped `type=gha` cache entries all land in the default `buildkit` scope,
+/// so the pull-request image build and each docker-publish matrix leg evict and
+/// overwrite each other's exported layers. Every GHA cache reference must pin an
+/// explicit scope.
+#[test]
+fn release_workflow_scopes_every_gha_buildx_cache() {
+    let workflow = release_workflow();
+
+    for line in workflow.lines().filter(|line| {
+        line.trim_start().starts_with("cache-from: type=gha")
+            || line.trim_start().starts_with("cache-to: type=gha")
+    }) {
+        assert!(
+            line.contains("scope="),
+            "GHA buildx cache reference lacks an explicit scope, so it shares \
+             the default 'buildkit' scope with unrelated builds:\n{line}"
+        );
+    }
+
+    let docker_build = job_block(&workflow, "docker-build");
+    assert!(
+        docker_build.contains("cache-from: type=gha,scope=docker-image")
+            && docker_build.contains("cache-to: type=gha,mode=max,scope=docker-image"),
+        "the pull-request image build should use a dedicated scope"
+    );
+
+    let docker_publish = job_block(&workflow, "docker-publish");
+    assert!(
+        docker_publish.contains("cache-from: type=gha,scope=${{ matrix.platform }}")
+            && docker_publish.contains("cache-to: type=gha,mode=max,scope=${{ matrix.platform }}"),
+        "each docker-publish matrix leg should scope its cache by platform so \
+         the legs do not overwrite each other"
     );
 }
 
