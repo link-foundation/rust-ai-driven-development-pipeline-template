@@ -122,6 +122,42 @@ jobs:
       - name: Check required documentation
         run: bash scripts/check-required-docs.sh
 
+  # === RELEASE PREFLIGHT - prove the credentials can publish (issues #163, #167) ===
+  # Principle 16: a non-empty secret proves nothing (an expired token is
+  # non-empty), and a login proves authentication, not authorisation -- so
+  # scripts/preflight-credentials.sh probes with an attempted write. In
+  # release mode a refused credential fails the run here, before the matrix
+  # spends a minute; in report mode (pull requests -- a fork has no
+  # publishing secrets) the same probes annotate without blocking, which is
+  # why the publishing jobs gate on `result == 'success'` rather than on the
+  # run being green.
+  release-preflight:
+    name: Release Preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Probe every release credential
+        env:
+          PREFLIGHT_MODE: >-
+            ${{
+              (
+                (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+                (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'instant')
+              ) && 'release' || 'report'
+            }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+          DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: bash scripts/preflight-credentials.sh
+
   # === CHANGELOG CHECK - only runs on PRs with code changes ===
   # Docs-only PRs (./docs folder, markdown files) don't require changelog fragments
   changelog:
@@ -689,7 +725,7 @@ jobs:
   # This job automatically bumps version based on fragments in changelog.d/
   auto-release:
     name: Auto Release
-    needs: [lint, test, build]
+    needs: [lint, test, build, release-preflight]
     outputs:
       docker_enabled: ${{ steps.dockerhub.outputs.enabled }}
       release_version: ${{ steps.release-metadata.outputs.version }}
@@ -701,6 +737,7 @@ jobs:
       !cancelled() &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
+      needs.release-preflight.result == 'success' &&
       needs.build.result == 'success'
     runs-on: ubuntu-latest
     # Covers the crate build, publish, smoke test, and a cold Docker build.
@@ -851,7 +888,7 @@ jobs:
   # Manual release via workflow_dispatch - only after CI passes
   manual-release:
     name: Instant Release
-    needs: [lint, test, build]
+    needs: [lint, test, build, release-preflight]
     outputs:
       docker_enabled: ${{ steps.dockerhub.outputs.enabled }}
       release_version: ${{ steps.version.outputs.new_version }}
@@ -864,6 +901,7 @@ jobs:
       !cancelled() &&
       github.event_name == 'workflow_dispatch' &&
       github.event.inputs.release_mode == 'instant' &&
+      needs.release-preflight.result == 'success' &&
       needs.build.result == 'success'
     runs-on: ubuntu-latest
     # Covers the crate build, publish, smoke test, and a cold Docker build.
@@ -983,9 +1021,10 @@ jobs:
   # builds run in parallel without racing to update a shared image tag.
   docker-publish:
     name: Publish Docker / ${{ matrix.platform }}
-    needs: [auto-release, manual-release]
+    needs: [auto-release, manual-release, release-preflight]
     if: |
       !cancelled() &&
+      needs.release-preflight.result == 'success' &&
       (needs.auto-release.result == 'success' || needs.manual-release.result == 'success') &&
       (needs.auto-release.outputs.docker_enabled == 'true' || needs.manual-release.outputs.docker_enabled == 'true')
     strategy:
@@ -1050,9 +1089,10 @@ jobs:
 
   docker-merge-manifest:
     name: Publish Docker manifest
-    needs: [auto-release, manual-release, docker-publish]
+    needs: [auto-release, manual-release, docker-publish, release-preflight]
     if: |
       !cancelled() &&
+      needs.release-preflight.result == 'success' &&
       needs.docker-publish.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -1243,6 +1283,7 @@ jobs:
     needs:
       - detect-changes
       - validate-docs
+      - release-preflight
       - changelog
       - version-check
       - secrets-scan

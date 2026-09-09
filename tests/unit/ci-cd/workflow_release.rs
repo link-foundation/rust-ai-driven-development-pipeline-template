@@ -167,6 +167,9 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("detect-changes", 5),
         // Docs validation (issue #161): required documents and their sections.
         ("validate-docs", 5),
+        // Probes the publish credentials before the matrix spends a minute
+        // (issues #163 and #167).
+        ("release-preflight", 5),
         ("changelog", 10),
         ("version-check", 5),
         ("secrets-scan", 10),
@@ -483,7 +486,7 @@ fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible()
     );
 
     let docker_publish = job_block(&workflow, "docker-publish");
-    assert!(docker_publish.contains("needs: [auto-release, manual-release]"));
+    assert!(docker_publish.contains("needs: [auto-release, manual-release, release-preflight]"));
     assert!(docker_publish.contains("push-by-digest=true"));
 }
 
