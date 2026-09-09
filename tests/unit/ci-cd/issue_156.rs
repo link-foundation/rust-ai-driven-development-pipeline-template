@@ -67,10 +67,7 @@ fn jobs(workflow: &str) -> Vec<Job> {
 }
 
 fn job_names(workflow: &str) -> Vec<String> {
-    jobs(workflow)
-        .into_iter()
-        .map(|job| job.name)
-        .collect()
+    jobs(workflow).into_iter().map(|job| job.name).collect()
 }
 
 fn gate_needs(body: &str) -> Vec<String> {
@@ -143,7 +140,10 @@ fn the_gate_receives_what_supersede_detection_needs() {
             .find(|job| job.name == "pipeline-status")
             .unwrap();
 
-        for required in ["RUN_SHA: ${{ github.sha }}", "BRANCH_REF: ${{ github.ref_name }}"] {
+        for required in [
+            "RUN_SHA: ${{ github.sha }}",
+            "BRANCH_REF: ${{ github.ref_name }}",
+        ] {
             assert!(
                 gate.body.contains(required),
                 "{name}: pipeline-status is missing {required}; without it a cancelled \

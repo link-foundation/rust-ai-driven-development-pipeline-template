@@ -37,6 +37,7 @@
 //!   - toml-changed: 'true' if any .toml files changed
 //!   - workflow-changed: 'true' if any .github/workflows/ files changed
 //!   - any-code-changed: 'true' if any code files changed (excludes docs, changelog.d, experiments, examples)
+//!   - docs-changed: 'true' if any markdown file or docs/ file changed
 //!
 //! ```cargo
 //! [dependencies]
@@ -248,6 +249,13 @@ fn is_manifest_or_lockfile_change(file_path: &str) -> bool {
     file_path.ends_with(".toml") || file_path.ends_with("Cargo.lock")
 }
 
+/// The docs-validation gate keys on exactly what the code-change filters
+/// deliberately exclude: markdown anywhere and the docs folder. Computed from
+/// the full changed-file list, because `included_changed_files` drops both.
+fn is_docs_change(file_path: &str) -> bool {
+    file_path.ends_with(".md") || file_path.starts_with("docs/")
+}
+
 fn code_change_pattern() -> Regex {
     Regex::new(r"(\.(rs|toml|mjs|js|yml|yaml)$|(^|/)Cargo\.lock$|^\.github/workflows/)").unwrap()
 }
@@ -299,6 +307,12 @@ fn main() {
         "workflow-changed",
         if workflow_changed { "true" } else { "false" },
     );
+
+    // Detect documentation changes. Deliberately computed from every changed
+    // file: the code filters below exclude docs, which is exactly the set the
+    // validate-docs job cares about (issue #161).
+    let docs_changed = changed_files.iter().any(|f| is_docs_change(f));
+    set_output("docs-changed", if docs_changed { "true" } else { "false" });
 
     // Detect code changes (excluding docs, changelog.d, experiments, examples folders, and markdown files)
     println!("\nFiles considered as code changes:");
@@ -420,6 +434,31 @@ mod tests {
             assert!(is_manifest_or_lockfile_change(path));
             assert!(code_pattern.is_match(path));
             assert!(!is_excluded_from_code_changes("", path));
+        }
+    }
+
+    /// Docs changes are exactly what the code-change filters exclude, so the
+    /// validate-docs gate sees the files no other job would (issue #161).
+    #[test]
+    fn docs_changes_are_the_complement_of_the_code_filters() {
+        for path in [
+            "README.md",
+            "CONTRIBUTING.md",
+            "docs/guide.md",
+            "docs/case-studies/issue-109/repro.md",
+            "changelog.d/20260908_fix.md",
+            "docs/style.css",
+        ] {
+            assert!(is_docs_change(path), "{path} should be a docs change");
+        }
+
+        for path in [
+            "src/lib.rs",
+            "Cargo.toml",
+            ".github/workflows/release.yml",
+            "src/data.json",
+        ] {
+            assert!(!is_docs_change(path), "{path} is not a docs change");
         }
     }
 

@@ -868,7 +868,10 @@ bump: patch
         );
 
         let lowercase_rules = "remote: error: push declined due to repository rule violations";
-        assert_eq!(classify_push_failure(lowercase_rules), PushFailure::RepositoryRules);
+        assert_eq!(
+            classify_push_failure(lowercase_rules),
+            PushFailure::RepositoryRules
+        );
     }
 
     #[test]
@@ -959,7 +962,11 @@ bump: patch
         let repo = temp_dir("verify-leftover");
         fs::create_dir_all(repo.join("changelog.d")).unwrap();
         write_changelog(&repo, "# Changelog\n\n## [0.2.0] - 2026-09-09\n");
-        fs::write(repo.join("changelog.d/20260909_unconsumed.md"), "leftover\n").unwrap();
+        fs::write(
+            repo.join("changelog.d/20260909_unconsumed.md"),
+            "leftover\n",
+        )
+        .unwrap();
         let (changelog, dir, lock) = anchored(&repo);
 
         let error =
@@ -1208,9 +1215,7 @@ fn main() {
             exit(1);
         }
     };
-    let staged_rust_source = staged_files
-        .lines()
-        .any(|file| file.ends_with(".rs"));
+    let staged_rust_source = staged_files.lines().any(|file| file.ends_with(".rs"));
     if staged_rust_source {
         if let Err(e) = exec("cargo", &["fmt", "--all", "--", "--check"]) {
             eprintln!(

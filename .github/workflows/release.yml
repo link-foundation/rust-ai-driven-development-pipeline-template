@@ -76,6 +76,7 @@ jobs:
       toml-changed: ${{ steps.changes.outputs.toml-changed }}
       workflow-changed: ${{ steps.changes.outputs.workflow-changed }}
       any-code-changed: ${{ steps.changes.outputs.any-code-changed }}
+      docs-changed: ${{ steps.changes.outputs.docs-changed }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -97,6 +98,29 @@ jobs:
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: rust-script scripts/detect-code-changes.rs
+
+  # === DOCS VALIDATION - required documents and their sections (issue #161) ===
+  # A diff review reliably misses a deleted CONTRIBUTING.md or a gutted
+  # README, and the link checker actually gets greener when the sections that
+  # contained the links go away. scripts/check-required-docs.sh is the check;
+  # the .md size limit half of principle 12 lives in
+  # scripts/check-file-size.rs (runs in the lint job).
+  validate-docs:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-validate-docs
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.docs-changed == 'true'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check required documentation
+        run: bash scripts/check-required-docs.sh
 
   # === CHANGELOG CHECK - only runs on PRs with code changes ===
   # Docs-only PRs (./docs folder, markdown files) don't require changelog fragments
@@ -1218,6 +1242,7 @@ jobs:
     name: Pipeline Status
     needs:
       - detect-changes
+      - validate-docs
       - changelog
       - version-check
       - secrets-scan

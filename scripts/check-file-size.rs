@@ -1,6 +1,6 @@
 #!/usr/bin/env rust-script
-//! Check Rust files for maximum and warning line-count thresholds
-//! Exits with error code 1 if any files exceed the hard limit
+//! Check source and documentation files for maximum and warning line-count
+//! thresholds. Exits with error code 1 if any files exceed the hard limit
 //!
 //! Usage: rust-script scripts/check-file-size.rs
 //!
@@ -18,8 +18,25 @@ use walkdir::WalkDir;
 
 const MAX_LINES: usize = 1000;
 const WARN_LINES: usize = 900;
-const FILE_EXTENSIONS: &[&str] = &[".rs"];
+/// Documentation gets its own, larger budget: principle 12 names 2500 lines
+/// for docs, and a reference document legitimately runs longer than a source
+/// file. `check-required-docs.sh` covers the rest of the docs checks.
+const MAX_DOC_LINES: usize = 2500;
+const WARN_DOC_LINES: usize = 2250;
+const FILE_EXTENSIONS: &[&str] = &[".rs", ".md"];
 const EXCLUDE_PATTERNS: &[&str] = &["target", ".git", "node_modules"];
+
+/// The warning and hard limits for a file, keyed by extension. Matched the
+/// same case-sensitive way `has_valid_extension` does, so a `.MD` file is
+/// neither size-checked nor given the docs budget.
+fn limits_for(file: &str) -> (usize, usize) {
+    let is_doc = Path::new(file).extension().is_some_and(|ext| ext == "md");
+    if is_doc {
+        (WARN_DOC_LINES, MAX_DOC_LINES)
+    } else {
+        (WARN_LINES, MAX_LINES)
+    }
+}
 
 fn should_exclude(path: &Path) -> bool {
     let path_str = path.to_string_lossy();
@@ -62,10 +79,10 @@ enum LineStatus {
     Violation,
 }
 
-const fn classify_line_count(line_count: usize) -> LineStatus {
-    if line_count > MAX_LINES {
+const fn classify_line_count(line_count: usize, warn: usize, max: usize) -> LineStatus {
+    if line_count > max {
         LineStatus::Violation
-    } else if line_count > WARN_LINES {
+    } else if line_count > warn {
         LineStatus::Warning
     } else {
         LineStatus::WithinLimit
@@ -105,12 +122,14 @@ fn check_directory(cwd: &Path) -> CheckResult {
 
         match count_lines(path) {
             Ok(line_count) => {
+                let file = relative_path(path, cwd);
+                let (warn, max) = limits_for(&file);
                 let finding = Finding {
-                    file: relative_path(path, cwd),
+                    file,
                     lines: line_count,
                 };
 
-                match classify_line_count(line_count) {
+                match classify_line_count(line_count, warn, max) {
                     LineStatus::Violation => result.violations.push(finding),
                     LineStatus::Warning => result.warnings.push(finding),
                     LineStatus::WithinLimit => {}
@@ -142,8 +161,9 @@ fn escape_annotation_message(value: &str) -> String {
 }
 
 fn warning_annotation(finding: &Finding) -> String {
+    let (warn, max) = limits_for(&finding.file);
     let message = format!(
-        "File has {} lines (approaching limit of {MAX_LINES}). Consider extracting code to keep at or below {WARN_LINES} lines and prevent concurrent PR merge limit violations.",
+        "File has {} lines (approaching limit of {max}). Consider extracting code to keep at or below {warn} lines and prevent concurrent PR merge limit violations.",
         finding.lines
     );
 
@@ -188,21 +208,21 @@ fn print_warnings(warnings: &[Finding], changed: Option<&BTreeSet<String>>) {
     }
 
     for warning in warnings {
+        let (warn, max) = limits_for(&warning.file);
         if should_annotate(warning, changed) {
             println!("{}", warning_annotation(warning));
         }
         println!(
-            "WARNING: {} has {} lines (approaching limit of {MAX_LINES}, warning threshold: {WARN_LINES})",
+            "WARNING: {} has {} lines (approaching limit of {max}, warning threshold: {warn})",
             warning.file, warning.lines
         );
     }
 
     println!();
-    println!(
-        "The following files are approaching the {MAX_LINES} line limit (>{WARN_LINES} lines):"
-    );
+    println!("The following files are approaching their line limits:");
     for warning in warnings {
-        println!("  {}", warning.file);
+        let (_, max) = limits_for(&warning.file);
+        println!("  {} (limit {max})", warning.file);
     }
     println!("\nConsider extracting code to prevent concurrent PR merge limit violations.\n");
 }
@@ -215,18 +235,20 @@ fn print_violations(violations: &[Finding]) {
 
     println!("Found files exceeding the line limit:\n");
     for violation in violations {
+        let (_, max) = limits_for(&violation.file);
         println!(
-            "  {}: {} lines (exceeds {MAX_LINES})",
+            "  {}: {} lines (exceeds {max})",
             violation.file, violation.lines
         );
     }
-    println!("\nPlease refactor these files to be under {MAX_LINES} lines\n");
+    println!("\nPlease refactor these files to be under their line limits\n");
 }
 
 #[cfg(not(test))]
 fn main() {
     println!(
-        "\nChecking Rust files for maximum {MAX_LINES} lines (warning above {WARN_LINES})...\n"
+        "\nChecking source files for maximum {MAX_LINES} lines (warning above {WARN_LINES}) and \
+         documentation for maximum {MAX_DOC_LINES} lines (warning above {WARN_DOC_LINES})...\n"
     );
 
     let cwd = std::env::current_dir().expect("Failed to get current directory");
@@ -272,14 +294,75 @@ mod tests {
 
     #[test]
     fn classifies_warning_band_without_blocking() {
-        assert_eq!(classify_line_count(WARN_LINES), LineStatus::WithinLimit);
-        assert_eq!(classify_line_count(WARN_LINES + 1), LineStatus::Warning);
-        assert_eq!(classify_line_count(MAX_LINES), LineStatus::Warning);
+        assert_eq!(
+            classify_line_count(WARN_LINES, WARN_LINES, MAX_LINES),
+            LineStatus::WithinLimit
+        );
+        assert_eq!(
+            classify_line_count(WARN_LINES + 1, WARN_LINES, MAX_LINES),
+            LineStatus::Warning
+        );
+        assert_eq!(
+            classify_line_count(MAX_LINES, WARN_LINES, MAX_LINES),
+            LineStatus::Warning
+        );
     }
 
     #[test]
     fn classifies_hard_limit_violations() {
-        assert_eq!(classify_line_count(MAX_LINES + 1), LineStatus::Violation);
+        assert_eq!(
+            classify_line_count(MAX_LINES + 1, WARN_LINES, MAX_LINES),
+            LineStatus::Violation
+        );
+    }
+
+    /// A reference document legitimately runs longer than a source file, so
+    /// `.md` files are measured against the docs budget, not the source one
+    /// (issue #161).
+    #[test]
+    fn documentation_is_measured_against_its_own_larger_budget() {
+        assert_eq!(limits_for("README.md"), (WARN_DOC_LINES, MAX_DOC_LINES));
+        assert_eq!(limits_for("docs/guide.md"), (WARN_DOC_LINES, MAX_DOC_LINES));
+        assert_eq!(limits_for("src/lib.rs"), (WARN_LINES, MAX_LINES));
+
+        assert_eq!(
+            classify_line_count(MAX_LINES + 1, WARN_DOC_LINES, MAX_DOC_LINES),
+            LineStatus::WithinLimit,
+            "a source-limit overflow must not fail a document"
+        );
+        assert_eq!(
+            classify_line_count(WARN_DOC_LINES + 1, WARN_DOC_LINES, MAX_DOC_LINES),
+            LineStatus::Warning
+        );
+        assert_eq!(
+            classify_line_count(MAX_DOC_LINES + 1, WARN_DOC_LINES, MAX_DOC_LINES),
+            LineStatus::Violation
+        );
+    }
+
+    #[test]
+    fn check_directory_applies_each_budget_to_its_own_files() {
+        let repo = temp_dir("budgets");
+        write_rust_file_with_lines(&repo.join("source.rs"), MAX_LINES + 1);
+        write_rust_file_with_lines(&repo.join("document.md"), MAX_LINES + 1);
+        write_rust_file_with_lines(&repo.join("long_document.md"), MAX_DOC_LINES + 1);
+
+        let result = check_directory(&repo);
+
+        assert_eq!(
+            result
+                .violations
+                .iter()
+                .map(|finding| finding.file.as_str())
+                .collect::<Vec<_>>(),
+            vec!["long_document.md", "source.rs"],
+            "a document just over the source limit is fine, while a document over \
+             the docs limit and a source file over the source limit are not"
+        );
+        assert!(
+            result.warnings.is_empty(),
+            "no fixture file crosses a warning threshold"
+        );
     }
 
     #[test]

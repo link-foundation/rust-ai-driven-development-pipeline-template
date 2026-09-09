@@ -165,6 +165,8 @@ fn release_workflow_jobs_have_explicit_timeouts() {
     let workflow = release_workflow();
     let expected_timeouts = [
         ("detect-changes", 5),
+        // Docs validation (issue #161): required documents and their sections.
+        ("validate-docs", 5),
         ("changelog", 10),
         ("version-check", 5),
         ("secrets-scan", 10),
@@ -785,9 +787,11 @@ fn pipeline_status_gate_covers_every_other_job() {
 #[cfg(unix)]
 #[test]
 fn pipeline_status_script_handles_all_conclusions() {
+    /// (case name, `NEEDS_JSON`, `IS_MAIN`, extra env, expected success)
+    type StatusCase<'a> = (&'a str, &'a str, &'a str, &'a [(&'a str, &'a str)], bool);
     // Issue #156: a cancelled job on main is a hidden timeout only when this
     // run was still the branch head; a superseded run's cancellation is churn.
-    let cases: [(&str, &str, &str, &[(&str, &str)], bool); 6] = [
+    let cases: [StatusCase; 6] = [
         (
             "success",
             r#"{"test":{"result":"success"},"docs":{"result":"skipped"}}"#,
@@ -823,7 +827,10 @@ fn pipeline_status_script_handles_all_conclusions() {
             &[
                 ("RUN_SHA", "0000000000000000000000000000000000000000"),
                 ("BRANCH_REF", "main"),
-                ("BRANCH_HEAD_SHA", "1111111111111111111111111111111111111111"),
+                (
+                    "BRANCH_HEAD_SHA",
+                    "1111111111111111111111111111111111111111",
+                ),
             ],
             true,
         ),
@@ -834,7 +841,10 @@ fn pipeline_status_script_handles_all_conclusions() {
             &[
                 ("RUN_SHA", "1111111111111111111111111111111111111111"),
                 ("BRANCH_REF", "main"),
-                ("BRANCH_HEAD_SHA", "1111111111111111111111111111111111111111"),
+                (
+                    "BRANCH_HEAD_SHA",
+                    "1111111111111111111111111111111111111111",
+                ),
             ],
             false,
         ),
@@ -908,17 +918,14 @@ fn release_workflow_scopes_every_gha_buildx_cache() {
     let docker_build = job_block(&workflow, "docker-build");
     assert!(
         docker_build.contains("cache-from: type=gha,scope=docker-image")
-            && docker_build
-                .contains("cache-to: type=gha,mode=max,scope=docker-image"),
+            && docker_build.contains("cache-to: type=gha,mode=max,scope=docker-image"),
         "the pull-request image build should use a dedicated scope"
     );
 
     let docker_publish = job_block(&workflow, "docker-publish");
     assert!(
-        docker_publish
-            .contains("cache-from: type=gha,scope=${{ matrix.platform }}")
-            && docker_publish
-                .contains("cache-to: type=gha,mode=max,scope=${{ matrix.platform }}"),
+        docker_publish.contains("cache-from: type=gha,scope=${{ matrix.platform }}")
+            && docker_publish.contains("cache-to: type=gha,mode=max,scope=${{ matrix.platform }}"),
         "each docker-publish matrix leg should scope its cache by platform so \
          the legs do not overwrite each other"
     );

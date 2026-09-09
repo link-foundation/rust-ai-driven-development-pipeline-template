@@ -359,10 +359,7 @@ fn every_arithmetic_knob_is_validated_before_the_loop() {
         ("BUDGET_WARN_PERCENT", "seventy"),
         ("BUDGET_GRACE_SECONDS", "1.5"),
     ] {
-        let output = run_budget_script_with_env(
-            &[(key, value)],
-            &["5", "Bad knob", "true"],
-        );
+        let output = run_budget_script_with_env(&[(key, value)], &["5", "Bad knob", "true"]);
         assert_eq!(
             output.status.code(),
             Some(2),

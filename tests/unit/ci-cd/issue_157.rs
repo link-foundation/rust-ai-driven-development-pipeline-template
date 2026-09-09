@@ -145,7 +145,15 @@ fn run_script_with_flaky_git(fail_times: u32) -> std::process::Output {
     fs::write(origin.join("README.md"), "base\n").expect("README should be writable");
     git(&origin, &["add", "README.md"]);
     git(&origin, &["commit", "-m", "base"]);
-    git(&origin, &["clone", "--no-local", ".", clone.to_str().expect("clone path is utf8")]);
+    git(
+        &origin,
+        &[
+            "clone",
+            "--no-local",
+            ".",
+            clone.to_str().expect("clone path is utf8"),
+        ],
+    );
     fs::write(clone.join("feature.txt"), "feature\n").expect("feature file should be writable");
     git(&clone, &["add", "feature.txt"]);
     git(&clone, &["commit", "-m", "feature"]);
@@ -153,15 +161,20 @@ fn run_script_with_flaky_git(fail_times: u32) -> std::process::Output {
     install_flaky_git_shim(&bin, &find_git(), fail_times);
 
     let output = Command::new("bash")
-        .arg(
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("scripts/simulate-fresh-merge.sh"),
-        )
+        .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("scripts/simulate-fresh-merge.sh"))
         .env("GITHUB_BASE_REF", "main")
         .env("FRESH_MERGE_CHECKS", "true")
         // Short backoff so the retry loop does not dominate the test run.
         .env("FRESH_MERGE_RETRY_DELAY_SECONDS", "1")
         .env("FRESH_MERGE_FETCH_ATTEMPTS", "5")
-        .env("PATH", format!("{}:{}", bin.display(), std::env::var("PATH").unwrap_or_default()))
+        .env(
+            "PATH",
+            format!(
+                "{}:{}",
+                bin.display(),
+                std::env::var("PATH").unwrap_or_default()
+            ),
+        )
         .current_dir(&clone)
         .output()
         .expect("the fresh-merge script should run");

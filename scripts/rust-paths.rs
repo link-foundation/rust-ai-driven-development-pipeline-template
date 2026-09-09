@@ -303,8 +303,8 @@ fn find_value_in_table(content: &str, table: &str, key: &str) -> Option<String> 
 /// (`version = { workspace = true }`) form.
 fn package_version_is_inherited(content: &str) -> bool {
     let dotted = Regex::new(r"(?m)^\s*version\.workspace\s*=\s*true\s*(#.*)?$").unwrap();
-    let inline = Regex::new(r"(?m)^\s*version\s*=\s*\{\s*workspace\s*=\s*true\s*\}\s*(#.*)?$")
-        .unwrap();
+    let inline =
+        Regex::new(r"(?m)^\s*version\s*=\s*\{\s*workspace\s*=\s*true\s*\}\s*(#.*)?$").unwrap();
     dotted.is_match(content) || inline.is_match(content)
 }
 
