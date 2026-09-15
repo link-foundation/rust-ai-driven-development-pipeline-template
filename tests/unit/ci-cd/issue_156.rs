@@ -2,10 +2,8 @@
 //!
 //! `check-pipeline-status.sh` was wired only into `release.yml`, and a
 //! `cancelled` conclusion was treated as a hidden timeout on every ref. The
-//! gate now exists in every workflow, and a cancelled job on main is only a
-//! failure when the run was still the head of the branch -- a run superseded
-//! by a newer commit was cancelled by GitHub's concurrency handling, which is
-//! expected churn, not a timeout.
+//! gate now exists in every workflow, and a cancelled job is excused only when
+//! the run was superseded and that job literally opts into cancellation.
 
 use std::fs;
 use std::path::PathBuf;
@@ -114,8 +112,8 @@ fn the_gate_observes_every_other_job() {
             .expect("gate exists (checked by every_workflow_has_a_terminal_status_gate)");
 
         assert!(
-            gate.body.contains("if: always()"),
-            "{name}: the gate must run even when earlier jobs fail or are cancelled"
+            gate.body.contains("if: ${{ !cancelled() }}"),
+            "{name}: the gate must inspect failed jobs without repainting a whole-run cancellation"
         );
 
         let needs = gate_needs(&gate.body);
@@ -160,7 +158,7 @@ fn the_script_treats_an_unresolvable_head_as_not_superseded() {
         .replace("\r\n", "\n");
 
     assert!(
-        script.contains("git ls-remote origin"),
+        script.contains("git ls-remote \"$GIT_REMOTE\""),
         "the branch head should be resolved from the remote"
     );
     assert!(
@@ -169,7 +167,7 @@ fn the_script_treats_an_unresolvable_head_as_not_superseded() {
          unreachable from the job"
     );
     assert!(
-        script.contains("cannot be proven superseded"),
+        script.contains("cannot prove this run was superseded"),
         "every unresolvable path must say out loud that the cancelled job is \
          treated as a real failure -- silence here would be the bug this gate \
          exists to prevent"

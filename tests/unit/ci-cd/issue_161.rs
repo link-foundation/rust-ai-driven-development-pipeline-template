@@ -8,6 +8,8 @@
 //! job; the size-limit half gives `.md` files their own (larger) budget in
 //! `scripts/check-file-size.rs`.
 
+#![cfg(not(windows))]
+
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};

@@ -74,7 +74,8 @@ fn the_gate_releases_only_on_a_complete_recovery() {
     let script = read("scripts/recheck-broken-links.mjs");
 
     assert!(script.contains("result.stillBroken.length === 0"));
-    assert!(script.contains("result.recovered.length === unanswered.length"));
+    assert!(script.contains("result.recovered.length === unansweredCount"));
+    assert!(script.contains("finalFailureCount === 0"));
     assert!(script.contains("'all_recovered=true\\n'"));
 }
 

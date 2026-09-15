@@ -725,7 +725,8 @@ fn rust_script_is_installed_through_the_retrying_locked_helper() {
 /// `always()` runs a job even when the workflow run is cancelled, which is the exact
 /// opposite of what `!cancelled()` expresses. Combining them makes `!cancelled()` dead
 /// weight while reading as if cancellation still stopped the job. The terminal status
-/// observer is the sole intentional exception: it must see cancelled dependencies.
+/// observer also uses `!cancelled()`: it sees individual cancelled dependencies, but
+/// does not repaint a whole workflow run that a user or concurrency policy cancelled.
 #[test]
 fn release_workflow_never_combines_always_with_not_cancelled() {
     let workflow = release_workflow();
@@ -737,10 +738,10 @@ fn release_workflow_never_combines_always_with_not_cancelled() {
     );
     assert_eq!(
         workflow.matches("always()").count(),
-        1,
-        "only the terminal pipeline-status observer should use always()"
+        0,
+        "the terminal observer must not run after a whole-run cancellation"
     );
-    assert!(job_block(&workflow, "pipeline-status").contains("if: always()"));
+    assert!(job_block(&workflow, "pipeline-status").contains("if: ${{ !cancelled() }}"));
     assert!(
         workflow.contains("!cancelled()"),
         "conditional jobs should still be guarded by !cancelled()"
@@ -817,11 +818,11 @@ fn pipeline_status_script_handles_all_conclusions() {
             false,
         ),
         (
-            "cancelled off main",
+            "cancelled off main without a proven supersede",
             r#"{"test":{"result":"cancelled"}}"#,
             "false",
             &[],
-            true,
+            false,
         ),
         (
             "cancelled on main but superseded by a newer commit",
@@ -835,7 +836,7 @@ fn pipeline_status_script_handles_all_conclusions() {
                     "1111111111111111111111111111111111111111",
                 ),
             ],
-            true,
+            false,
         ),
         (
             "cancelled on main while still the branch head",

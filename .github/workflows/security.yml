@@ -94,7 +94,7 @@ jobs:
       - cargo-audit
       - codeql
       - dependency-review
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -13,7 +13,9 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
+#[cfg(unix)]
 use std::process::{Command, Output};
+#[cfg(unix)]
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn repo_path(relative: &str) -> PathBuf {
@@ -52,6 +54,7 @@ fn job_block<'a>(workflow: &'a str, job: &str) -> &'a str {
     )
 }
 
+#[cfg(unix)]
 fn temp_dir(name: &str) -> PathBuf {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -66,6 +69,7 @@ fn temp_dir(name: &str) -> PathBuf {
 /// configurable verdict, so the behaviour tests never touch a network. The
 /// response table is the environment (`FAKE_*` variables); the defaults are a
 /// fully working credential set.
+#[cfg(unix)]
 fn write_curl_stub(dir: &Path) {
     let stub = r#"#!/usr/bin/env bash
 method=GET; mode=body; url=''
@@ -116,10 +120,12 @@ esac
     }
 }
 
+#[cfg(unix)]
 struct PreflightRun {
     status: Output,
 }
 
+#[cfg(unix)]
 fn run_preflight(workdir: &Path, env: &[(&str, &str)], mode: &str) -> PreflightRun {
     let fixture = temp_dir("run");
     write_curl_stub(&fixture);
@@ -154,10 +160,12 @@ fn run_preflight(workdir: &Path, env: &[(&str, &str)], mode: &str) -> PreflightR
     }
 }
 
+#[cfg(unix)]
 fn stdout(run: &PreflightRun) -> String {
     String::from_utf8_lossy(&run.status.stdout).into_owned()
 }
 
+#[cfg(unix)]
 fn release_env() -> Vec<(&'static str, &'static str)> {
     vec![
         ("CARGO_REGISTRY_TOKEN", "cargo-token"),
