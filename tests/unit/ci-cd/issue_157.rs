@@ -6,7 +6,9 @@
 //! does, so the fetch now retries with linear backoff before giving up.
 
 use std::fs;
+#[cfg(not(windows))]
 use std::path::{Path, PathBuf};
+#[cfg(not(windows))]
 use std::process::Command;
 
 fn script() -> String {

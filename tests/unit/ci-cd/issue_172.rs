@@ -1,11 +1,12 @@
 //! Regression test for issue #172: a command root may return while a worker
 //! remains alive holding the stdout inherited from the CI step.
 
+#![cfg(target_os = "linux")]
+
 use std::fs;
 use std::process::Command;
 
 #[test]
-#[cfg(target_os = "linux")]
 fn a_surviving_worker_cannot_hold_the_callers_pipeline_open() {
     let marker = format!("issue-172-survivor-{}", std::process::id());
     let dir = std::env::temp_dir().join(&marker);
