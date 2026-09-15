@@ -1,6 +1,8 @@
 //! Regression tests for issue #171: a moved branch only explains a cancelled
 //! job when that job could actually be cancelled by a superseding run.
 
+#![cfg(not(windows))]
+
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
