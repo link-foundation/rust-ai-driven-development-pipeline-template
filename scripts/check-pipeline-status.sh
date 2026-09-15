@@ -1,80 +1,119 @@
 #!/usr/bin/env bash
-# Terminal status gate: observe every job of the workflow and turn a hidden
-# timeout into a visible failure.
-#
-# GitHub reports jobs killed by `timeout-minutes` as `cancelled`. On a
-# non-default ref that is indistinguishable from a superseded run; on the
-# default branch it would otherwise vanish into a grey run.
-#
-# Environment:
-#   NEEDS_JSON  - required; `${{ toJSON(needs) }}` from the gate job
-#   IS_MAIN     - 'true' when this run is a push to the default branch
-#   RUN_SHA     - the commit this run was started for (${{ github.sha }})
-#   BRANCH_REF  - the branch name the run is on (${{ github.ref_name }})
-#   BRANCH_HEAD_SHA - optional pre-resolved head of BRANCH_REF; when unset the
-#                     head is resolved with `git ls-remote origin`
-#
-# A cancelled job on main is a failure only when this run was still the head of
-# the branch: a run whose commit has since been superseded was cancelled by
-# GitHub's concurrency handling, which is expected churn. When the head cannot
-# be resolved at all (missing env, unreachable remote), the run is treated as
-# NOT superseded and the check fails loud -- a silent pass here would be the
-# exact bug this gate exists to prevent (issue #156).
+# Terminal status gate. A cancellation is excused only when the run was
+# superseded and that specific job has effective cancel-in-progress: true.
+# Missing files, jobs, values, and unevaluated expressions fail closed.
 set -euo pipefail
-
 : "${NEEDS_JSON:?NEEDS_JSON is required (pass toJSON(needs))}"
-IS_MAIN="${IS_MAIN:-false}"
-
-select_by_result() {
-  printf '%s' "$NEEDS_JSON" \
-    | python3 -c 'import json, sys
-want = sys.argv[1]
-needs = json.load(sys.stdin)
-print(", ".join(name for name, job in needs.items() if job.get("result") == want))' "$1"
-}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BRANCH_NAME="${BRANCH_NAME:-${BRANCH_REF:-main}}"
+GIT_REMOTE="${GIT_REMOTE:-origin}"
+VERBOSE="${PIPELINE_STATUS_VERBOSE:-0}"
+trace() { [ "$VERBOSE" = "1" ] && echo "[pipeline-status] $*" >&2 || true; }
 
 run_is_superseded() {
-  if [[ -z "${RUN_SHA:-}" ]]; then
-    echo "check-pipeline-status: RUN_SHA is not set; a cancelled job cannot be proven superseded, so it is treated as a real failure" >&2
-    return 1
+  local head="${BRANCH_HEAD_SHA:-}"
+  if [ -z "${RUN_SHA:-}" ]; then
+    echo "RUN_SHA is unset; cannot prove this run was superseded." >&2; return 1
   fi
-  if [[ -z "${BRANCH_REF:-}" ]]; then
-    echo "check-pipeline-status: BRANCH_REF is not set; a cancelled job cannot be proven superseded, so it is treated as a real failure" >&2
-    return 1
+  if [ -z "$head" ]; then
+    head="$(git ls-remote "$GIT_REMOTE" "refs/heads/${BRANCH_NAME}" 2>/dev/null | awk 'NR == 1 { print $1 }')"
   fi
-
-  local head_sha=""
-  if [[ -n "${BRANCH_HEAD_SHA:-}" ]]; then
-    head_sha="$BRANCH_HEAD_SHA"
-  elif ! head_sha="$(git ls-remote origin "refs/heads/${BRANCH_REF}" 2>/dev/null | awk '{print $1}')" || [[ -z "$head_sha" ]]; then
-    echo "check-pipeline-status: could not resolve refs/heads/${BRANCH_REF} on origin; a cancelled job cannot be proven superseded, so it is treated as a real failure" >&2
-    return 1
+  if [ -z "$head" ]; then
+    echo "Could not resolve the head of ${BRANCH_NAME}; cannot prove this run was superseded." >&2; return 1
   fi
-
-  [[ "$RUN_SHA" != "$head_sha" ]]
+  echo "This run tests ${RUN_SHA}; ${BRANCH_NAME} is at ${head}."
+  [ "$head" != "$RUN_SHA" ]
 }
 
-failed="$(select_by_result failure)"
-cancelled="$(select_by_result cancelled)"
+select_by_result() {
+  NEEDS_JSON="$NEEDS_JSON" WANT_RESULT="$1" python3 -c '
+import json, os
+needs = json.loads(os.environ["NEEDS_JSON"]); want = os.environ["WANT_RESULT"]
+for name, value in needs.items():
+    result = (value or {}).get("result")
+    if (result == "cancelled") if want == "cancelled" else (result not in ("success", "skipped", "cancelled")):
+        print(name)
+'
+}
 
+join_names() {
+  local out="" name
+  while IFS= read -r name; do
+    [ -z "$name" ] && continue
+    if [ -z "$out" ]; then out="$name"; else out="$out, $name"; fi
+  done <<<"$1"
+  printf '%s' "$out"
+}
+
+resolve_workflow_file() {
+  local ref path
+  if [ -n "${WORKFLOW_FILE:-}" ]; then printf '%s' "$WORKFLOW_FILE"; return; fi
+  ref="${GITHUB_WORKFLOW_REF:-}"; [ -n "$ref" ] || return 1
+  ref="${ref%%@*}"; path="${ref#*/.github/}"
+  [ "$path" != "$ref" ] || return 1
+  printf '.github/%s' "$path"
+}
+
+# Print: job<TAB>supersede|overrun<TAB>reason.
+classify_cancellations() {
+  local names="$1" superseded="$2" workflow reason name value table=""
+  local -A policy=()
+  workflow="$(resolve_workflow_file || true)"
+  if [ -z "$workflow" ]; then
+    reason="the workflow file could not be resolved from GITHUB_WORKFLOW_REF"
+  elif [ ! -f "$workflow" ]; then
+    reason="the workflow file ${workflow} is unreadable"
+  elif ! table="$(WORKFLOW_FILE="$workflow" JOB_NAMES="$names" bash "$SCRIPT_DIR/read-job-cancel-in-progress.sh" 2>&1)"; then
+    reason="the workflow concurrency could not be read: ${table}"; table=""
+  else
+    reason=""
+    while IFS=$'\t' read -r name value; do
+      [ -n "$name" ] && policy["$name"]="$value"
+    done <<<"$table"
+  fi
+  while IFS= read -r name; do
+    [ -z "$name" ] && continue
+    value="${policy[$name]:-unreadable}"
+    trace "${name}: cancel-in-progress=${value}, superseded=${superseded}"
+    if [ "$superseded" != yes ]; then
+      printf '%s\toverrun\tthe run is still current, so nothing overtook it\n' "$name"; continue
+    fi
+    case "$value" in
+      true) printf '%s\tsupersede\tit sets cancel-in-progress: true\n' "$name" ;;
+      false) printf '%s\toverrun\tit sets cancel-in-progress: false, so a supersede queues instead of cancelling it\n' "$name" ;;
+      none) printf '%s\toverrun\tit has no concurrency group to cancel it\n' "$name" ;;
+      missing) printf '%s\toverrun\tthe workflow declares no job by that name\n' "$name" ;;
+      unknown) printf '%s\toverrun\tits cancel-in-progress value is an expression the gate cannot evaluate\n' "$name" ;;
+      *) printf '%s\toverrun\t%s\n' "$name" "$reason" ;;
+    esac
+  done <<<"$names"
+}
+
+[ "$VERBOSE" != "1" ] || trace "needs: $NEEDS_JSON"
+failed_lines="$(select_by_result other)"; cancelled_lines="$(select_by_result cancelled)"
+failed="$(join_names "$failed_lines")"; cancelled="$(join_names "$cancelled_lines")"
 echo "Failed jobs:    ${failed:-<none>}"
 echo "Cancelled jobs: ${cancelled:-<none>}"
-
 status=0
-if [[ -n "$failed" ]]; then
-  echo "::error::Pipeline failed. Failing jobs: ${failed}"
-  status=1
+if [ -n "$failed" ]; then
+  echo "::error title=Pipeline failed::Failing jobs: ${failed}"; status=1
 fi
-
-if [[ -n "$cancelled" ]]; then
-  if [[ "$IS_MAIN" != "true" ]]; then
-    echo "::warning::Cancelled jobs: ${cancelled}. On a non-default ref this is usually a superseded run — open each job and search for 'has exceeded the maximum execution time' to rule out a real timeout. Steps wrapped in scripts/run-with-budget-warning.sh report a real timeout as a failure instead, which is why long steps carry their own budget."
-  elif run_is_superseded; then
-    echo "::warning::Cancelled jobs: ${cancelled}. This run is no longer the head of ${BRANCH_REF}: a newer commit superseded it, so the cancellation is expected churn."
-  else
-    echo "::error::Pipeline has cancelled jobs on main: ${cancelled}. This run was still the head of ${BRANCH_REF:-the branch} when the jobs were cancelled, so the cancellation is a real failure -- most likely a job killed by 'timeout-minutes', which GitHub reports as cancelled. Steps wrapped in scripts/run-with-budget-warning.sh report a real timeout as a failure instead, which is why long steps carry their own budget."
+if [ -n "$cancelled" ]; then
+  superseded=no; if run_is_superseded; then superseded=yes; fi
+  superseded_lines=""; overrun_lines=""
+  while IFS=$'\t' read -r job verdict reason; do
+    [ -z "$job" ] && continue
+    echo "  ${job}: ${reason}"
+    if [ "$verdict" = supersede ]; then superseded_lines+="${job}"$'\n'; else overrun_lines+="${job}"$'\n'; fi
+  done < <(classify_cancellations "$cancelled_lines" "$superseded")
+  superseded_jobs="$(join_names "$superseded_lines")"; overrun_jobs="$(join_names "$overrun_lines")"
+  if [ -n "$superseded_jobs" ]; then
+    echo "::warning title=Cancelled jobs in a superseded run::${superseded_jobs}. These jobs set cancel-in-progress: true, so their cancellation is explained."
+  fi
+  if [ -n "$overrun_jobs" ]; then
+    echo "::error title=Pipeline has cancelled jobs::${overrun_jobs}. No supersede accounts for these cancellations; inspect each for 'has exceeded the maximum execution time'."
     status=1
   fi
 fi
-
+[ "$status" -ne 0 ] || echo "All required jobs succeeded or were legitimately skipped."
 exit "$status"

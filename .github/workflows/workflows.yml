@@ -106,7 +106,7 @@ jobs:
     needs:
       - actionlint
       - zizmor
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
