@@ -14,9 +14,7 @@ fn a_surviving_worker_cannot_hold_the_callers_pipeline_open() {
     let command = dir.join("command.sh");
     fs::write(
         &command,
-        format!(
-            "#!/usr/bin/env bash\nsh -c 'sleep 20' {marker} &\necho root-finished\nexit 0\n"
-        ),
+        format!("#!/usr/bin/env bash\nsh -c 'sleep 20' {marker} &\necho root-finished\nexit 0\n"),
     )
     .expect("write worker fixture");
 

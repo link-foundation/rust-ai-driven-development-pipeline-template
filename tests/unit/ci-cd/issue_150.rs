@@ -118,8 +118,8 @@ fn the_runner_covers_every_script_that_has_tests() {
     let scripts = scripts_with_tests();
     assert_eq!(
         scripts.len(),
-        9,
-        "expected nine scripts with inline test suites, found: {scripts:?}"
+        12,
+        "expected twelve scripts with inline test suites, found: {scripts:?}"
     );
 }
 

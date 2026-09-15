@@ -741,9 +741,7 @@ fn release_workflow_never_combines_always_with_not_cancelled() {
         0,
         "the terminal observer must not run after a whole-run cancellation"
     );
-    assert!(
-        job_block(&workflow, "pipeline-status").contains("if: ${{ !cancelled() }}")
-    );
+    assert!(job_block(&workflow, "pipeline-status").contains("if: ${{ !cancelled() }}"));
     assert!(
         workflow.contains("!cancelled()"),
         "conditional jobs should still be guarded by !cancelled()"
