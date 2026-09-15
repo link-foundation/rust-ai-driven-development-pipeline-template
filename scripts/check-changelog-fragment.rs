@@ -20,27 +20,39 @@
 //! regex = "1"
 //! ```
 
+use regex::Regex;
 use std::env;
 use std::path::Path;
-use std::process::{Command, exit};
-use regex::Regex;
+use std::process::{exit, Command};
 
-fn exec(command: &str, args: &[&str]) -> String {
+fn exec(command: &str, args: &[&str]) -> Result<String, String> {
     match Command::new(command).args(args).output() {
-        Ok(output) => {
-            if output.status.success() {
-                String::from_utf8_lossy(&output.stdout).trim().to_string()
-            } else {
-                eprintln!("Error executing {} {:?}", command, args);
-                eprintln!("{}", String::from_utf8_lossy(&output.stderr));
-                String::new()
-            }
+        Ok(output) if output.status.success() => {
+            Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
         }
-        Err(e) => {
-            eprintln!("Failed to execute {} {:?}: {}", command, args, e);
-            String::new()
-        }
+        Ok(output) => Err(format!(
+            "{} {:?} exited with {}: {}",
+            command,
+            args,
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        )),
+        Err(error) => Err(format!(
+            "failed to execute {} {:?}: {}",
+            command, args, error
+        )),
     }
+}
+
+fn fetch_base(base_ref: &str) -> Result<(), String> {
+    let refspec = format!("refs/heads/{base_ref}:refs/remotes/origin/{base_ref}");
+    let shallow = exec("git", &["rev-parse", "--is-shallow-repository"])? == "true";
+    let mut args = vec!["fetch", "origin"];
+    if shallow {
+        args.push("--unshallow");
+    }
+    args.push(&refspec);
+    exec("git", &args).map(|_| ())
 }
 
 fn get_rust_root() -> String {
@@ -61,24 +73,36 @@ fn get_rust_root() -> String {
     ".".to_string()
 }
 
-fn get_changed_files() -> Vec<String> {
+fn get_changed_files() -> Result<Vec<String>, String> {
     let base_ref = env::var("GITHUB_BASE_REF").unwrap_or_else(|_| "main".to_string());
     eprintln!("Comparing against origin/{}...HEAD", base_ref);
-
-    let output = exec(
-        "git",
-        &["diff", "--name-only", &format!("origin/{}...HEAD", base_ref)],
-    );
-
-    if output.is_empty() {
-        return Vec::new();
-    }
-
-    output.lines().filter(|s| !s.is_empty()).map(String::from).collect()
+    let comparison = format!("origin/{base_ref}...HEAD");
+    let diff_args = ["diff", "--name-only", comparison.as_str()];
+    let output = match exec("git", &diff_args) {
+        Ok(output) => output,
+        Err(first_error) => {
+            eprintln!(
+                "Initial diff failed ({first_error}); fetching the explicit base ref and retrying."
+            );
+            fetch_base(&base_ref).map_err(|fetch_error| {
+                format!("could not prepare base after diff failure ({first_error}); {fetch_error}")
+            })?;
+            exec("git", &diff_args)?
+        }
+    };
+    Ok(output
+        .lines()
+        .filter(|s| !s.is_empty())
+        .map(String::from)
+        .collect())
 }
 
 fn is_source_file(file_path: &str, rust_root: &str) -> bool {
-    let prefix = if rust_root == "." { String::new() } else { format!("{}/", rust_root) };
+    let prefix = if rust_root == "." {
+        String::new()
+    } else {
+        format!("{}/", rust_root)
+    };
 
     let source_patterns = [
         Regex::new(&format!(r"^{}src/", regex::escape(&prefix))).unwrap(),
@@ -87,11 +111,17 @@ fn is_source_file(file_path: &str, rust_root: &str) -> bool {
         Regex::new(&format!(r"^{}Cargo\.toml$", regex::escape(&prefix))).unwrap(),
     ];
 
-    source_patterns.iter().any(|pattern| pattern.is_match(file_path))
+    source_patterns
+        .iter()
+        .any(|pattern| pattern.is_match(file_path))
 }
 
 fn is_changelog_fragment(file_path: &str, rust_root: &str) -> bool {
-    let changelog_dir = if rust_root == "." { "changelog.d/".to_string() } else { format!("{}/changelog.d/", rust_root) };
+    let changelog_dir = if rust_root == "." {
+        "changelog.d/".to_string()
+    } else {
+        format!("{}/changelog.d/", rust_root)
+    };
 
     (file_path.starts_with(&changelog_dir) || file_path.starts_with("changelog.d/"))
         && file_path.ends_with(".md")
@@ -103,10 +133,19 @@ fn main() {
 
     let rust_root = get_rust_root();
     if rust_root != "." {
-        println!("Detected multi-language repository (Rust root: {})", rust_root);
+        println!(
+            "Detected multi-language repository (Rust root: {})",
+            rust_root
+        );
     }
 
-    let changed_files = get_changed_files();
+    let changed_files = match get_changed_files() {
+        Ok(files) => files,
+        Err(error) => {
+            eprintln!("::error::Could not determine the PR's changed files: {error}");
+            exit(1);
+        }
+    };
 
     if changed_files.is_empty() {
         println!("No changed files found");
@@ -120,7 +159,10 @@ fn main() {
     println!();
 
     // Count source files changed
-    let source_changes: Vec<&String> = changed_files.iter().filter(|f| is_source_file(f, &rust_root)).collect();
+    let source_changes: Vec<&String> = changed_files
+        .iter()
+        .filter(|f| is_source_file(f, &rust_root))
+        .collect();
     let source_changed_count = source_changes.len();
 
     println!("Source files changed: {}", source_changed_count);
@@ -161,4 +203,19 @@ fn main() {
         "Changelog check passed (source files changed: {}, fragments added: {})",
         source_changed_count, fragment_added_count
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn command_failure_is_not_an_empty_success() {
+        let error = exec(
+            "git",
+            &["diff", "--name-only", "definitely-not-a-ref...HEAD"],
+        )
+        .expect_err("an invalid revision must remain an error");
+        assert!(error.contains("exited with"));
+    }
 }

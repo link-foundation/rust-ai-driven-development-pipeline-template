@@ -26,26 +26,39 @@
 //! regex = "1"
 //! ```
 
+use regex::Regex;
 use std::env;
 use std::path::Path;
-use std::process::{Command, exit};
-use regex::Regex;
+use std::process::{exit, Command};
 
-fn exec(command: &str, args: &[&str]) -> String {
+fn exec(command: &str, args: &[&str]) -> Result<String, String> {
     match Command::new(command).args(args).output() {
-        Ok(output) => {
-            String::from_utf8_lossy(&output.stdout).trim().to_string()
+        Ok(output) if output.status.success() => {
+            Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
         }
-        Err(_) => String::new(),
+        Ok(output) => Err(format!(
+            "{} {:?} exited with {}: {}",
+            command,
+            args,
+            output.status,
+            String::from_utf8_lossy(&output.stderr).trim()
+        )),
+        Err(error) => Err(format!(
+            "failed to execute {} {:?}: {}",
+            command, args, error
+        )),
     }
 }
 
-fn exec_ignore_error(command: &str, args: &[&str]) {
-    let _ = Command::new(command)
-        .args(args)
-        .stdout(std::process::Stdio::null())
-        .stderr(std::process::Stdio::null())
-        .status();
+fn fetch_base(base_ref: &str) -> Result<(), String> {
+    let refspec = format!("refs/heads/{base_ref}:refs/remotes/origin/{base_ref}");
+    let shallow = exec("git", &["rev-parse", "--is-shallow-repository"])? == "true";
+    let mut args = vec!["fetch", "origin"];
+    if shallow {
+        args.push("--unshallow");
+    }
+    args.push(&refspec);
+    exec("git", &args).map(|_| ())
 }
 
 fn should_skip_version_check() -> bool {
@@ -95,17 +108,22 @@ fn get_cargo_toml_path(rust_root: &str) -> String {
     }
 }
 
-fn get_cargo_toml_diff(cargo_toml_path: &str) -> String {
+fn get_cargo_toml_diff(cargo_toml_path: &str) -> Result<String, String> {
     let base_ref = env::var("GITHUB_BASE_REF").unwrap_or_else(|_| "main".to_string());
-
-    // Ensure we have the base branch
-    exec_ignore_error("git", &["fetch", "origin", &base_ref, "--depth=1"]);
-
-    // Get the diff for Cargo.toml
-    exec(
-        "git",
-        &["diff", &format!("origin/{}...HEAD", base_ref), "--", cargo_toml_path],
-    )
+    let comparison = format!("origin/{base_ref}...HEAD");
+    let diff_args = ["diff", comparison.as_str(), "--", cargo_toml_path];
+    match exec("git", &diff_args) {
+        Ok(diff) => Ok(diff),
+        Err(first_error) => {
+            eprintln!(
+                "Initial diff failed ({first_error}); fetching the explicit base ref and retrying."
+            );
+            fetch_base(&base_ref).map_err(|fetch_error| {
+                format!("could not prepare base after diff failure ({first_error}); {fetch_error}")
+            })?;
+            exec("git", &diff_args)
+        }
+    }
 }
 
 fn has_version_change(diff: &str) -> bool {
@@ -137,7 +155,13 @@ fn main() {
     // Get and check the diff
     let rust_root = get_rust_root();
     let cargo_toml_path = get_cargo_toml_path(&rust_root);
-    let diff = get_cargo_toml_diff(&cargo_toml_path);
+    let diff = match get_cargo_toml_diff(&cargo_toml_path) {
+        Ok(diff) => diff,
+        Err(error) => {
+            eprintln!("::error::Could not determine the Cargo.toml diff: {error}");
+            exit(1);
+        }
+    };
 
     if diff.is_empty() {
         println!("No changes to Cargo.toml detected.");
@@ -160,4 +184,16 @@ fn main() {
 
     println!("Cargo.toml was modified but version field was not changed.");
     println!("Version check passed.");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn command_failure_is_not_an_empty_success() {
+        let error = exec("git", &["diff", "definitely-not-a-ref...HEAD"])
+            .expect_err("an invalid revision must remain an error");
+        assert!(error.contains("exited with"));
+    }
 }
