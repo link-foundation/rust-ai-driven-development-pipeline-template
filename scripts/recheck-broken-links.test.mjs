@@ -354,6 +354,42 @@ describe('re-check step end to end', () => {
     }
   });
 
+  it('keeps the gate closed when a recovered transport error accompanies a final 404', async () => {
+    const server = createServer((request, response) => {
+      response.writeHead(200);
+      response.end();
+    });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const { port } = server.address();
+
+    const dir = mkdtempSync(path.join(tmpdir(), 'recheck-'));
+    try {
+      const reportPath = writeReport(dir, [
+        `- [ERROR] <http://127.0.0.1:${port}/healthy> | Connection reset by peer`,
+        '- [404] <https://example.com/final/> | Rejected status code: 404 Not Found',
+      ]);
+      const outputPath = path.join(dir, 'github-output.txt');
+
+      const { code } = await runRecheck({
+        LYCHEE_OUTPUT: reportPath,
+        RECOVERED_OUTPUT: path.join(dir, 'recovered.txt'),
+        GITHUB_OUTPUT: outputPath,
+        RECHECK_WAIT_MS: '10',
+        RECHECK_BUDGET_SECONDS: '30',
+      });
+
+      assert.equal(code, 0);
+      assert.equal(
+        existsSync(outputPath),
+        false,
+        'all_recovered is a verdict about the complete report, not only the re-asked subset'
+      );
+    } finally {
+      server.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('exits 0 even when the report is missing entirely', async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'recheck-'));
     try {
