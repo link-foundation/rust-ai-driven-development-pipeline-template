@@ -57,7 +57,6 @@ resolve_workflow_file() {
 # Print: job<TAB>supersede|overrun<TAB>reason.
 classify_cancellations() {
   local names="$1" superseded="$2" workflow reason name value table=""
-  local -A policy=()
   workflow="$(resolve_workflow_file || true)"
   if [ -z "$workflow" ]; then
     reason="the workflow file could not be resolved from GITHUB_WORKFLOW_REF"
@@ -67,13 +66,11 @@ classify_cancellations() {
     reason="the workflow concurrency could not be read: ${table}"; table=""
   else
     reason=""
-    while IFS=$'\t' read -r name value; do
-      [ -n "$name" ] && policy["$name"]="$value"
-    done <<<"$table"
   fi
   while IFS= read -r name; do
     [ -z "$name" ] && continue
-    value="${policy[$name]:-unreadable}"
+    value="$(printf '%s\n' "$table" | awk -F '\t' -v job="$name" '$1 == job { print $2; exit }')"
+    value="${value:-unreadable}"
     trace "${name}: cancel-in-progress=${value}, superseded=${superseded}"
     if [ "$superseded" != yes ]; then
       printf '%s\toverrun\tthe run is still current, so nothing overtook it\n' "$name"; continue
