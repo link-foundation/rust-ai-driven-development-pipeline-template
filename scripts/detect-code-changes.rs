@@ -106,6 +106,8 @@ fn get_changed_files() -> Vec<String> {
 }
 
 fn get_changed_files_in_repo(repo_path: &Path, event_name: &str) -> Vec<String> {
+    // Disable rename detection in every diff so moving code into an excluded
+    // folder still reports the deleted source path and activates the code jobs.
     // GitHub Actions checks out a synthetic merge commit for pull_request
     // events: HEAD is the merge commit, HEAD^ is the base branch, HEAD^2
     // is the actual PR head. To get the per-commit diff (what the latest
@@ -117,7 +119,7 @@ fn get_changed_files_in_repo(repo_path: &Path, event_name: &str) -> Vec<String> 
         println!("Comparing HEAD^2^ to HEAD^2 (per-commit diff of PR head)");
         let output = exec_in(
             "git",
-            &["diff", "--name-only", "HEAD^2^", "HEAD^2"],
+            &["diff", "--name-only", "--no-renames", "HEAD^2^", "HEAD^2"],
             Some(repo_path),
         );
         if !output.is_empty() {
@@ -131,7 +133,7 @@ fn get_changed_files_in_repo(repo_path: &Path, event_name: &str) -> Vec<String> 
         println!("HEAD^2^ not available (first commit in PR), comparing HEAD^ to HEAD^2");
         let output = exec_in(
             "git",
-            &["diff", "--name-only", "HEAD^", "HEAD^2"],
+            &["diff", "--name-only", "--no-renames", "HEAD^", "HEAD^2"],
             Some(repo_path),
         );
         if !output.is_empty() {
@@ -146,7 +148,7 @@ fn get_changed_files_in_repo(repo_path: &Path, event_name: &str) -> Vec<String> 
     println!("Comparing HEAD^1 to HEAD");
     let output = exec_in(
         "git",
-        &["diff", "--name-only", "HEAD^1", "HEAD"],
+        &["diff", "--name-only", "--no-renames", "HEAD^1", "HEAD"],
         Some(repo_path),
     );
 

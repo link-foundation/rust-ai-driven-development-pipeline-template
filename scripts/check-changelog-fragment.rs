@@ -82,7 +82,12 @@ fn get_changed_files(added_only: bool) -> Result<Vec<String>, String> {
     let comparison = format!("origin/{base_ref}...HEAD");
     let mut diff_args = vec!["diff", "--name-only", "-z", comparison.as_str()];
     if added_only {
+        // A replaced fragment is new; a byte-identical move of a pending one is not.
+        diff_args.push("--find-renames=100%");
         diff_args.push("--diff-filter=A");
+    } else {
+        // Include both paths of a move, especially source moved out of src/.
+        diff_args.push("--no-renames");
     }
     let output = match exec("git", &diff_args) {
         Ok(output) => output,
@@ -118,7 +123,11 @@ fn is_source_file(file_path: &str, rust_root: &str) -> bool {
             regex::escape(&prefix)
         ))
         .unwrap(),
-        Regex::new(&format!(r"^{}(?:[^/]+/)*Cargo\.toml$", regex::escape(&prefix))).unwrap(),
+        Regex::new(&format!(
+            r"^{}(?:[^/]+/)*Cargo\.toml$",
+            regex::escape(&prefix)
+        ))
+        .unwrap(),
     ];
 
     source_patterns
@@ -142,10 +151,11 @@ fn is_changelog_fragment(file_path: &str, rust_root: &str) -> bool {
 fn main() {
     println!("Checking for changelog fragment in PR diff...\n");
 
-    let rust_root = rust_paths::repository_relative_root(&get_rust_root()).unwrap_or_else(|error| {
-        eprintln!("::error::{error}");
-        exit(1);
-    });
+    let rust_root =
+        rust_paths::repository_relative_root(&get_rust_root()).unwrap_or_else(|error| {
+            eprintln!("::error::{error}");
+            exit(1);
+        });
     if rust_root != "." {
         println!(
             "Detected multi-language repository (Rust root: {})",
