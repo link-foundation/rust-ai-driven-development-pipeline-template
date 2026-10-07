@@ -65,6 +65,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.20.0] - 2026-10-07
+
+### Added
+- `release-preflight` job proves the crates.io and Docker Hub credentials can actually publish before the release matrix spends its minutes (#163, #167)
+- `validate-docs` job verifies every required document and section, and `check-file-size.rs` now measures markdown against its own larger budget (#161)
+- The link checker re-asks exactly the failures where no host ever answered and releases the run when they all recover; the Wayback lookup skips the recovered URLs (#168)
+
+### Changed
+- The pipeline status gate runs in every workflow and can tell a superseded run from a timeout on main (#156)
+- cargo audit denies warnings, so `unmaintained`, `unsound` and `yanked` findings fail the gate (#164)
+- actionlint is digest-pinned to 1.7.12 and the zizmor CLI version is named explicitly, matching the pin-everything policy (#160, #165, #166)
+- Each buildx platform writes to its own GHA cache scope, so separate builds no longer evict each other (#154)
+
+### Fixed
+- `run-with-budget-warning.sh` measures elapsed wall-clock time, so a non-integer poll setting can no longer silently disable enforcement (#153)
+- `rust-paths.rs` reads the crate name and version from the `[package]` table only, instead of a table-blind regex (#155)
+- A transient `git fetch` failure no longer fails the whole fresh-merge job (#157)
+- The leaked hive-mind `.gitkeep` placeholder is removed from the default branch (#158)
+- The version commit is linted, formatted and tested before it is pushed to main (#159)
+- Push retries classify GH006/GH013 ruleset rejections instead of rebasing three times and reporting the wrong cause (#162)
+
+### Fixed
+
+- Link recovery now considers every original failure, including final HTTP responses, before releasing the link-check gate (#170)
+- Cancelled jobs are excused only when their own effective concurrency policy proves a superseding run could cancel them (#171)
+- Step budgets isolate output from surviving descendants and can detect, terminate, and report privileged process-group survivors (#172)
+- Manual changelog descriptions cannot inject GitHub Actions workflow commands through generated fragment output (#173)
+- Changelog and version policy checks fail closed when their base diff is unavailable and retry after fetching the explicit base ref (#174)
+- Pipeline status checks remain portable to the Bash 3.2 macOS runner, and the file-size gate freezes existing source debt while excluding generated changelog history
+
+### Fixed
+- Pin CI runners, rust-script and security scanners, and check tool installation in every job.
+- Reject manual version changes, reused changelog fragments, Cargo manifest warnings and unrelated release-index changes.
+- Verify scoped crates.io credentials through a metadata-only publish probe and keep publication tokens out of Cargo arguments.
+- Retry transient link failures with bounded backoff, exclude experiments from CodeQL, remove duplicate doc tests and increase registry propagation wait margin.
+
 ## [0.19.35] - 2026-09-05
 
 ### Fixed
