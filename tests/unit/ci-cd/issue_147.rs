@@ -96,6 +96,29 @@ fn rust_toolchain_is_hash_pinned_everywhere() {
     }
 }
 
+/// Generated toolchain branches are force-updated. Their old commits can fall
+/// out of upstream history despite being valid full-length hashes.
+#[test]
+fn rust_toolchain_pin_uses_verified_master_history() {
+    // Verified against upstream master on 2026-10-07. Recheck ancestry when
+    // updating: gh api repos/dtolnay/rust-toolchain/compare/<sha>...master
+    const VERIFIED_MASTER_COMMIT: &str = "7e38f4b43b4db5c8dd498af069a4f6196df1d067";
+    for (name, body) in all_workflows() {
+        for line in body.lines().filter(|line| {
+            line.trim_start()
+                .starts_with("uses: dtolnay/rust-toolchain@")
+                || line
+                    .trim_start()
+                    .starts_with("- uses: dtolnay/rust-toolchain@")
+        }) {
+            assert!(
+                line.contains(VERIFIED_MASTER_COMMIT) && line.contains("master branch"),
+                "{name} must pin a verified master-history commit, not a generated toolchain branch: {line}"
+            );
+        }
+    }
+}
+
 /// Pinning to a hash drops the `stable` ref that used to supply the action's
 /// default `toolchain:` input, so every pinned use has to restate it.
 #[test]

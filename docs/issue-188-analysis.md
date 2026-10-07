@@ -147,7 +147,7 @@ tests, `tests/unit/ci-cd/issue_188.rs`, and the Node test suites. The existing
 in the required release gate. No new runtime dependency is added to the crate;
 the TOML library belongs only to the version-check script.
 
-Local validation passed 263 crate tests, 110 inline script tests, 16 CLI
+Local validation passed 264 crate tests, 110 inline script tests, 16 CLI
 regressions and 48 Node tests. Formatting, Clippy with denied warnings, rustdoc,
 the Cargo-warning gate, source/documentation size limits, package size,
 Actionlint with ShellCheck, pinned secretlint and both Zizmor personas passed.
@@ -177,3 +177,24 @@ tests. Versions and root Cargo.lock remain unchanged: the newly added patch
 fragment is the repository's release trigger, and the automated writer owns the
 subsequent version bump. Existing tag ordering, Docker credential probing, native
 desktop targets, release gating and configurable retry budgets are retained.
+
+## CI investigation and action provenance
+
+The first complete CI run used commit `4f8057f` at 2026-10-07 02:06:43 UTC.
+The main pipeline gates, links, security and all six desktop builds passed.
+Code-gated jobs were skipped for that documentation-only commit; the follow-up
+includes a Rust policy test so those jobs run against the final source tree. The
+Workflows audit failed: `ci-logs/workflows-37560398405.log`, lines 269–284,
+reported 16 Rust action references with no history in the referenced repository.
+The offline local audit cannot perform this GitHub ancestry check.
+
+The existing `6bed0761...` pin came from the generated `stable` branch.
+GitHub's compare API confirmed it had diverged from `master` by one commit.
+Upstream explicitly requires full SHA pins from `master` history, because
+generated branch commits eventually become unreachable. Replace all 16 uses
+with verified master commit `7e38f4b43b4db5c8dd498af069a4f6196df1d067`,
+retaining the explicit `toolchain: stable` inputs. A new repository-wide policy
+test fails on the old pin before replacement. Validate both Zizmor personas with
+authenticated online audits as well as the normal local checks.
+[Upstream pinning requirements](https://github.com/dtolnay/rust-toolchain#choice-of-full-length-commit-sha),
+[verified upstream commit](https://github.com/dtolnay/rust-toolchain/commit/7e38f4b43b4db5c8dd498af069a4f6196df1d067)
