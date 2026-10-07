@@ -23,6 +23,28 @@ use regex::Regex;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
+
+/// Normalize configured roots to Git's repository-relative, slash-separated paths.
+pub fn repository_relative_root(root: &str) -> Result<String, String> {
+    let root = fs::canonicalize(root).map_err(|e| format!("Invalid Rust root: {e}"))?;
+    let output = Command::new("git")
+        .current_dir(&root)
+        .args(["rev-parse", "--show-toplevel"])
+        .output()
+        .map_err(|e| format!("Could not find repository root: {e}"))?;
+    if !output.status.success() {
+        return Err("Could not find repository root".to_string());
+    }
+    let repository = fs::canonicalize(String::from_utf8_lossy(&output.stdout).trim())
+        .map_err(|e| e.to_string())?;
+    let relative = root.strip_prefix(repository).map_err(|e| e.to_string())?;
+    if relative.as_os_str().is_empty() {
+        Ok(".".to_string())
+    } else {
+        Ok(relative.to_string_lossy().replace('\\', "/"))
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PackageInfo {

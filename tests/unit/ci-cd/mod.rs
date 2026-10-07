@@ -10,6 +10,9 @@ mod check_file_size;
 // borrow (issue #150). Loading release-naming.rs twice here is the price of
 // that; the sibling `mod release_naming` below is what release_naming_tests.rs
 // exercises directly.
+#[allow(clippy::all, clippy::nursery, clippy::pedantic, dead_code)]
+#[path = "../../../scripts/check-workflow-tools.rs"]
+mod check_workflow_tools;
 #[allow(clippy::duplicate_mod)]
 #[path = "../../../scripts/create-github-release.rs"]
 mod create_github_release;
@@ -33,6 +36,7 @@ mod issue_163;
 mod issue_168;
 mod issue_171;
 mod issue_172;
+mod issue_188;
 #[path = "../../../scripts/release-naming.rs"]
 mod release_naming;
 mod release_naming_tests;

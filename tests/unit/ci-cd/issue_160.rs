@@ -26,7 +26,7 @@ fn workflows() -> String {
 /// The zizmor version the action runs and the version documented for local
 /// reproduction must be the same number, or a contributor reproducing a
 /// finding locally is running a different analyser than CI did.
-const ZIZMOR_VERSION: &str = "1.29.0";
+const ZIZMOR_VERSION: &str = "1.30.1";
 
 #[test]
 fn the_zizmor_version_is_named_instead_of_left_to_the_action_default() {

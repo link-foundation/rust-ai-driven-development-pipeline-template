@@ -11,7 +11,7 @@
 # suite failed.
 set -uo pipefail
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 # Match how CI compiles the rest of the tree, so dead-code and unused-import
 # warnings introduced by the test harness surface here rather than in CI.
@@ -35,4 +35,11 @@ if [ "$status" -ne 0 ]; then
   printf '  %s\n' "${failed[@]}" >&2
 fi
 
+# Exercise CLI guards in isolated Git repositories, and registry/link mocks.
+if ! python3 experiments/issue-188-regressions.py -v; then
+  status=1
+fi
+if ! node --test scripts/*.test.mjs; then
+  status=1
+fi
 exit "$status"

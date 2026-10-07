@@ -14,7 +14,7 @@ permissions:
 jobs:
   cargo-audit:
     name: Cargo audit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-cargo-audit
@@ -38,7 +38,7 @@ jobs:
 
   codeql:
     name: CodeQL (${{ matrix.language }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-codeql-${{ matrix.language }}
@@ -58,15 +58,15 @@ jobs:
       - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-
-      - uses: github/codeql-action/autobuild@v4
+          build-mode: none
+          config-file: ./.github/codeql/codeql-config.yml
 
       - uses: github/codeql-action/analyze@v4
 
   dependency-review:
     name: Dependency Review
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-dependency-review
@@ -95,7 +95,7 @@ jobs:
       - codeql
       - dependency-review
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6

@@ -28,7 +28,7 @@ jobs:
   resolve:
     name: Resolve release
     if: ${{ vars.DESKTOP_RELEASE_ENABLED == 'true' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       tag: ${{ steps.release.outputs.tag }}
@@ -55,7 +55,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { label: linux-x64, runner: ubuntu-latest }
+          - { label: linux-x64, runner: ubuntu-24.04 }
           - { label: linux-arm64, runner: ubuntu-24.04-arm }
           - { label: macos-x64, runner: macos-15-intel }
           - { label: macos-arm64, runner: macos-14 }
@@ -73,7 +73,7 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.event_name != 'pull_request' && needs.resolve.outputs.tag || '' }}
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+      - uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067 # master branch @ 2026-10-01
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -130,7 +130,7 @@ jobs:
     name: Publish checksums and provenance
     needs: [resolve, build]
     if: ${{ !cancelled() && github.event_name != 'pull_request' && needs.build.result == 'success' && needs.resolve.outputs.should_build == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       actions: read
@@ -199,7 +199,7 @@ jobs:
       - build
       - finalize
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6

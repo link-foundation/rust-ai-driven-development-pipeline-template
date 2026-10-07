@@ -23,7 +23,7 @@ Thank you for your interest in contributing! This document provides guidelines a
 
    ```bash
    rustup component add rustfmt clippy
-   cargo install rust-script
+   ./scripts/install-rust-script.sh
    ```
 
 4. **Install pre-commit hooks** (optional but recommended)
@@ -62,6 +62,13 @@ Thank you for your interest in contributing! This document provides guidelines a
    # Run Clippy lints
    cargo clippy --all-targets --all-features
 
+   # Deny Cargo's own warnings (RUSTFLAGS only controls rustc warnings)
+   bash scripts/check-cargo-warnings.sh
+
+   # Ensure every CI job installs the tools it uses
+   rustc scripts/check-workflow-tools.rs -o /tmp/check-workflow-tools
+   /tmp/check-workflow-tools
+
    # Check file sizes (requires rust-script)
    rust-script scripts/check-file-size.rs
 
@@ -88,12 +95,13 @@ Thank you for your interest in contributing! This document provides guidelines a
    ./scripts/test-scripts.sh
    ```
 
-   `cargo test` only builds the library crate, so it does not run the `#[cfg(test)]`
+   `cargo test` runs the crate targets and doc tests, but does not run the `#[cfg(test)]`
    suites that live inside `scripts/*.rs`. Run `./scripts/test-scripts.sh` before
    touching anything under `scripts/`; it builds each script as its own test harness
    under the same `RUSTFLAGS: -Dwarnings` the pipeline sets, which is where a helper
    that only `main` reaches shows up as dead code. The `script-tests` job runs the
-   same script, and `build` -- and therefore every release -- is gated on it.
+   same script, including offline Git regressions and mocked registry/link tests,
+   and `build` -- and therefore every release -- is gated on it.
 
    Rust's built-in `cargo test` runner does not provide a portable global per-test timeout, so wrap long-running network, IO, or async tests with explicit test-level deadlines. If a repository adopts `cargo nextest`, configure runner deadlines with options such as `--slow-timeout` and `--leak-timeout`.
 
@@ -307,10 +315,15 @@ This project uses semantic versioning (MAJOR.MINOR.PATCH):
 - **MINOR**: New features (backward compatible)
 - **PATCH**: Bug fixes (backward compatible)
 
-Releases are managed through GitHub releases. To trigger a release:
+Versions are managed by the release pipeline. To trigger a release:
 
-1. Manually trigger the release workflow with a version bump type
-2. Or: Update the version in Cargo.toml and push to main
+1. Add a new fragment in `changelog.d/` with its bump type and merge the pull request.
+2. Or manually trigger the release workflow with a version bump type.
+
+The writer updates package metadata and consumes fragments after checking the
+entire repository for unrelated staged, modified, deleted or untracked files.
+It refuses a dirty checkout containing unrelated work and preserves those files.
+Do not edit package versions manually in pull requests, including `release/*` branches.
 
 ## Getting Help
 

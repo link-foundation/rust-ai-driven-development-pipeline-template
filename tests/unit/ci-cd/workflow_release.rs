@@ -710,7 +710,7 @@ fn rust_script_is_installed_through_the_retrying_locked_helper() {
         "installer should short-circuit when rust-script is already present"
     );
     assert!(
-        helper.contains("cargo install rust-script --locked"),
+        helper.contains("--version \"$RUST_SCRIPT_VERSION\" --locked --force"),
         "installer should use --locked for reproducible installs"
     );
     assert!(

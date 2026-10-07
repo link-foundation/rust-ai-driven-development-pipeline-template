@@ -89,7 +89,7 @@ cargo fmt --check
 # Run Clippy lints
 cargo clippy --all-targets --all-features
 
-# Check file size limits (requires rust-script: cargo install rust-script)
+# Check file size limits (requires rust-script: ./scripts/install-rust-script.sh)
 rust-script scripts/check-file-size.rs
 
 # Check the packaged crate stays under the crates.io 10 MiB upload limit
@@ -274,7 +274,7 @@ git add Cargo.lock
 ### Cargo Registry Network Hardening
 
 The release workflow sets Cargo network defaults at workflow scope so every
-Cargo command, from `cargo install rust-script` through release publishing,
+Cargo command, from installing rust-script through release publishing,
 inherits them:
 
 ```yaml
@@ -333,7 +333,7 @@ If this step is skipped, the first `deploy-docs` run fails on `actions/deploy-pa
 ## Scripts Reference
 
 All scripts in `scripts/` are Rust scripts that use [rust-script](https://github.com/fornwall/rust-script).
-Install rust-script with: `cargo install rust-script`
+Install rust-script with: `./scripts/install-rust-script.sh`
 
 | Command                               | Description              |
 | ------------------------------------- | ------------------------ |

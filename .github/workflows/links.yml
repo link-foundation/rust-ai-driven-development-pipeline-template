@@ -9,6 +9,7 @@ on:
       - '**.html'
       - '.github/workflows/links.yml'
       - '.lycheeignore'
+      - 'lychee.toml'
       - 'scripts/check-web-archive.mjs'
       - 'scripts/check-web-archive.test.mjs'
       - 'scripts/recheck-broken-links.mjs'
@@ -21,6 +22,7 @@ on:
       - '**.html'
       - '.github/workflows/links.yml'
       - '.lycheeignore'
+      - 'lychee.toml'
       - 'scripts/check-web-archive.mjs'
       - 'scripts/check-web-archive.test.mjs'
       - 'scripts/recheck-broken-links.mjs'
@@ -42,7 +44,7 @@ env:
 jobs:
   link-checker:
     name: Check Links
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Typical run: <1min with lychee cache. 10min prevents slow
     # external hosts or Wayback Machine probes from hanging the workflow.
     timeout-minutes: 10
@@ -90,12 +92,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Re-check links that never got an answer
+      - name: Re-check unanswered and transient links
         # --max-retries never retries a failure during the connect phase
         # (lycheeverse/lychee#2297), so a healthy URL behind a connection
         # reset is reported broken without one retry. Ask those URLs again
-        # outside lychee. A failure carrying a status code is a host's
-        # answer and stays final.
+        # outside lychee. Rejected 5xx responses are also never retried by
+        # lychee; retry them and 429 here while keeping 404 final.
         if: steps.lychee.outputs.exit_code != 0
         id: recheck
         run: node scripts/recheck-broken-links.mjs
@@ -149,7 +151,7 @@ jobs:
     needs:
       - link-checker
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6

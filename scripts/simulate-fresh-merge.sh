@@ -99,6 +99,10 @@ else
   cargo fmt --all -- --check || status=1
   echo "::endgroup::"
 
+  echo "::group::Cargo manifest warnings"
+  bash scripts/check-cargo-warnings.sh || status=1
+  echo "::endgroup::"
+
   echo "::group::cargo clippy --all-targets --all-features"
   cargo clippy --all-targets --all-features || status=1
   echo "::endgroup::"

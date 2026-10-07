@@ -3,10 +3,7 @@
 //! Used by the CI/CD pipeline for releases
 //!
 //! IMPORTANT: This script checks crates.io (the source of truth for Rust packages),
-//! NOT git tags. This is critical because:
-//! - Git tags can exist without the package being published
-//! - GitHub releases create tags but don't publish to crates.io
-//! - Only crates.io publication means users can actually install the package
+//! NOT git tags, which can exist before a package is published.
 //!
 //! Supports both single-language and multi-language repository structures:
 //! - Single-language: Cargo.toml and changelog.d/ in repository root
@@ -23,9 +20,7 @@
 //! serde_json = "1"
 //! ```
 
-// `rust-script --test` builds this file as a test harness, where `main` is not
-// the entry point, so every helper reachable only from `main` looks unused.
-// The real (non-test) build still denies dead code.
+// Test harnesses replace main; the real build still denies unused helpers.
 #![cfg_attr(test, allow(dead_code))]
 
 #[cfg(not(test))]
@@ -40,6 +35,9 @@ use std::path::{Path, PathBuf};
 #[cfg(not(test))]
 use std::process::exit;
 use std::process::Command;
+
+#[path = "release-index.rs"]
+mod release_index;
 
 #[path = "release-naming.rs"]
 mod release_naming;
@@ -1050,6 +1048,14 @@ fn main() {
     let changelog_dir = get_changelog_dir(&rust_root);
     let changelog_file = get_changelog_path(&rust_root);
 
+    // Inspect all repository changes before any release write or remote request.
+    release_index::ReleaseIndex::new(Path::new(&rust_root), &package_manifest)
+        .and_then(|index| index.validate())
+        .unwrap_or_else(|e| {
+            eprintln!("::error::{e}");
+            exit(1);
+        });
+
     // Configure git
     let _ = exec("git", &["config", "user.name", "github-actions[bot]"]);
     let _ = exec(
@@ -1099,6 +1105,13 @@ fn main() {
             }
         }
     }
+
+    // Recompute the allowlist after synchronization, including new fragments.
+    let release_index = release_index::ReleaseIndex::new(Path::new(&rust_root), &package_manifest)
+        .unwrap_or_else(|e| {
+            eprintln!("::error::{e}");
+            exit(1);
+        });
 
     // Get current version
     let content = match fs::read_to_string(&package_manifest) {
@@ -1187,6 +1200,11 @@ fn main() {
         exit(1);
     }
 
+    release_index.validate().unwrap_or_else(|e| {
+        eprintln!("::error::{e}");
+        exit(1);
+    });
+
     // Stage Cargo.toml, Cargo.lock if changed, CHANGELOG.md, and consumed changelog fragments.
     let package_manifest_str = package_manifest.to_string_lossy().to_string();
     let cargo_lock_str = cargo_lock_path.to_string_lossy().to_string();
@@ -1205,29 +1223,11 @@ fn main() {
         }
     }
 
-    // Nothing downstream will lint this commit, so the staged tree is checked
-    // here (issue #159): the lint job's `cargo fmt --check` equivalent runs on
-    // whatever source files the release commit carries.
-    let staged_files = match exec("git", &["diff", "--cached", "--name-only"]) {
-        Ok(files) => files,
-        Err(e) => {
-            eprintln!("Error listing staged files: {}", e);
-            exit(1);
-        }
-    };
-    let staged_rust_source = staged_files.lines().any(|file| file.ends_with(".rs"));
-    if staged_rust_source {
-        if let Err(e) = exec("cargo", &["fmt", "--all", "--", "--check"]) {
-            eprintln!(
-                "::error title=Release commit is not rustfmt-clean::The staged \
-                 release commit fails `cargo fmt --all -- --check`. This commit is \
-                 pushed by the release job and no workflow is triggered for it, so \
-                 it must already be clean when it is created.\n{}",
-                e
-            );
-            exit(1);
-        }
-    }
+    // Validate the complete index again, including anything staged beforehand.
+    release_index.validate().unwrap_or_else(|e| {
+        eprintln!("::error::{e}");
+        exit(1);
+    });
 
     // Check if there are changes to commit
     if exec_check("git", &["diff", "--cached", "--quiet"]) {
