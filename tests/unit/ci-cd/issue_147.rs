@@ -63,8 +63,8 @@ fn workflows_are_audited_by_zizmor() {
         "the zizmor job must use the repository's audit configuration"
     );
     assert!(
-        workflows.contains("min-confidence: medium"),
-        "the zizmor job must report medium-confidence findings, not only high ones"
+        workflows.contains("min-confidence: low"),
+        "the zizmor job must report low-confidence findings, not only high ones"
     );
 }
 
@@ -161,6 +161,7 @@ fn run_blocks_do_not_interpolate_the_github_context() {
                 "${{ github.head_ref }}",
                 "${{ github.event.",
                 "${{ matrix.",
+                "${{ steps.",
             ] {
                 assert!(
                     !line.contains(context),

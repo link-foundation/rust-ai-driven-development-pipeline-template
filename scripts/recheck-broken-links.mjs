@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Re-check the lychee failures where no host ever answered.
+ * Re-check unanswered links and transient HTTP 429/5xx failures.
  *
  * lychee's `--max-retries` cannot retry a connection reset during connect
  * (lycheeverse/lychee#2297: the error is classified by its phase, and the
@@ -10,9 +10,8 @@
  * address range — is reported as broken without a single retry. This script
  * asks those URLs again, outside lychee.
  *
- * The rule that keeps this from hiding real breakage: a failure carrying a
- * status code means a host answered, and that answer is final — a 404 is
- * never re-checked.
+ * Permanent HTTP failures remain final: a 404 is never re-checked. A 429
+ * or 5xx is retried with backoff, and stays failed if it never recovers.
  *
  * Environment variables:
  *   - LYCHEE_OUTPUT: Path to the lychee markdown report
@@ -26,7 +25,7 @@
  *
  * GitHub Actions outputs:
  *   - all_recovered: 'true' only when the complete lychee report contains no
- *     answered/final failures and every unanswered link recovered on re-check.
+ *     permanent failures and every transient failure recovered on re-check.
  *     Consumers must test `!= 'true'`, never `== 'false'`: a
  *     skipped or crashed step leaves the output empty, and only the `!=`
  *     form fails safe.
@@ -56,11 +55,10 @@ const ACCEPT_DEFAULT = '100..=103,200..=299';
  * Split the lychee markdown report into per-failure records.
  *
  * A failure is "answered" when a numeric status marker is present ([404])
- * or the detail says "Rejected status code" — a host answered, and the
- * answer is final. Everything else ([ERROR], [TIMEOUT], [UNKNOWN]) is a
- * failure where no host ever answered.
+ * or the detail says "Rejected status code". Only permanent statuses are
+ * final; 429 and 5xx remain retryable. Other errors received no HTTP answer.
  * @param {string} content - The markdown content from lychee
- * @returns {Array<{marker: string, url: string, detail: string, answered: boolean}>}
+ * @returns {Array<{marker: string, url: string, detail: string, answered: boolean, retryable: boolean}>}
  */
 export function parseLycheeFailures(content) {
   const failures = [];
@@ -80,7 +78,11 @@ export function parseLycheeFailures(content) {
     const answered =
       /^\d{3}$/.test(marker) || /rejected status code/i.test(detail);
 
-    failures.push({ marker, url, detail, answered });
+    const status = /^\d{3}$/.test(marker)
+      ? Number(marker)
+      : Number(detail.match(/rejected status code:\s*(\d{3})/i)?.[1]);
+    const retryable = !answered || isTransientStatus(status);
+    failures.push({ marker, url, detail, answered, retryable });
   }
 
   return failures;
@@ -141,12 +143,14 @@ export function extractLycheeRequestOptions(workflowText) {
   };
 }
 
+export function isTransientStatus(status) {
+  return status === 429 || (status >= 500 && status <= 599);
+}
+
 /**
- * Ask every URL once more, round-robin with a doubling wait, until everything
- * either answers accepted or the budget runs out. Any answer is final: an
- * accepted status recovers the URL, a rejected status fails it for good, and
- * only a URL that keeps refusing to answer is retried.
- * @param {string[]} urls - The URLs that never got an answer from lychee
+ * Retry unanswered and 429/5xx URLs sequentially with bounded doubling waits.
+ * An accepted status recovers the URL; a permanent rejected status is final.
+ * @param {string[]} urls - The retryable URLs from lychee
  * @param {{accept: string, userAgent: string, budgetSeconds?: number, initialWaitMs?: number, fetchImpl?: typeof fetch}} options
  * @returns {Promise<{recovered: string[], stillBroken: Array<{url: string, status: number|null, reason: string}>}>}
  */
@@ -157,13 +161,14 @@ export async function recheckUnanswered(urls, options) {
   const startedAt = Date.now();
   const initialWaitMs = options.initialWaitMs ?? INITIAL_WAIT_MS_DEFAULT;
   let waitMs = initialWaitMs;
+  let round = 0;
 
   const recovered = [];
   const rejected = [];
   let pending = [...new Set(urls)];
 
   while (pending.length > 0 && Date.now() - startedAt < budgetMs) {
-    if (waitMs !== initialWaitMs) {
+    if (round > 0) {
       const elapsed = Date.now() - startedAt;
 
       if (elapsed + waitMs > budgetMs) {
@@ -174,19 +179,22 @@ export async function recheckUnanswered(urls, options) {
       waitMs *= 2;
     }
 
+    round += 1;
     const stillPending = [];
 
     for (const url of pending) {
+      const remainingMs = budgetMs - (Date.now() - startedAt);
+      if (remainingMs <= 0) { stillPending.push(url); continue; }
       const controller = new AbortController();
       const timeoutId = setTimeout(
         () => controller.abort(),
-        REQUEST_TIMEOUT_MS
+        Math.min(REQUEST_TIMEOUT_MS, remainingMs)
       );
       let response;
 
       try {
         response = await fetchImpl(url, {
-          method: 'HEAD',
+          method: 'GET',
           redirect: 'follow',
           signal: controller.signal,
           headers: { 'user-agent': options.userAgent },
@@ -199,8 +207,12 @@ export async function recheckUnanswered(urls, options) {
         clearTimeout(timeoutId);
       }
 
+      // Release response bodies so connections and memory stay bounded.
+      await response.body?.cancel();
       if (accept(response.status)) {
         recovered.push(url);
+      } else if (isTransientStatus(response.status)) {
+        stillPending.push(url);
       } else {
         rejected.push({
           url,
@@ -220,7 +232,7 @@ export async function recheckUnanswered(urls, options) {
       ...pending.map((url) => ({
         url,
         status: null,
-        reason: 'no answer within the re-check budget',
+        reason: 'no accepted response within the re-check budget',
       })),
     ],
   };
@@ -258,14 +270,14 @@ async function main() {
   const failures = parseLycheeFailures(content);
 
   const finalFailures = failures.filter(
-    (failure) => failure.answered || !/^https?:\/\//i.test(failure.url)
+    (failure) => !failure.retryable || !/^https?:\/\//i.test(failure.url)
   );
-  const unanswered = failures
-    .filter((failure) => !failure.answered && /^https?:\/\//i.test(failure.url))
-    .map((failure) => failure.url);
+  const unanswered = [...new Set(failures
+    .filter((failure) => failure.retryable && /^https?:\/\//i.test(failure.url))
+    .map((failure) => failure.url))];
 
   console.log(
-    `Re-check: ${failures.length} lychee failure(s), ${finalFailures.length} answered and final, ${unanswered.length} never got an answer`
+    `Re-check: ${failures.length} lychee failure(s), ${finalFailures.length} permanent failures, ${unanswered.length} retryable failures`
   );
 
   if (unanswered.length === 0) {
@@ -285,7 +297,7 @@ async function main() {
 
   for (const url of result.recovered) {
     console.log(
-      `::notice::${url} never answered lychee but answers ${options.accept} now -- not a broken link`
+      `::notice::${url} failed transiently in lychee but answers ${options.accept} now -- not a broken link`
     );
   }
 
@@ -294,7 +306,7 @@ async function main() {
   }
 
   console.log(
-    `Re-check finished: ${result.recovered.length} recovered, ${result.stillBroken.length} still without an answer`
+    `Re-check finished: ${result.recovered.length} recovered, ${result.stillBroken.length} still failed`
   );
 
   if (allFailuresRecovered(finalFailures.length, unanswered.length, result)) {

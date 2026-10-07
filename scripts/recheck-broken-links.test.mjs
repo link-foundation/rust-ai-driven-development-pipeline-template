@@ -143,6 +143,34 @@ describe('accept list parsing', () => {
 });
 
 describe('re-check requests', () => {
+  for (const status of [429, 500, 502, 503, 504]) {
+    it(`retries transient HTTP ${status} until it recovers`, async () => {
+      let calls = 0;
+      const result = await recheckUnanswered(['https://a.example/flaky'], {
+        accept: '200..=299',
+        userAgent: 'lychee',
+        budgetSeconds: 2,
+        initialWaitMs: 1,
+        fetchImpl: async () => ({ status: ++calls === 1 ? status : 200 }),
+      });
+      assert.equal(calls, 2);
+      assert.deepEqual(result.recovered, ['https://a.example/flaky']);
+      assert.deepEqual(result.stillBroken, []);
+    });
+  }
+
+  it('bounds repeated 503 responses and leaves the link failed', async () => {
+    let calls = 0;
+    const result = await recheckUnanswered(['https://a.example/flaky'], {
+      accept: '200..=299', userAgent: 'lychee',
+      budgetSeconds: 0.03, initialWaitMs: 5,
+      fetchImpl: async () => { calls += 1; return { status: 503 }; },
+    });
+    assert.ok(calls > 0 && calls < 10);
+    assert.deepEqual(result.recovered, []);
+    assert.equal(result.stillBroken.length, 1);
+  });
+
   it('recovers a URL that answers accepted', async () => {
     const result = await recheckUnanswered(['https://a.example/x'], {
       accept: '200..=299',
@@ -208,7 +236,7 @@ describe('re-check requests', () => {
 
     assert.deepEqual(result.recovered, []);
     assert.equal(result.stillBroken[0].status, null);
-    assert.ok(result.stillBroken[0].reason.includes('no answer'));
+    assert.ok(result.stillBroken[0].reason.includes('no accepted response'));
   });
 
   it('asks a duplicated URL only once', async () => {
@@ -241,7 +269,7 @@ describe('re-check requests', () => {
     });
 
     assert.equal(seen.url, 'https://a.example/x');
-    assert.equal(seen.init.method, 'HEAD');
+    assert.equal(seen.init.method, 'GET');
     assert.equal(seen.init.headers['user-agent'], 'my-checker/2.0');
   });
 });
@@ -274,6 +302,40 @@ describe('re-check step end to end', () => {
       child.on('close', (code) => resolve({ code, output }));
     });
   }
+
+  it('recovers numeric 429 and rejected 503 reports after backoff', async () => {
+    const requests = new Map();
+    const server = createServer((request, response) => {
+      const count = (requests.get(request.url) || 0) + 1;
+      requests.set(request.url, count);
+      response.writeHead(count === 1 ? (request.url === '/limited' ? 429 : 503) : 200);
+      response.end();
+    });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const base = `http://127.0.0.1:${server.address().port}`;
+    const dir = mkdtempSync(path.join(tmpdir(), 'recheck-'));
+    try {
+      const reportPath = writeReport(dir, [
+        `- [429] <${base}/limited> | Too Many Requests`,
+        `- [ERROR] <${base}/unavailable> | Rejected status code: 503 Service Unavailable`,
+      ]);
+      const outputPath = path.join(dir, 'github-output.txt');
+      const { code } = await runRecheck({
+        LYCHEE_OUTPUT: reportPath,
+        RECOVERED_OUTPUT: path.join(dir, 'recovered.txt'),
+        GITHUB_OUTPUT: outputPath,
+        RECHECK_WAIT_MS: '10',
+        RECHECK_BUDGET_SECONDS: '5',
+      });
+      assert.equal(code, 0);
+      assert.equal(requests.get('/limited'), 2);
+      assert.equal(requests.get('/unavailable'), 2);
+      assert.ok(readFileSync(outputPath, 'utf8').includes('all_recovered=true'));
+    } finally {
+      await new Promise((resolve) => server.close(resolve));
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 
   it('recovers only the URLs that answer healthy and never re-asks a 404', async () => {
     const requests = [];
@@ -315,7 +377,7 @@ describe('re-check step end to end', () => {
       assert.ok(!requests.includes('/final'));
       // One link stayed broken, so the gate must not be released.
       assert.equal(existsSync(outputPath), false);
-      assert.ok(output.includes('still without an answer'));
+      assert.ok(output.includes('still failed'));
     } finally {
       server.close();
       rmSync(dir, { recursive: true, force: true });

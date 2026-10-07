@@ -65,7 +65,7 @@ jobs:
   # === DETECT CHANGES - determines which jobs should run ===
   detect-changes:
     name: Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-detect-changes
@@ -107,7 +107,7 @@ jobs:
   # scripts/check-file-size.rs (runs in the lint job).
   validate-docs:
     name: Validate Documentation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-validate-docs
@@ -133,7 +133,7 @@ jobs:
   # run being green.
   release-preflight:
     name: Release Preflight
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
@@ -162,7 +162,7 @@ jobs:
   # Docs-only PRs (./docs folder, markdown files) don't require changelog fragments
   changelog:
     name: Changelog Fragment Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-changelog
@@ -194,7 +194,7 @@ jobs:
   # This ensures versions are only modified by the automated release pipeline
   version-check:
     name: Version Modification Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-version-check
@@ -227,7 +227,7 @@ jobs:
   # Language-agnostic credential scan; runs via npx so no Node dependency is committed.
   secrets-scan:
     name: Secrets Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-secrets-scan
@@ -238,14 +238,14 @@ jobs:
           persist-credentials: false
 
       - name: Run secretlint
-        run: npx --yes -p secretlint -p @secretlint/secretlint-rule-preset-recommend secretlint --secretlintignore .gitignore "**/*"
+        run: npx --yes -p secretlint@13.0.7 -p @secretlint/secretlint-rule-preset-recommend@13.0.7 secretlint --secretlintignore .gitignore "**/*"
 
   # === FRESH MERGE SIMULATION ===
   # Catches semantic merge conflicts: a pull request that is green in isolation but
   # breaks the base branch once merged into its current tip.
   fresh-merge:
     name: Fresh Merge Simulation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-fresh-merge
@@ -292,7 +292,7 @@ jobs:
   # that have no registry credentials.
   docker-build:
     name: Docker Image Build Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # The image compiles the crate from scratch; 30 minutes is not enough cold.
     # The build step is a `uses:` action, so it cannot be wrapped in
     # scripts/run-with-budget-warning.sh; docker/build-push-action owns its own
@@ -343,7 +343,7 @@ jobs:
   # hashFiles('**/Cargo.lock') from silently degrading to the empty hash.
   cargo-lock:
     name: Cargo.lock Guard
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-cargo-lock
@@ -380,7 +380,7 @@ jobs:
   # See: https://github.com/link-assistant/hive-mind/pull/1024 for why this dependency was removed
   lint:
     name: Lint and Format Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-lint
@@ -430,6 +430,9 @@ jobs:
       - name: Check formatting
         run: cargo fmt --all -- --check
 
+      - name: Fail on Cargo manifest warnings
+        run: bash scripts/check-cargo-warnings.sh
+
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features
 
@@ -455,7 +458,7 @@ jobs:
       - name: Build documentation
         # Fail-closed rustdoc gate: rustdoc-only lints (for example
         # rustdoc::private_intra_doc_links) are not reported by clippy or
-        # `cargo test --doc`, so they must be caught here, before release,
+        # doc tests, so they must be caught here, before release,
         # instead of in the post-release deploy-docs job.
         env:
           RUSTDOCFLAGS: -D warnings
@@ -494,7 +497,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-24.04, macos-26, windows-latest]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -530,6 +533,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-test-
 
+      # cargo test includes doc tests with the same feature set.
       - name: Run tests
         shell: bash
         env:
@@ -538,14 +542,6 @@ jobs:
           bash scripts/run-with-budget-warning.sh "$TEST_BUDGET_SECONDS" "Test suite"
           cargo test --all-features --verbose
 
-      - name: Run doc tests
-        shell: bash
-        env:
-          DOC_TEST_BUDGET_SECONDS: 300
-        run: >-
-          bash scripts/run-with-budget-warning.sh "$DOC_TEST_BUDGET_SECONDS" "Doc tests"
-          cargo test --doc --verbose
-
   # === RELEASE SCRIPT TESTS ===
   # `cargo test` only builds the library crate, so the inline `#[cfg(test)]`
   # suites in scripts/*.rs — including the regression guard on
@@ -553,7 +549,7 @@ jobs:
   # unless a job runs `rust-script --test` on them explicitly.
   script-tests:
     name: Release Script Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-script-tests
@@ -607,7 +603,7 @@ jobs:
   # Generate and upload code coverage using cargo-llvm-cov
   coverage:
     name: Code Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-coverage
@@ -678,7 +674,7 @@ jobs:
   # Build package - only runs if lint and test pass
   build:
     name: Build Package
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-build
@@ -739,7 +735,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       needs.release-preflight.result == 'success' &&
       needs.build.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Covers the crate build, publish, smoke test, and a cold Docker build.
     timeout-minutes: 60
     env:
@@ -749,12 +745,12 @@ jobs:
       contents: write
     steps:
       # This job pushes the version bump commit and tag back to `main`, so the
-      # checkout credentials have to stay in `.git/config` (no
-      # `persist-credentials: false` here, unlike every read-only checkout).
+      # checkout explicitly persists credentials for these serialized writers.
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
@@ -783,9 +779,11 @@ jobs:
       - name: Collect changelog and bump version
         id: version
         if: steps.check.outputs.should_release == 'true' && steps.check.outputs.skip_bump != 'true'
+        env:
+          BUMP_TYPE: ${{ steps.bump_type.outputs.bump_type }}
         run: |
           rust-script scripts/version-and-commit.rs \
-            --bump-type "${{ steps.bump_type.outputs.bump_type }}"
+            --bump-type "$BUMP_TYPE"
 
       - name: Get current version
         id: current_version
@@ -814,7 +812,9 @@ jobs:
             steps.check.outputs.crate_published == 'true' ||
             steps.publish-crate.outputs.publish_result == 'success'
           )
-        run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.current_version.outputs.version }}"
+        env:
+          RELEASE_VERSION: ${{ steps.current_version.outputs.version }}
+        run: rust-script scripts/wait-for-crate.rs --release-version "$RELEASE_VERSION"
 
       - name: Smoke-test published crate
         if: |
@@ -822,7 +822,9 @@ jobs:
             steps.check.outputs.crate_published == 'true' ||
             steps.publish-crate.outputs.publish_result == 'success'
           )
-        run: rust-script scripts/smoke-test-published-crate.rs --release-version "${{ steps.current_version.outputs.version }}"
+        env:
+          RELEASE_VERSION: ${{ steps.current_version.outputs.version }}
+        run: rust-script scripts/smoke-test-published-crate.rs --release-version "$RELEASE_VERSION"
 
       - name: Configure Docker Hub publishing
         if: |
@@ -857,10 +859,13 @@ jobs:
             steps.check.outputs.crate_published == 'true' ||
             steps.publish-crate.outputs.publish_result == 'success'
           )
+        env:
+          NEW_VERSION: ${{ steps.version.outputs.new_version }}
+          CURRENT_VERSION: ${{ steps.current_version.outputs.version }}
         run: |
-          release_version="${{ steps.version.outputs.new_version }}"
+          release_version="$NEW_VERSION"
           if [ -z "$release_version" ]; then
-            release_version="${{ steps.current_version.outputs.version }}"
+            release_version="$CURRENT_VERSION"
           fi
           echo "version=$release_version" >> "$GITHUB_OUTPUT"
 
@@ -874,9 +879,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_HUB_URL: ${{ steps.dockerhub.outputs.docker_hub_url }}
           REPOSITORY: ${{ github.repository }}
+          RELEASE_VERSION: ${{ steps.release-metadata.outputs.version }}
         run: |
           release_args=(
-            --release-version "${{ steps.release-metadata.outputs.version }}"
+            --release-version "$RELEASE_VERSION"
             --repository "$REPOSITORY"
           )
           if [ -n "$DOCKER_HUB_URL" ]; then
@@ -903,7 +909,7 @@ jobs:
       github.event.inputs.release_mode == 'instant' &&
       needs.release-preflight.result == 'success' &&
       needs.build.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Covers the crate build, publish, smoke test, and a cold Docker build.
     timeout-minutes: 60
     env:
@@ -913,12 +919,12 @@ jobs:
       contents: write
     steps:
       # This job pushes the version bump commit and tag back to `main`, so the
-      # checkout credentials have to stay in `.git/config` (no
-      # `persist-credentials: false` here, unlike every read-only checkout).
+      # checkout explicitly persists credentials for these serialized writers.
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
@@ -932,9 +938,6 @@ jobs:
 
       - name: Configure git
         run: rust-script scripts/git-config.rs
-
-      - name: Collect changelog fragments
-        run: rust-script scripts/collect-changelog.rs
 
       - name: Version and commit
         id: version
@@ -964,14 +967,18 @@ jobs:
           (steps.version.outputs.version_committed == 'true' ||
             steps.version.outputs.already_released == 'true') &&
           steps.publish-crate.outputs.publish_result == 'success'
-        run: rust-script scripts/wait-for-crate.rs --release-version "${{ steps.version.outputs.new_version }}"
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
+        run: rust-script scripts/wait-for-crate.rs --release-version "$RELEASE_VERSION"
 
       - name: Smoke-test published crate
         if: |
           (steps.version.outputs.version_committed == 'true' ||
             steps.version.outputs.already_released == 'true') &&
           steps.publish-crate.outputs.publish_result == 'success'
-        run: rust-script scripts/smoke-test-published-crate.rs --release-version "${{ steps.version.outputs.new_version }}"
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
+        run: rust-script scripts/smoke-test-published-crate.rs --release-version "$RELEASE_VERSION"
 
       - name: Configure Docker Hub publishing
         if: |
@@ -1007,9 +1014,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCKER_HUB_URL: ${{ steps.dockerhub.outputs.docker_hub_url }}
           REPOSITORY: ${{ github.repository }}
+          RELEASE_VERSION: ${{ steps.version.outputs.new_version }}
         run: |
           release_args=(
-            --release-version "${{ steps.version.outputs.new_version }}"
+            --release-version "$RELEASE_VERSION"
             --repository "$REPOSITORY"
           )
           if [ -n "$DOCKER_HUB_URL" ]; then
@@ -1032,7 +1040,7 @@ jobs:
       matrix:
         include:
           - platform: linux/amd64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
@@ -1074,9 +1082,11 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
 
       - name: Export digest
+        env:
+          BUILD_DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
+          digest="$BUILD_DIGEST"
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest
@@ -1094,7 +1104,7 @@ jobs:
       !cancelled() &&
       needs.release-preflight.result == 'success' &&
       needs.docker-publish.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
       DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME || secrets.DOCKERHUB_USERNAME }}
@@ -1136,7 +1146,7 @@ jobs:
   changelog-pr:
     name: Create Changelog PR
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'changelog-pr'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-main-write
@@ -1212,7 +1222,7 @@ jobs:
         (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
         (github.event_name == 'workflow_dispatch' && github.event.inputs.release_mode == 'instant')
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: read
@@ -1302,7 +1312,7 @@ jobs:
       - changelog-pr
       - deploy-docs
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6

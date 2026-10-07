@@ -34,7 +34,7 @@
 use std::env;
 use std::fs;
 use std::io::Write;
-use std::process::{Command, exit};
+use std::process::{exit, Command};
 
 #[path = "rust-paths.rs"]
 mod rust_paths;
@@ -56,7 +56,11 @@ fn needs_cd(rust_root: &str) -> bool {
 
 fn set_output(key: &str, value: &str) {
     if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Ok(mut file) = fs::OpenOptions::new().create(true).append(true).open(&output_file) {
+        if let Ok(mut file) = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&output_file)
+        {
             let _ = writeln!(file, "{}={}", key, value);
         }
     }
@@ -143,7 +147,11 @@ fn main() {
 
     // Get token from CLI arg, then env vars
     let token = get_arg("token")
-        .or_else(|| env::var("CARGO_REGISTRY_TOKEN").ok().filter(|s| !s.is_empty()))
+        .or_else(|| {
+            env::var("CARGO_REGISTRY_TOKEN")
+                .ok()
+                .filter(|s| !s.is_empty())
+        })
         .or_else(|| env::var("CARGO_TOKEN").ok().filter(|s| !s.is_empty()));
 
     let package_info = match rust_paths::read_package_info(&package_manifest) {
@@ -159,7 +167,9 @@ fn main() {
     println!("Package: {}@{}", name, version);
 
     if name == "example-sum-package-name" {
-        println!("Skipping publish: package name is the template default 'example-sum-package-name'");
+        println!(
+            "Skipping publish: package name is the template default 'example-sum-package-name'"
+        );
         println!("Rename the package in Cargo.toml before publishing to crates.io");
         set_output("publish_result", "skipped");
         return;
@@ -188,7 +198,7 @@ fn main() {
     cmd.arg("publish").arg("--allow-dirty").arg("-p").arg(&name);
 
     if let Some(t) = &token {
-        cmd.arg("--token").arg(t);
+        cmd.env("CARGO_REGISTRY_TOKEN", t);
     }
 
     // For multi-language repos, change to the rust directory
@@ -227,9 +237,15 @@ fn main() {
                 eprintln!("Original cargo publish error:");
                 eprintln!("{}", combined.trim());
                 eprintln!();
-                eprintln!("This is a TRANSIENT, automatically-recoverable throttle, not a pipeline bug.");
-                eprintln!("No action is required other than waiting for the 24-hour window to roll over.");
-                eprintln!("scripts/check-release-needed.rs will re-attempt the same version on the next");
+                eprintln!(
+                    "This is a TRANSIENT, automatically-recoverable throttle, not a pipeline bug."
+                );
+                eprintln!(
+                    "No action is required other than waiting for the 24-hour window to roll over."
+                );
+                eprintln!(
+                    "scripts/check-release-needed.rs will re-attempt the same version on the next"
+                );
                 eprintln!("push to 'main' once the throttle window has cleared.");
                 eprintln!();
                 eprintln!("See: https://doc.rust-lang.org/cargo/reference/publishing.html#publishing-a-new-version-of-an-existing-crate");
@@ -241,11 +257,17 @@ fn main() {
                 eprintln!();
                 eprintln!("Failed to publish due to missing or invalid authentication token.");
                 eprintln!();
-                eprintln!("SOLUTION: Configure one of these secrets in your repository or organization:");
-                eprintln!("  1. CARGO_REGISTRY_TOKEN - Cargo's native environment variable (preferred)");
+                eprintln!(
+                    "SOLUTION: Configure one of these secrets in your repository or organization:"
+                );
+                eprintln!(
+                    "  1. CARGO_REGISTRY_TOKEN - Cargo's native environment variable (preferred)"
+                );
                 eprintln!("  2. CARGO_TOKEN - Alternative name for backwards compatibility");
                 eprintln!();
-                eprintln!("If using organization secrets with a different name, map it in your workflow:");
+                eprintln!(
+                    "If using organization secrets with a different name, map it in your workflow:"
+                );
                 eprintln!("  - name: Publish to Crates.io");
                 eprintln!("    env:");
                 eprintln!("      CARGO_REGISTRY_TOKEN: ${{{{ secrets.YOUR_SECRET_NAME }}}}");

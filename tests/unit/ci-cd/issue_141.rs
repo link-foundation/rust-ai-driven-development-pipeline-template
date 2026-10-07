@@ -45,7 +45,7 @@ fn workflows_are_linted_by_actionlint() {
          a native binary without shellcheck on PATH silently skips the shell checks"
     );
     assert!(
-        workflows.contains("paths: ['.github/**']"),
+        workflows.contains("paths: ['.github/**',"),
         "the actionlint check must run for changes under .github/"
     );
 }

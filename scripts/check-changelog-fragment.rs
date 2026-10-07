@@ -25,6 +25,9 @@ use std::env;
 use std::path::Path;
 use std::process::{exit, Command};
 
+#[path = "rust-paths.rs"]
+mod rust_paths;
+
 fn exec(command: &str, args: &[&str]) -> Result<String, String> {
     match Command::new(command).args(args).output() {
         Ok(output) if output.status.success() => {
@@ -73,11 +76,14 @@ fn get_rust_root() -> String {
     ".".to_string()
 }
 
-fn get_changed_files() -> Result<Vec<String>, String> {
+fn get_changed_files(added_only: bool) -> Result<Vec<String>, String> {
     let base_ref = env::var("GITHUB_BASE_REF").unwrap_or_else(|_| "main".to_string());
     eprintln!("Comparing against origin/{}...HEAD", base_ref);
     let comparison = format!("origin/{base_ref}...HEAD");
-    let diff_args = ["diff", "--name-only", comparison.as_str()];
+    let mut diff_args = vec!["diff", "--name-only", "-z", comparison.as_str()];
+    if added_only {
+        diff_args.push("--diff-filter=A");
+    }
     let output = match exec("git", &diff_args) {
         Ok(output) => output,
         Err(first_error) => {
@@ -91,7 +97,7 @@ fn get_changed_files() -> Result<Vec<String>, String> {
         }
     };
     Ok(output
-        .lines()
+        .split('\0')
         .filter(|s| !s.is_empty())
         .map(String::from)
         .collect())
@@ -105,10 +111,14 @@ fn is_source_file(file_path: &str, rust_root: &str) -> bool {
     };
 
     let source_patterns = [
-        Regex::new(&format!(r"^{}src/", regex::escape(&prefix))).unwrap(),
-        Regex::new(&format!(r"^{}tests/", regex::escape(&prefix))).unwrap(),
-        Regex::new(&format!(r"^{}?scripts/", regex::escape(&prefix))).unwrap(),
-        Regex::new(&format!(r"^{}Cargo\.toml$", regex::escape(&prefix))).unwrap(),
+        Regex::new(&format!(r"^{}(?:[^/]+/)*src/", regex::escape(&prefix))).unwrap(),
+        Regex::new(&format!(r"^{}(?:[^/]+/)*tests/", regex::escape(&prefix))).unwrap(),
+        Regex::new(&format!(
+            r"^(?:{}scripts/|scripts/)",
+            regex::escape(&prefix)
+        ))
+        .unwrap(),
+        Regex::new(&format!(r"^{}(?:[^/]+/)*Cargo\.toml$", regex::escape(&prefix))).unwrap(),
     ];
 
     source_patterns
@@ -123,15 +133,19 @@ fn is_changelog_fragment(file_path: &str, rust_root: &str) -> bool {
         format!("{}/changelog.d/", rust_root)
     };
 
-    (file_path.starts_with(&changelog_dir) || file_path.starts_with("changelog.d/"))
-        && file_path.ends_with(".md")
-        && !file_path.ends_with("README.md")
+    let path = Path::new(file_path);
+    path.parent() == Some(Path::new(&changelog_dir))
+        && path.extension().is_some_and(|ext| ext == "md")
+        && path.file_name().is_some_and(|name| name != "README.md")
 }
 
 fn main() {
     println!("Checking for changelog fragment in PR diff...\n");
 
-    let rust_root = get_rust_root();
+    let rust_root = rust_paths::repository_relative_root(&get_rust_root()).unwrap_or_else(|error| {
+        eprintln!("::error::{error}");
+        exit(1);
+    });
     if rust_root != "." {
         println!(
             "Detected multi-language repository (Rust root: {})",
@@ -139,7 +153,7 @@ fn main() {
         );
     }
 
-    let changed_files = match get_changed_files() {
+    let changed_files = match get_changed_files(false) {
         Ok(files) => files,
         Err(error) => {
             eprintln!("::error::Could not determine the PR's changed files: {error}");
@@ -174,7 +188,11 @@ fn main() {
     println!();
 
     // Count changelog fragments added in this PR
-    let fragments_added: Vec<&String> = changed_files
+    let added_files = get_changed_files(true).unwrap_or_else(|error| {
+        eprintln!("::error::Could not determine added fragments: {error}");
+        exit(1);
+    });
+    let fragments_added: Vec<&String> = added_files
         .iter()
         .filter(|f| is_changelog_fragment(f, &rust_root))
         .collect();

@@ -18,8 +18,8 @@
 //! Optional arguments:
 //!   --crate-name <name>       Crate name. Defaults to Cargo.toml package name.
 //!   --rust-root <path>        Root containing Cargo.toml. Defaults to auto-detect.
-//!   --max-attempts <count>    Defaults to 30.
-//!   --sleep-seconds <count>   Defaults to 10.
+//!   --max-attempts <count>    Defaults to 40.
+//!   --sleep-seconds <count>   Defaults to 15.
 //!
 //! Outputs (written to GITHUB_OUTPUT):
 //!   - crate_available: 'true' when the version is visible, or 'skipped' for template defaults
@@ -281,8 +281,8 @@ fn main() {
 
     let crate_name = get_arg("crate-name").unwrap_or(package_info.name);
     let version = get_arg("release-version").unwrap_or(package_info.version);
-    let max_attempts = parse_count_arg("max-attempts", 30);
-    let sleep_seconds = parse_count_arg("sleep-seconds", 10);
+    let max_attempts = parse_count_arg("max-attempts", 40);
+    let sleep_seconds = parse_count_arg("sleep-seconds", 15);
 
     if should_skip_crate_wait(&crate_name) {
         println!(

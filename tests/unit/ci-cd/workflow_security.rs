@@ -209,7 +209,8 @@ fn security_workflow_scans_rust_actions_and_pull_request_dependencies() {
     assert!(codeql.contains("language: [rust, actions]"));
     assert!(codeql.contains("uses: github/codeql-action/init@v4"));
     assert!(codeql.contains("languages: ${{ matrix.language }}"));
-    assert!(codeql.contains("uses: github/codeql-action/autobuild@v4"));
+    assert!(codeql.contains("build-mode: none"));
+    assert!(codeql.contains("config-file: ./.github/codeql/codeql-config.yml"));
     assert!(codeql.contains("uses: github/codeql-action/analyze@v4"));
 
     let dependency_review = job_block(&workflow, "dependency-review");

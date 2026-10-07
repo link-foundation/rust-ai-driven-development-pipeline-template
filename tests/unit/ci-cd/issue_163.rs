@@ -5,9 +5,8 @@
 //! whole matrix before anyone learned the release could not happen (and the
 //! answer arrived as a registry error in the middle of a long log). The
 //! `release-preflight` job probes both credentials before the expensive jobs
-//! spend their minutes: crates.io with `GET /api/v1/me` plus the public
-//! owners endpoint (a valid token for the wrong account passes the first and
-//! fails the publish), Docker Hub with an attempted blob-upload write (a
+//! spend their minutes: crates.io with an archive-free publish request that
+//! verifies token/crate scopes, Docker Hub with an attempted blob-upload write (a
 //! login -- or a token endpoint -- proves authentication, not
 //! authorisation).
 
@@ -84,17 +83,6 @@ while [ $i -lt $# ]; do
   i=$((i+1))
 done
 case "$url" in
-  */api/v1/me)
-    if [ "${FAKE_ME_STATUS:-200}" != 200 ]; then
-      printf '{"errors":[{"detail":"no verdict"}]}\n%s\n' "${FAKE_ME_STATUS:-200}"
-    else
-      printf '{"user":{"id":1,"login":"%s"}}\n200\n' "${FAKE_CRATES_LOGIN:-octocat}"
-    fi ;;
-  */owners)
-    case "${FAKE_OWNERS_STATUS:-200}" in
-      404) printf '{"errors":[{"detail":"not found"}]}\n404\n' ;;
-      *) printf '{"users":[{"login":"octocat"},{"login":"someone-else"}]}\n200\n' ;;
-    esac ;;
   */token?*)
     printf '{"token":"fake-jwt","access":"pull"}\n200\n' ;;
   */blobs/uploads/*)
@@ -113,6 +101,17 @@ esac
     let bin = dir.join("bin");
     fs::create_dir_all(&bin).unwrap();
     fs::write(bin.join("curl"), stub).unwrap();
+    fs::write(dir.join("fetch-stub.mjs"), r"
+globalThis.fetch = async (url, request) => {
+  if (!url.endsWith('/api/v1/crates/new') || request.method !== 'PUT') {
+    throw new Error('unexpected publish probe');
+  }
+  const length = request.body.readUInt32LE();
+  if (request.body.length !== 4 + length) throw new Error('archive must be absent');
+  const status = Number(process.env.FAKE_CRATES_STATUS || 400);
+  return { status, json: async () => ({errors: [{detail: process.env.FAKE_CRATES_DETAIL || 'invalid tarball length'}]}) };
+};
+").unwrap();
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
@@ -129,8 +128,7 @@ struct PreflightRun {
 fn run_preflight(workdir: &Path, env: &[(&str, &str)], mode: &str) -> PreflightRun {
     let fixture = temp_dir("run");
     write_curl_stub(&fixture);
-    // The ownership probe reads the crate name from the manifest in the
-    // working directory; give every fixture the same one.
+    // The publish scope probe reads the selected crate from this manifest.
     fs::write(
         workdir.join("Cargo.toml"),
         "[package]\nname = \"test-crate\"\nversion = \"0.1.0\"\n",
@@ -143,6 +141,11 @@ fn run_preflight(workdir: &Path, env: &[(&str, &str)], mode: &str) -> PreflightR
         .arg(script)
         .current_dir(workdir)
         .env("PREFLIGHT_MODE", mode)
+        .env(
+            "NODE_OPTIONS",
+            format!("--import={}", fixture.join("fetch-stub.mjs").display()),
+        )
+        .env_remove("DOCKERHUB_IMAGE")
         .env(
             "PATH",
             format!(
@@ -175,7 +178,7 @@ fn release_env() -> Vec<(&'static str, &'static str)> {
     ]
 }
 
-/// The happy path: a token crates.io accepts, ownership of the crate, and a
+/// The happy path: crates.io accepts the publish scope, and a
 /// Docker Hub write the registry opens a session for.
 #[cfg(unix)]
 #[test]
@@ -189,8 +192,14 @@ fn a_working_credential_set_passes_in_release_mode() {
         stdout(&run)
     );
     let out = stdout(&run);
-    assert!(out.contains("logged in as octocat"), "{out}");
-    assert!(out.contains("is an owner of test-crate"), "{out}");
+    assert!(
+        out.contains("publish token and crate scope accepted"),
+        "{out}"
+    );
+    assert!(
+        out.contains("ownership is checked by the real publish"),
+        "{out}"
+    );
     assert!(out.contains("blob-upload write"), "{out}");
 }
 
@@ -201,31 +210,36 @@ fn a_working_credential_set_passes_in_release_mode() {
 fn a_refused_cargo_token_fails_release_mode() {
     let workdir = temp_dir("cargo-403");
     let mut env = release_env();
-    env.push(("FAKE_ME_STATUS", "403"));
+    env.push(("FAKE_CRATES_STATUS", "403"));
     let run = run_preflight(&workdir, &env, "release");
 
     assert!(!run.status.status.success());
-    assert!(stdout(&run).contains("crates.io rejected the publish token (403)"));
+    assert!(stdout(&run).contains("publish token or crate scope rejected (403)"));
 }
 
-/// A valid token belonging to an account that is not an owner of the crate
-/// passes /api/v1/me and still fails `cargo publish`.
+/// The probe cannot prove ownership. A scoped endpoint refusal is denied;
+/// ownership remains the real publisher's responsibility (including teams).
 #[cfg(unix)]
 #[test]
-fn a_valid_token_for_a_non_owner_account_is_a_failure() {
-    let workdir = temp_dir("not-owner");
+fn a_token_without_publish_scope_is_a_failure() {
+    let workdir = temp_dir("not-scoped");
     let mut env = release_env();
-    // The stub's owner list is fixed (octocat, someone-else); logging in as
-    // anyone else must fail the ownership probe.
-    env.push(("FAKE_CRATES_LOGIN", "impostor"));
+    env.push(("FAKE_CRATES_STATUS", "403"));
     let run = run_preflight(&workdir, &env, "release");
+    assert!(!run.status.status.success());
+    assert!(stdout(&run).contains("crate scope rejected"));
+}
 
-    assert!(
-        !run.status.status.success(),
-        "impostor is not an owner of test-crate: {}",
-        stdout(&run)
-    );
-    assert!(stdout(&run).contains("is not an owner of test-crate"));
+#[cfg(unix)]
+#[test]
+fn unknown_cargo_credentials_block_release_even_if_docker_is_verified() {
+    let workdir = temp_dir("partial-unknown");
+    let mut env = release_env();
+    env.push(("FAKE_CRATES_STATUS", "503"));
+    let run = run_preflight(&workdir, &env, "release");
+    assert!(!run.status.status.success(), "{}", stdout(&run));
+    assert!(stdout(&run).contains("UNKNOWN"));
+    assert!(stdout(&run).contains("Docker Hub accepted"));
 }
 
 /// The measured Docker Hub behaviour: the token endpoint hands out a token
@@ -254,7 +268,7 @@ fn a_login_success_with_a_refused_write_is_a_failure() {
 fn every_failure_is_reported_not_just_the_first() {
     let workdir = temp_dir("both-broken");
     let mut env = release_env();
-    env.push(("FAKE_ME_STATUS", "403"));
+    env.push(("FAKE_CRATES_STATUS", "403"));
     env.push(("FAKE_UPLOAD_STATUS", "403"));
     let run = run_preflight(&workdir, &env, "release");
 
@@ -271,8 +285,7 @@ fn every_failure_is_reported_not_just_the_first() {
 fn a_rate_limited_probe_is_unknown_and_release_mode_refuses_to_run_on_it() {
     let workdir = temp_dir("all-429");
     let mut env = release_env();
-    env.push(("FAKE_ME_STATUS", "429"));
-    env.push(("FAKE_OWNERS_STATUS", "429"));
+    env.push(("FAKE_CRATES_STATUS", "429"));
     env.push(("FAKE_UPLOAD_STATUS", "429"));
     let run = run_preflight(&workdir, &env, "release");
 
@@ -298,7 +311,7 @@ fn a_rate_limited_probe_is_unknown_and_release_mode_refuses_to_run_on_it() {
 fn report_mode_reports_but_never_blocks() {
     let workdir = temp_dir("report-mode");
     let mut env = release_env();
-    env.push(("FAKE_ME_STATUS", "403"));
+    env.push(("FAKE_CRATES_STATUS", "403"));
     env.push(("FAKE_UPLOAD_STATUS", "403"));
     let run = run_preflight(&workdir, &env, "report");
 

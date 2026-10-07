@@ -39,7 +39,7 @@ fn docker_release_builds_both_platforms_on_native_runners() {
     let publish = job_block(&workflow, "docker-publish");
 
     assert!(publish.contains("platform: linux/amd64"));
-    assert!(publish.contains("runner: ubuntu-latest"));
+    assert!(publish.contains("runner: ubuntu-24.04"));
     assert!(publish.contains("platform: linux/arm64"));
     assert!(publish.contains("runner: ubuntu-24.04-arm"));
     assert!(publish.contains("runs-on: ${{ matrix.runner }}"));

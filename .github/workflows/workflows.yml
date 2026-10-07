@@ -3,9 +3,9 @@ name: Workflows
 on:
   push:
     branches: [main]
-    paths: ['.github/**']
+    paths: ['.github/**', 'scripts/check-workflow-tools.rs']
   pull_request:
-    paths: ['.github/**']
+    paths: ['.github/**', 'scripts/check-workflow-tools.rs']
 
 # Keep the workflow read-only unless a job explicitly needs an additional scope.
 permissions:
@@ -14,7 +14,7 @@ permissions:
 jobs:
   actionlint:
     name: Actionlint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-actionlint
@@ -45,7 +45,7 @@ jobs:
 
   zizmor:
     name: Zizmor
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -65,20 +65,20 @@ jobs:
       # have code scanning enabled, and the job should fail loudly either way.
       #
       # `version` is named rather than left at the default, because the
-      # action's `latest` entry is its own frozen table (v0.6.2 -> zizmor
-      # 1.29.0), not the latest zizmor. Naming it keeps the next bump a
+      # action's `latest` entry is its own frozen table (v0.6.4 -> zizmor
+      # 1.30.1), not the latest zizmor. Naming it keeps the next bump a
       # visible line in the diff rather than a side effect of bumping the
       # action, and documents exactly which analyser reproduces a finding
       # (issue #166):
-      #   pipx run zizmor==1.29.0 --config .github/zizmor.yml \
-      #     --min-confidence medium --persona regular .github/workflows
-      - uses: zizmorcore/zizmor-action@v0.6.2
+      #   pipx run zizmor==1.30.1 --config .github/zizmor.yml \
+      #     --min-confidence low --persona regular .github/workflows
+      - uses: zizmorcore/zizmor-action@v0.6.4
         with:
           advanced-security: false
           annotations: true
           config: .github/zizmor.yml
-          min-confidence: medium
-          version: 1.29.0
+          min-confidence: low
+          version: 1.30.1
 
       # The run above uses `--persona regular`, which is the right default:
       # pedantic surfaces dozens of stylistic findings. But the audits that
@@ -93,9 +93,31 @@ jobs:
       - name: Audit for pedantic-only high-severity findings
         timeout-minutes: 10
         run: |
-          pipx run zizmor==1.29.0 --config .github/zizmor.yml \
+          pipx run zizmor==1.30.1 --config .github/zizmor.yml \
             --persona pedantic --min-severity high --min-confidence high \
             .github/workflows .github/actions
+
+  workflow-tools:
+    name: Workflow Tool Installation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-workflow-tools
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable branch @ 2026-09-03
+        with:
+          toolchain: stable
+
+      - name: Check per-job tool installation
+        run: |
+          rustc scripts/check-workflow-tools.rs -o "$RUNNER_TEMP/check-workflow-tools"
+          "$RUNNER_TEMP/check-workflow-tools" --verbose
 
   # Terminal status gate (issue #156): GitHub reports jobs killed by
   # timeout-minutes as cancelled. Observe every other job so a timeout on main
@@ -106,8 +128,9 @@ jobs:
     needs:
       - actionlint
       - zizmor
+      - workflow-tools
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6

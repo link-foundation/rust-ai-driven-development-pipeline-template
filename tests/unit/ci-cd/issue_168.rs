@@ -44,7 +44,7 @@ fn the_recheck_step_runs_only_when_lychee_failed() {
         .split("\njobs:\n")
         .nth(1)
         .expect("links.yml should declare jobs");
-    let step = step_block(job, "Re-check links that never got an answer");
+    let step = step_block(job, "Re-check unanswered and transient links");
 
     assert!(step.contains("if: steps.lychee.outputs.exit_code != 0"));
     assert!(step.contains("id: recheck"));
