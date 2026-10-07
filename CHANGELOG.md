@@ -66,6 +66,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.20.1] - 2026-10-07
+
+### Fixed
+- Recognize replacement changelog fragments while excluding unchanged fragment moves, regardless of Git's rename configuration.
+- Detect both paths of source moves so moving code into excluded folders still requires a changelog fragment and runs the code CI jobs.
+
 ## [0.20.0] - 2026-10-07
 
 ### Added
