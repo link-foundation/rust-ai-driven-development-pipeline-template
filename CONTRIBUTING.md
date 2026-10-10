@@ -339,3 +339,7 @@ Do not edit package versions manually in pull requests, including `release/*` br
 - Show empathy towards other community members
 
 Thank you for contributing!
+
+## JavaScript-first mixed-language projects
+
+Follow [the JavaScript-first gate and single push workflow](docs/javascript-first.md) before enabling production Rust jobs for a mixed-language project.
