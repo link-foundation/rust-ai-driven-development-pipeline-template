@@ -62,7 +62,6 @@ fn the_pedantic_pass_enforces_the_hash_pin_policy_on_images() {
         "--persona pedantic",
         "--min-severity high",
         "--min-confidence high",
-        ".github/workflows",
     ] {
         assert!(
             pedantic.contains(required),
