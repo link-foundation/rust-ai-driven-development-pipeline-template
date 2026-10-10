@@ -30,7 +30,6 @@ use regex::Regex;
 use serde::Deserialize;
 use std::env;
 use std::fs;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 #[cfg(not(test))]
 use std::process::exit;
@@ -72,18 +71,16 @@ fn get_changelog_path(rust_root: &str) -> String {
     }
 }
 
-fn set_output(key: &str, value: &str) {
-    if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Err(e) = fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&output_file)
-            .and_then(|mut f| writeln!(f, "{}={}", key, value))
-        {
-            eprintln!("Warning: Could not write to GITHUB_OUTPUT: {}", e);
-        }
-    }
-    println!("Output: {}={}", key, value);
+#[path = "changelog-files.rs"]
+mod changelog_files;
+
+#[path = "github-output.rs"]
+mod github_output;
+
+fn set_output(key: &str, value: &str) -> std::io::Result<()> {
+    github_output::write_output(key, value)?;
+    println!("Output: {key}={value}");
+    Ok(())
 }
 
 fn exec(command: &str, args: &[&str]) -> Result<String, String> {
@@ -429,32 +426,15 @@ fn collect_changelog_with_date(
     version: &str,
     date_str: &str,
 ) {
-    let dir_path = Path::new(changelog_dir);
-    if !dir_path.exists() {
-        return;
-    }
-
-    let mut files: Vec<_> = match fs::read_dir(dir_path) {
-        Ok(entries) => entries
-            .filter_map(|e| e.ok())
-            .map(|e| e.path())
-            .filter(|p| {
-                p.extension().map_or(false, |ext| ext == "md")
-                    && p.file_name().map_or(false, |name| name != "README.md")
-            })
-            .collect(),
-        Err(_) => return,
-    };
-
+    let files = changelog_files::list_fragments(Path::new(changelog_dir))
+        .unwrap_or_else(|error| panic!("{error}"));
     if files.is_empty() {
         return;
     }
 
-    files.sort();
-
     let fragments: Vec<String> = files
         .iter()
-        .filter_map(|f| fs::read_to_string(f).ok())
+        .map(|file| changelog_files::read_file(file).unwrap_or_else(|error| panic!("{error}")))
         .map(|c| strip_frontmatter(&c))
         .filter(|c| !c.is_empty())
         .collect();
@@ -474,7 +454,8 @@ fn collect_changelog_with_date(
         return;
     }
 
-    let mut content = fs::read_to_string(changelog_file).unwrap_or_default();
+    let mut content = changelog_files::read_file(Path::new(changelog_file))
+        .unwrap_or_else(|error| panic!("{error}"));
     let lines: Vec<&str> = content.lines().collect();
     let mut insert_index = None;
 
@@ -501,22 +482,9 @@ fn collect_changelog_with_date(
 
 /// Number of unconsumed changelog fragments (.md files other than README.md).
 fn count_changelog_fragments(changelog_dir: &str) -> usize {
-    let dir_path = Path::new(changelog_dir);
-    if !dir_path.exists() {
-        return 0;
-    }
-    fs::read_dir(dir_path)
-        .map(|entries| {
-            entries
-                .filter_map(|entry| entry.ok())
-                .map(|entry| entry.path())
-                .filter(|path| {
-                    path.extension().map_or(false, |ext| ext == "md")
-                        && path.file_name().map_or(false, |name| name != "README.md")
-                })
-                .count()
-        })
-        .unwrap_or(0)
+    changelog_files::list_fragments(Path::new(changelog_dir))
+        .unwrap_or_else(|error| panic!("{error}"))
+        .len()
 }
 
 /// Verify the release write before it becomes a commit (issue #159).
@@ -556,21 +524,11 @@ fn verify_release_write(
         }
     }
 
-    let leftover: Vec<String> = {
-        let dir_path = Path::new(changelog_dir);
-        match fs::read_dir(dir_path) {
-            Ok(entries) => entries
-                .filter_map(|entry| entry.ok())
-                .map(|entry| entry.path())
-                .filter(|path| {
-                    path.extension().map_or(false, |ext| ext == "md")
-                        && path.file_name().map_or(false, |name| name != "README.md")
-                })
-                .map(|path| path.to_string_lossy().to_string())
-                .collect(),
-            Err(_) => Vec::new(),
-        }
-    };
+    let leftover: Vec<String> = changelog_files::list_fragments(Path::new(changelog_dir))
+        .map_err(|error| format!("CHANGELOG verification failed: {error}"))?
+        .iter()
+        .map(|path| path.to_string_lossy().to_string())
+        .collect();
     if !leftover.is_empty() {
         return Err(format!(
             "CHANGELOG verification failed: fragments were not consumed and would \
@@ -976,6 +934,40 @@ bump: patch
     }
 
     #[test]
+    fn collection_rejects_unreadable_fragments_before_mutation() {
+        let repo = temp_dir("unreadable-fragment");
+        let dir = repo.join("changelog.d");
+        fs::create_dir_all(dir.join("broken.md")).unwrap();
+        fs::write(dir.join("good.md"), "### Fixed\n- Keep this fragment.\n").unwrap();
+        let changelog = repo.join("CHANGELOG.md");
+        fs::write(&changelog, "# Changelog\n").unwrap();
+        let result = std::panic::catch_unwind(|| {
+            collect_changelog_with_date(
+                dir.to_str().unwrap(),
+                changelog.to_str().unwrap(),
+                "1.0.0",
+                "2026-10-10",
+            );
+        });
+        assert!(result.is_err(), "unreadable fragment must be fatal");
+        assert_eq!(fs::read_to_string(changelog).unwrap(), "# Changelog\n");
+        assert!(dir.join("good.md").is_file());
+        fs::remove_dir_all(repo).unwrap();
+    }
+
+    #[test]
+    fn counting_and_verification_reject_fragment_directory_read_errors() {
+        let repo = temp_dir("unreadable-directory");
+        fs::write(repo.join("changelog.d"), "not a directory").unwrap();
+        let (changelog, dir, lock) = anchored(&repo);
+        assert!(std::panic::catch_unwind(|| count_changelog_fragments(&dir)).is_err());
+        let error =
+            verify_release_write(&changelog, &dir, &lock, "crate", "1.0.0", false).unwrap_err();
+        assert!(error.contains("changelog.d"));
+        fs::remove_dir_all(repo).unwrap();
+    }
+
+    #[test]
     fn verification_fails_when_the_lock_disagrees_with_the_manifest() {
         let repo = temp_dir("verify-lock");
         fs::create_dir_all(repo.join("changelog.d")).unwrap();
@@ -1009,7 +1001,7 @@ bump: patch
 }
 
 #[cfg(not(test))]
-fn main() {
+fn main() -> std::io::Result<()> {
     let bump_type = match get_arg("bump-type") {
         Some(bt) => bt,
         None => {
@@ -1232,9 +1224,9 @@ fn main() {
     // Check if there are changes to commit
     if exec_check("git", &["diff", "--cached", "--quiet"]) {
         println!("No changes to commit");
-        set_output("version_committed", "false");
-        set_output("new_version", &new_version);
-        return;
+        set_output("version_committed", "false")?;
+        set_output("new_version", &new_version)?;
+        return Ok(());
     }
 
     // Commit changes
@@ -1327,6 +1319,7 @@ fn main() {
     }
     println!("Pushed changes and tag {}", tag_name);
 
-    set_output("version_committed", "true");
-    set_output("new_version", &new_version);
+    set_output("version_committed", "true")?;
+    set_output("new_version", &new_version)?;
+    Ok(())
 }

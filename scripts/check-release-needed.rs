@@ -42,14 +42,13 @@
 
 use serde::Deserialize;
 use std::env;
-use std::fs;
 use std::path::Path;
 use std::process::exit;
 
-#[path = "rust-paths.rs"]
-mod rust_paths;
 #[path = "release-naming.rs"]
 mod release_naming;
+#[path = "rust-paths.rs"]
+mod rust_paths;
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -63,21 +62,13 @@ fn get_arg(name: &str) -> Option<String> {
     env::var(&env_name).ok().filter(|s| !s.is_empty())
 }
 
-fn set_output(key: &str, value: &str) {
-    if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Err(e) = fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&output_file)
-            .and_then(|mut f| {
-                use std::io::Write;
-                writeln!(f, "{}={}", key, value)
-            })
-        {
-            eprintln!("Warning: Could not write to GITHUB_OUTPUT: {}", e);
-        }
-    }
-    println!("Output: {}={}", key, value);
+#[path = "github-output.rs"]
+mod github_output;
+
+fn set_output(key: &str, value: &str) -> std::io::Result<()> {
+    github_output::write_output(key, value)?;
+    println!("Output: {key}={value}");
+    Ok(())
 }
 
 #[derive(Deserialize)]
@@ -272,7 +263,7 @@ fn get_max_published_version(crate_name: &str) -> Option<String> {
     }
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let rust_root = match rust_paths::get_rust_root(None, true) {
         Ok(root) => root,
         Err(e) => {
@@ -306,10 +297,10 @@ fn main() {
     let max_published = get_max_published_version(&crate_name);
     if let Some(ref max_ver) = max_published {
         println!("Max published version on crates.io: {}", max_ver);
-        set_output("max_published_version", max_ver);
+        set_output("max_published_version", max_ver)?;
     } else {
         println!("No versions published on crates.io yet (or crate not found)");
-        set_output("max_published_version", "");
+        set_output("max_published_version", "")?;
     }
 
     if !has_fragments {
@@ -336,15 +327,15 @@ fn main() {
         set_output(
             "crate_published",
             if crate_published { "true" } else { "false" },
-        );
+        )?;
         set_output(
             "dockerhub_required",
             if dockerhub_required { "true" } else { "false" },
-        );
+        )?;
         set_output(
             "dockerhub_published",
             if dockerhub_published { "true" } else { "false" },
-        );
+        )?;
         set_output(
             "github_release_published",
             if github_release_published {
@@ -352,7 +343,7 @@ fn main() {
             } else {
                 "false"
             },
-        );
+        )?;
 
         println!(
             "Crate: {}, Version: {}, Published on crates.io: {}",
@@ -381,18 +372,19 @@ fn main() {
                 "No changelog fragments and v{} is fully published",
                 current_version
             );
-            set_output("should_release", "false");
+            set_output("should_release", "false")?;
         } else {
             println!(
                 "No changelog fragments but v{} is missing at least one release artifact",
                 current_version
             );
-            set_output("should_release", "true");
-            set_output("skip_bump", "true");
+            set_output("should_release", "true")?;
+            set_output("skip_bump", "true")?;
         }
     } else {
         println!("Found changelog fragments, proceeding with release");
-        set_output("should_release", "true");
-        set_output("skip_bump", "false");
+        set_output("should_release", "true")?;
+        set_output("skip_bump", "false")?;
     }
+    Ok(())
 }

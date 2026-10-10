@@ -42,6 +42,9 @@ fi
 if ! python3 experiments/issue-190-rename-regressions.py -v; then
   status=1
 fi
+if ! python3 experiments/issue-192-release-io-regressions.py -v; then
+  status=1
+fi
 if ! node --test scripts/*.test.mjs; then
   status=1
 fi

@@ -23,12 +23,10 @@
 //! regex = "1"
 //! ```
 
+use regex::Regex;
 use std::env;
-use std::fs;
-use std::io::Write;
 use std::path::Path;
 use std::process::exit;
-use regex::Regex;
 
 fn get_arg(name: &str) -> Option<String> {
     let args: Vec<String> = env::args().collect();
@@ -70,13 +68,16 @@ fn get_changelog_dir(rust_root: &str) -> String {
     }
 }
 
-fn set_output(key: &str, value: &str) {
-    if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Ok(mut file) = fs::OpenOptions::new().create(true).append(true).open(&output_file) {
-            let _ = writeln!(file, "{}={}", key, value);
-        }
-    }
-    println!("Output: {}={}", key, value);
+#[path = "changelog-files.rs"]
+mod changelog_files;
+
+#[path = "github-output.rs"]
+mod github_output;
+
+fn set_output(key: &str, value: &str) -> std::io::Result<()> {
+    github_output::write_output(key, value)?;
+    println!("Output: {key}={value}");
+    Ok(())
 }
 
 fn bump_priority(bump_type: &str) -> u8 {
@@ -106,69 +107,60 @@ fn parse_frontmatter(content: &str) -> Option<String> {
     None
 }
 
-fn determine_bump_type(changelog_dir: &str, default_bump: &str) -> (String, usize) {
-    let dir_path = Path::new(changelog_dir);
-    if !dir_path.exists() {
-        println!("No {} directory found", changelog_dir);
-        return (default_bump.to_string(), 0);
-    }
-
-    let mut files: Vec<_> = match fs::read_dir(dir_path) {
-        Ok(entries) => entries
-            .filter_map(|e| e.ok())
-            .map(|e| e.path())
-            .filter(|p| {
-                p.extension().map_or(false, |ext| ext == "md")
-                    && p.file_name().map_or(false, |name| name != "README.md")
-            })
-            .collect(),
-        Err(_) => {
-            println!("No changelog fragments found");
-            return (default_bump.to_string(), 0);
-        }
-    };
-
+fn determine_bump_type(
+    changelog_dir: &str,
+    default_bump: &str,
+) -> std::io::Result<(String, usize)> {
+    let files = changelog_files::list_fragments(Path::new(changelog_dir))?;
     if files.is_empty() {
         println!("No changelog fragments found");
-        return (default_bump.to_string(), 0);
+        return Ok((default_bump.to_string(), 0));
     }
-
-    files.sort();
 
     let mut highest_priority: u8 = 0;
     let mut highest_bump_type = default_bump.to_string();
 
     for file in &files {
-        if let Ok(content) = fs::read_to_string(file) {
-            if let Some(bump) = parse_frontmatter(&content) {
-                let priority = bump_priority(&bump);
-                if priority > highest_priority {
-                    highest_priority = priority;
-                    highest_bump_type = bump.clone();
-                }
-                println!("Fragment {}: bump={}", file.file_name().unwrap().to_string_lossy(), bump);
-            } else {
-                println!(
-                    "Fragment {}: no bump specified, using default",
-                    file.file_name().unwrap().to_string_lossy()
-                );
+        let content = changelog_files::read_file(file)?;
+        if let Some(bump) = parse_frontmatter(&content) {
+            let priority = bump_priority(&bump);
+            if priority > highest_priority {
+                highest_priority = priority;
+                highest_bump_type = bump.clone();
             }
+            println!(
+                "Fragment {}: bump={}",
+                file.file_name().unwrap().to_string_lossy(),
+                bump
+            );
+        } else {
+            println!(
+                "Fragment {}: no bump specified, using default",
+                file.file_name().unwrap().to_string_lossy()
+            );
         }
     }
 
-    (highest_bump_type, files.len())
+    Ok((highest_bump_type, files.len()))
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let default_bump = get_arg("default").unwrap_or_else(|| "patch".to_string());
     let rust_root = get_rust_root();
     let changelog_dir = get_changelog_dir(&rust_root);
 
-    let (bump_type, fragment_count) = determine_bump_type(&changelog_dir, &default_bump);
+    let (bump_type, fragment_count) = determine_bump_type(&changelog_dir, &default_bump)?;
 
-    println!("\nDetermined bump type: {} (from {} fragment(s))", bump_type, fragment_count);
+    println!(
+        "\nDetermined bump type: {} (from {} fragment(s))",
+        bump_type, fragment_count
+    );
 
-    set_output("bump_type", &bump_type);
-    set_output("fragment_count", &fragment_count.to_string());
-    set_output("has_fragments", if fragment_count > 0 { "true" } else { "false" });
+    set_output("bump_type", &bump_type)?;
+    set_output("fragment_count", &fragment_count.to_string())?;
+    set_output(
+        "has_fragments",
+        if fragment_count > 0 { "true" } else { "false" },
+    )?;
+    Ok(())
 }

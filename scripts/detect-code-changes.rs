@@ -46,8 +46,8 @@
 
 use regex::Regex;
 use std::env;
+#[cfg(test)]
 use std::fs;
-use std::io::Write;
 use std::path::Path;
 use std::process::Command;
 
@@ -78,17 +78,13 @@ fn exec_in(command: &str, args: &[&str], current_dir: Option<&Path>) -> String {
     }
 }
 
-fn set_output(name: &str, value: &str) {
-    if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Ok(mut file) = fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&output_file)
-        {
-            let _ = writeln!(file, "{}={}", name, value);
-        }
-    }
-    println!("{}={}", name, value);
+#[path = "github-output.rs"]
+mod github_output;
+
+fn set_output(name: &str, value: &str) -> std::io::Result<()> {
+    github_output::write_output(name, value)?;
+    println!("{name}={value}");
+    Ok(())
 }
 
 fn is_merge_commit_in_repo(repo_path: &Path) -> bool {
@@ -269,7 +265,7 @@ fn included_changed_files<'a>(prefix: &str, changed_files: &'a [String]) -> Vec<
         .collect()
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     println!("Detecting file changes for CI/CD...\n");
 
     let changed_files = get_changed_files();
@@ -293,13 +289,13 @@ fn main() {
 
     // Detect .rs file changes (Rust source)
     let rs_changed = included_files.iter().any(|f| f.ends_with(".rs"));
-    set_output("rs-changed", if rs_changed { "true" } else { "false" });
+    set_output("rs-changed", if rs_changed { "true" } else { "false" })?;
 
     // Detect manifest/lockfile changes (Cargo.toml, Cargo.lock, etc.)
     let toml_changed = included_files
         .iter()
         .any(|f| is_manifest_or_lockfile_change(f));
-    set_output("toml-changed", if toml_changed { "true" } else { "false" });
+    set_output("toml-changed", if toml_changed { "true" } else { "false" })?;
 
     // Detect workflow changes
     let workflow_changed = included_files
@@ -308,13 +304,13 @@ fn main() {
     set_output(
         "workflow-changed",
         if workflow_changed { "true" } else { "false" },
-    );
+    )?;
 
     // Detect documentation changes. Deliberately computed from every changed
     // file: the code filters below exclude docs, which is exactly the set the
     // validate-docs job cares about (issue #161).
     let docs_changed = changed_files.iter().any(|f| is_docs_change(f));
-    set_output("docs-changed", if docs_changed { "true" } else { "false" });
+    set_output("docs-changed", if docs_changed { "true" } else { "false" })?;
 
     // Detect code changes (excluding docs, changelog.d, experiments, examples folders, and markdown files)
     println!("\nFiles considered as code changes:");
@@ -333,9 +329,10 @@ fn main() {
     set_output(
         "any-code-changed",
         if code_changed { "true" } else { "false" },
-    );
+    )?;
 
     println!("\nChange detection completed.");
+    Ok(())
 }
 
 #[cfg(test)]

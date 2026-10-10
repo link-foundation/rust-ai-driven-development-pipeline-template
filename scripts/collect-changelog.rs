@@ -16,12 +16,16 @@
 //! chrono = "0.4"
 //! ```
 
+use chrono::Utc;
+use regex::Regex;
 use std::env;
 use std::fs;
 use std::path::Path;
 use std::process::exit;
-use chrono::Utc;
-use regex::Regex;
+
+#[path = "changelog-files.rs"]
+mod changelog_files;
+use changelog_files::{list_fragments, path_error, read_file};
 
 const INSERT_MARKER: &str = "<!-- changelog-insert-here -->";
 
@@ -103,45 +107,25 @@ fn strip_frontmatter(content: &str) -> String {
     }
 }
 
-fn collect_fragments(changelog_dir: &str) -> String {
-    let dir_path = Path::new(changelog_dir);
-    if !dir_path.exists() {
-        return String::new();
-    }
-
-    let mut files: Vec<_> = match fs::read_dir(dir_path) {
-        Ok(entries) => entries
-            .filter_map(|e| e.ok())
-            .map(|e| e.path())
-            .filter(|p| {
-                p.extension().map_or(false, |ext| ext == "md")
-                    && p.file_name().map_or(false, |name| name != "README.md")
-            })
-            .collect(),
-        Err(_) => return String::new(),
-    };
-
-    files.sort();
-
+fn collect_fragments(changelog_dir: &str) -> std::io::Result<(String, Vec<std::path::PathBuf>)> {
+    let files = list_fragments(Path::new(changelog_dir))?;
     let mut fragments = Vec::new();
     for file in &files {
-        if let Ok(raw_content) = fs::read_to_string(file) {
-            let content = strip_frontmatter(&raw_content);
-            if !content.is_empty() {
-                fragments.push(content);
-            }
+        let raw_content = read_file(file)?;
+        let content = strip_frontmatter(&raw_content);
+        if !content.is_empty() {
+            fragments.push(content);
         }
     }
-
-    fragments.join("\n\n")
+    Ok((fragments.join("\n\n"), files))
 }
 
-fn update_changelog(changelog_file: &str, version: &str, fragments: &str) {
+fn update_changelog(changelog_file: &str, version: &str, fragments: &str) -> std::io::Result<()> {
     let date_str = Utc::now().format("%Y-%m-%d").to_string();
     let new_entry = format!("\n## [{}] - {}\n\n{}\n", version, date_str, fragments);
 
     if Path::new(changelog_file).exists() {
-        let mut content = fs::read_to_string(changelog_file).unwrap_or_default();
+        let mut content = read_file(Path::new(changelog_file))?;
 
         if content.contains(INSERT_MARKER) {
             content = content.replace(INSERT_MARKER, &format!("{}{}", INSERT_MARKER, new_entry));
@@ -158,7 +142,8 @@ fn update_changelog(changelog_file: &str, version: &str, fragments: &str) {
             }
 
             if let Some(idx) = insert_index {
-                let mut new_lines: Vec<String> = lines[..idx].iter().map(|s| s.to_string()).collect();
+                let mut new_lines: Vec<String> =
+                    lines[..idx].iter().map(|s| s.to_string()).collect();
                 new_lines.push(new_entry.clone());
                 new_lines.extend(lines[idx..].iter().map(|s| s.to_string()));
                 content = new_lines.join("\n");
@@ -168,7 +153,8 @@ fn update_changelog(changelog_file: &str, version: &str, fragments: &str) {
             }
         }
 
-        fs::write(changelog_file, content).expect("Failed to write changelog");
+        fs::write(changelog_file, content)
+            .map_err(|error| path_error("write changelog", Path::new(changelog_file), error))?;
     } else {
         let content = format!(
             "# Changelog\n\n\
@@ -178,33 +164,23 @@ fn update_changelog(changelog_file: &str, version: &str, fragments: &str) {
             {}\n{}\n",
             INSERT_MARKER, new_entry
         );
-        fs::write(changelog_file, content).expect("Failed to write changelog");
+        fs::write(changelog_file, content)
+            .map_err(|error| path_error("write changelog", Path::new(changelog_file), error))?;
     }
 
     println!("Updated CHANGELOG.md with version {}", version);
+    Ok(())
 }
 
-fn remove_fragments(changelog_dir: &str) {
-    let dir_path = Path::new(changelog_dir);
-    if !dir_path.exists() {
-        return;
+fn remove_fragments(files: &[std::path::PathBuf]) -> std::io::Result<()> {
+    for path in files {
+        fs::remove_file(path).map_err(|error| path_error("remove fragment", path, error))?;
+        println!("Removed {}", path.display());
     }
-
-    if let Ok(entries) = fs::read_dir(dir_path) {
-        for entry in entries.filter_map(|e| e.ok()) {
-            let path = entry.path();
-            if path.extension().map_or(false, |ext| ext == "md")
-                && path.file_name().map_or(false, |name| name != "README.md")
-            {
-                if fs::remove_file(&path).is_ok() {
-                    println!("Removed {}", path.display());
-                }
-            }
-        }
-    }
+    Ok(())
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let rust_root = get_rust_root();
     let cargo_toml = get_cargo_toml_path(&rust_root);
     let changelog_dir = get_changelog_dir(&rust_root);
@@ -220,15 +196,32 @@ fn main() {
 
     println!("Collecting changelog fragments for version {}", version);
 
-    let fragments = collect_fragments(&changelog_dir);
+    let (fragments, files) = collect_fragments(&changelog_dir)?;
 
     if fragments.is_empty() {
         println!("No changelog fragments found");
         exit(0);
     }
 
-    update_changelog(&changelog_file, &version, &fragments);
-    remove_fragments(&changelog_dir);
+    update_changelog(&changelog_file, &version, &fragments)?;
+    remove_fragments(&files)?;
 
     println!("Changelog collection complete");
+    Ok(())
+}
+
+#[cfg(test)]
+mod cleanup_tests {
+    use super::remove_fragments;
+
+    #[test]
+    fn cleanup_must_report_deletion_failure() {
+        let root = std::env::temp_dir().join(format!("fragment-removal-{}", std::process::id()));
+        std::fs::create_dir(&root).unwrap();
+        std::fs::create_dir(root.join("fragment.md")).unwrap();
+        let result = remove_fragments(&[root.join("fragment.md")]);
+        std::fs::remove_dir_all(root).unwrap();
+        let error = result.expect_err("fragment deletion must fail");
+        assert!(error.to_string().contains("fragment.md"));
+    }
 }
