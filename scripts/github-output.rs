@@ -54,6 +54,21 @@ mod tests {
     use std::fs;
 
     #[test]
+    fn creates_a_missing_output_file() {
+        let root = env::temp_dir().join(format!(
+            "new-github-output-{}-{}",
+            std::process::id(),
+            module_path!().replace("::", "-")
+        ));
+        fs::create_dir(&root).unwrap();
+        let path = root.join("outputs.txt");
+        write_output_to(Some(&path), "version", "1.0.0").unwrap();
+        let content = fs::read_to_string(&path).unwrap();
+        fs::remove_dir_all(root).unwrap();
+        assert_eq!(content, "version=1.0.0\n");
+    }
+
+    #[test]
     fn appends_without_overwriting_existing_outputs() {
         let path = env::temp_dir().join(format!(
             "github-output-{}-{}.txt",
