@@ -32,8 +32,6 @@
 //! ```
 
 use std::env;
-use std::fs;
-use std::io::Write;
 use std::process::{exit, Command};
 
 #[path = "rust-paths.rs"]
@@ -54,17 +52,13 @@ fn needs_cd(rust_root: &str) -> bool {
     rust_root != "."
 }
 
-fn set_output(key: &str, value: &str) {
-    if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Ok(mut file) = fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&output_file)
-        {
-            let _ = writeln!(file, "{}={}", key, value);
-        }
-    }
-    println!("Output: {}={}", key, value);
+#[path = "github-output.rs"]
+mod github_output;
+
+fn set_output(key: &str, value: &str) -> std::io::Result<()> {
+    github_output::write_output(key, value)?;
+    println!("Output: {key}={value}");
+    Ok(())
 }
 
 /// Classification of a failed `cargo publish` attempt.
@@ -128,7 +122,7 @@ fn classify_failure(combined: &str) -> FailureKind {
     }
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let rust_root = match rust_paths::get_rust_root(None, true) {
         Ok(root) => root,
         Err(e) => {
@@ -171,8 +165,8 @@ fn main() {
             "Skipping publish: package name is the template default 'example-sum-package-name'"
         );
         println!("Rename the package in Cargo.toml before publishing to crates.io");
-        set_output("publish_result", "skipped");
-        return;
+        set_output("publish_result", "skipped")?;
+        return Ok(());
     }
 
     println!();
@@ -210,7 +204,7 @@ fn main() {
 
     if output.status.success() {
         println!("Successfully published {}@{} to crates.io", name, version);
-        set_output("publish_result", "success");
+        set_output("publish_result", "success")?;
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
         let stdout = String::from_utf8_lossy(&output.stdout);
@@ -281,7 +275,7 @@ fn main() {
             }
         }
 
-        set_output("publish_result", kind.output_value());
+        set_output("publish_result", kind.output_value())?;
 
         // A rate-limit is a deferred, automatically-recoverable outcome: exit
         // successfully so the release job does not go red over a transient
@@ -289,11 +283,12 @@ fn main() {
         // successful publish (see .github/workflows/release.yml), so a deferred
         // upload never produces partial Docker/GitHub release artifacts.
         if kind.is_deferred() {
-            return;
+            return Ok(());
         }
 
         exit(1);
     }
+    Ok(())
 }
 
 #[cfg(test)]

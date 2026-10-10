@@ -342,8 +342,14 @@ fn the_timeout_annotation_reports_the_measured_overrun() {
     );
     assert_eq!(output.status.code(), Some(124));
     let stdout = String::from_utf8_lossy(&output.stdout);
+    // Process inspection and runner scheduling may add time to the 2s poll.
+    // Check the measured overrun without requiring an exact wall-clock value.
+    let elapsed = stdout
+        .split_once("Coarse polls ran for ")
+        .and_then(|(_, annotation)| annotation.split_once("s against its 1s budget"))
+        .and_then(|(seconds, _)| seconds.parse::<u64>().ok());
     assert!(
-        stdout.contains("ran for 2s against its 1s budget"),
+        elapsed.is_some_and(|seconds| seconds >= 2),
         "the error annotation should report the measured elapsed time against \
          the configured budget, got: {stdout}"
     );

@@ -30,7 +30,6 @@
 use regex::Regex;
 use std::env;
 use std::fs;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{exit, Command, Output};
 use std::thread;
@@ -85,18 +84,13 @@ fn parse_count_arg(name: &str, default: u64) -> u64 {
         .unwrap_or(default)
 }
 
-fn set_output(key: &str, value: &str) {
-    if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Err(e) = fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&output_file)
-            .and_then(|mut f| writeln!(f, "{key}={value}"))
-        {
-            eprintln!("Warning: Could not write to GITHUB_OUTPUT: {e}");
-        }
-    }
+#[path = "github-output.rs"]
+mod github_output;
+
+fn set_output(key: &str, value: &str) -> std::io::Result<()> {
+    github_output::write_output(key, value)?;
     println!("Output: {key}={value}");
+    Ok(())
 }
 
 fn should_skip_smoke_test(crate_name: &str) -> bool {
@@ -428,7 +422,7 @@ fn run_smoke_test(
     result
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let rust_root = match rust_paths::get_rust_root(None, true) {
         Ok(root) => root,
         Err(e) => {
@@ -461,13 +455,13 @@ fn main() {
             "Skipping published-crate smoke test: package name is the template default '{}'",
             entrypoints.crate_name
         );
-        set_output("smoke_test", "skipped");
-        return;
+        set_output("smoke_test", "skipped")?;
+        return Ok(());
     }
 
     if let Err(e) = run_smoke_test(&entrypoints, max_attempts, sleep_seconds) {
         eprintln!("::error::Published crate smoke test failed: {e}");
-        set_output("smoke_test", "fail");
+        set_output("smoke_test", "fail")?;
         exit(1);
     }
 
@@ -475,7 +469,8 @@ fn main() {
         "Published crate smoke test passed for {}@{}",
         entrypoints.crate_name, entrypoints.version
     );
-    set_output("smoke_test", "pass");
+    set_output("smoke_test", "pass")?;
+    Ok(())
 }
 
 #[cfg(test)]

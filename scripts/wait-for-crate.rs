@@ -36,7 +36,6 @@
 #![cfg_attr(test, allow(dead_code, unused_imports))]
 
 use std::env;
-use std::fs;
 use std::process::exit;
 use std::thread;
 use std::time::Duration;
@@ -75,21 +74,15 @@ fn get_arg(name: &str) -> Option<String> {
     env::var(&env_name).ok().filter(|s| !s.is_empty())
 }
 
-fn set_output(key: &str, value: &str) {
-    if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Err(e) = fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&output_file)
-            .and_then(|mut f| {
-                use std::io::Write;
-                writeln!(f, "{}={}", key, value)
-            })
-        {
-            eprintln!("Warning: Could not write to GITHUB_OUTPUT: {}", e);
-        }
-    }
-    println!("Output: {}={}", key, value);
+#[cfg(not(test))]
+#[path = "github-output.rs"]
+mod github_output;
+
+#[cfg(not(test))]
+fn set_output(key: &str, value: &str) -> std::io::Result<()> {
+    github_output::write_output(key, value)?;
+    println!("Output: {key}={value}");
+    Ok(())
 }
 
 fn parse_count_arg(name: &str, default: u64) -> u64 {
@@ -255,7 +248,7 @@ fn should_skip_crate_wait(crate_name: &str) -> bool {
 }
 
 #[cfg(not(test))]
-fn main() {
+fn main() -> std::io::Result<()> {
     let rust_root = match rust_paths::get_rust_root(None, true) {
         Ok(root) => root,
         Err(e) => {
@@ -289,8 +282,8 @@ fn main() {
             "Skipping crates.io availability wait: package name is the template default '{}'",
             crate_name
         );
-        set_output("crate_available", "skipped");
-        return;
+        set_output("crate_available", "skipped")?;
+        return Ok(());
     }
 
     let mut last_unknown: Option<String> = None;
@@ -303,8 +296,8 @@ fn main() {
                     "{}@{} is visible on crates.io after attempt {}",
                     crate_name, version, attempt
                 );
-                set_output("crate_available", "true");
-                return;
+                set_output("crate_available", "true")?;
+                return Ok(());
             }
             Visibility::NotPublishedYet => {
                 saw_definitive_answer = true;

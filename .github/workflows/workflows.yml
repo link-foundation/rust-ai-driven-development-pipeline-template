@@ -71,9 +71,12 @@ jobs:
       # action, and documents exactly which analyser reproduces a finding
       # (issue #166):
       #   pipx run zizmor==1.30.1 --config .github/zizmor.yml \
-      #     --min-confidence low --persona regular .github/workflows
+      #     --min-confidence low --persona regular .
+      # Scan the repository, including Dependabot and actions outside .github.
+      # Future Dependabot configs need cooldown: {default-days: 7} per ecosystem.
       - uses: zizmorcore/zizmor-action@v0.6.4
         with:
+          inputs: .
           advanced-security: false
           annotations: true
           config: .github/zizmor.yml
@@ -95,7 +98,7 @@ jobs:
         run: |
           pipx run zizmor==1.30.1 --config .github/zizmor.yml \
             --persona pedantic --min-severity high --min-confidence high \
-            .github/workflows .github/actions
+            .
 
   workflow-tools:
     name: Workflow Tool Installation

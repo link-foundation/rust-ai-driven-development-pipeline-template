@@ -23,11 +23,7 @@
 //! regex = "1"
 //! ```
 
-#[cfg(not(test))]
-use std::env;
 use std::fs;
-#[cfg(not(test))]
-use std::io::Write;
 use std::path::{Path, PathBuf};
 #[cfg(not(test))]
 use std::process::{exit, Command};
@@ -99,17 +95,14 @@ where
 }
 
 #[cfg(not(test))]
-fn set_output(key: &str, value: &str) {
-    if let Ok(output_file) = env::var("GITHUB_OUTPUT") {
-        if let Ok(mut file) = fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(&output_file)
-        {
-            let _ = writeln!(file, "{key}={value}");
-        }
-    }
+#[path = "github-output.rs"]
+mod github_output;
+
+#[cfg(not(test))]
+fn set_output(key: &str, value: &str) -> std::io::Result<()> {
+    github_output::write_output(key, value)?;
     println!("Output: {key}={value}");
+    Ok(())
 }
 
 /// Locate the `.crate` archive produced by `cargo package` for the given
@@ -126,7 +119,7 @@ fn find_crate_archive(rust_root: &str, name: &str, version: &str) -> Option<Path
 }
 
 #[cfg(not(test))]
-fn main() {
+fn main() -> std::io::Result<()> {
     let rust_root = match rust_paths::get_rust_root(None, true) {
         Ok(root) => root,
         Err(e) => {
@@ -206,7 +199,7 @@ fn main() {
         }
     };
 
-    set_output("crate_size_bytes", &size_bytes.to_string());
+    set_output("crate_size_bytes", &size_bytes.to_string())?;
     println!("Archive: {}", archive.display());
     println!("Size: {}", format_mib(size_bytes));
     println!("Limit: {}", format_mib(MAX_CRATE_BYTES));
@@ -223,7 +216,7 @@ fn main() {
             );
             println!("::error::{message}");
             eprintln!("\nERROR: {message}\n");
-            set_output("crate_size_check", "fail");
+            set_output("crate_size_check", "fail")?;
             exit(1);
         }
         SizeStatus::Warning => {
@@ -235,12 +228,12 @@ fn main() {
             );
             println!("::warning::{message}");
             println!("\nWARNING: {message}\n");
-            set_output("crate_size_check", "pass");
+            set_output("crate_size_check", "pass")?;
             exit(0);
         }
         SizeStatus::WithinLimit => {
             println!("\nCrate archive is within the crates.io upload limit\n");
-            set_output("crate_size_check", "pass");
+            set_output("crate_size_check", "pass")?;
             exit(0);
         }
     }
