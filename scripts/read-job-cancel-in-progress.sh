@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # Print the effective concurrency.cancel-in-progress value for each named job.
-# Values are true, false, none, missing, or unknown. Expressions deliberately
-# remain unknown: guessing would let an unexplained cancellation pass.
+# Values are true, false, none, missing, or unknown. Expressions outside the
+# supported github.ref comparisons remain unknown (fail closed).
 set -euo pipefail
 : "${WORKFLOW_FILE:?WORKFLOW_FILE is required}"
+# The single-quoted body is Python; GitHub expressions are parsed as data.
+# shellcheck disable=SC2016
 WORKFLOW_FILE="$WORKFLOW_FILE" JOB_NAMES="${JOB_NAMES:-}" python3 -c '
 import os, re, sys
 path = os.environ["WORKFLOW_FILE"]
@@ -15,7 +17,14 @@ except OSError as exc:
 def indent_of(line): return len(line) - len(line.lstrip(" "))
 def is_blank(line): return not line.strip() or line.strip().startswith("#")
 def normalise(raw):
-    if "${{" in raw: return "unknown"
+    raw = re.sub(r"\s+#.*$", "", raw).strip()
+    if "${{" in raw:
+        # Only the exact comparisons used by this template are supported.
+        match = re.fullmatch(r"\$\{\{\s*github\.ref\s*(==|!=)\s*\x27([^\x27]*)\x27\s*\}\}", raw)
+        ref = os.environ.get("GITHUB_REF", "")
+        if not match or not ref: return "unknown"
+        equal = ref.casefold() == match[2].casefold()
+        return str(equal if match[1] == "==" else not equal).lower()
     raw = re.sub(r"\s+#.*$", "", raw).strip().strip("\x27\"").lower()
     return raw if raw in ("true", "false") else "unknown"
 def read_concurrency(start, indent):

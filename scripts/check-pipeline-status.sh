@@ -11,12 +11,12 @@ VERBOSE="${PIPELINE_STATUS_VERBOSE:-0}"
 trace() { [ "$VERBOSE" = "1" ] && echo "[pipeline-status] $*" >&2 || true; }
 
 run_is_superseded() {
-  local head="${BRANCH_HEAD_SHA:-}"
+  local head="${BRANCH_HEAD_SHA:-}" lookup_ref="${HEAD_REF:-refs/heads/${BRANCH_NAME}}"
   if [ -z "${RUN_SHA:-}" ]; then
     echo "RUN_SHA is unset; cannot prove this run was superseded." >&2; return 1
   fi
   if [ -z "$head" ]; then
-    head="$(git ls-remote "$GIT_REMOTE" "refs/heads/${BRANCH_NAME}" 2>/dev/null | awk 'NR == 1 { print $1 }')"
+    head="$(git ls-remote "$GIT_REMOTE" "$lookup_ref" 2>/dev/null | awk 'NR == 1 { print $1 }')"
   fi
   if [ -z "$head" ]; then
     echo "Could not resolve the head of ${BRANCH_NAME}; cannot prove this run was superseded." >&2; return 1

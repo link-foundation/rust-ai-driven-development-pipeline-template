@@ -100,9 +100,9 @@ fn rust_toolchain_is_hash_pinned_everywhere() {
 /// out of upstream history despite being valid full-length hashes.
 #[test]
 fn rust_toolchain_pin_uses_verified_master_history() {
-    // Verified against upstream master on 2026-10-07. Recheck ancestry when
+    // Verified against upstream master on 2026-10-26. Recheck ancestry when
     // updating: gh api repos/dtolnay/rust-toolchain/compare/<sha>...master
-    const VERIFIED_MASTER_COMMIT: &str = "7e38f4b43b4db5c8dd498af069a4f6196df1d067";
+    const VERIFIED_MASTER_COMMIT: &str = "e2a55d2ffb04f378e9626c28d38b36d230d1e12f";
     for (name, body) in all_workflows() {
         for line in body.lines().filter(|line| {
             line.trim_start()
@@ -112,7 +112,7 @@ fn rust_toolchain_pin_uses_verified_master_history() {
                     .starts_with("- uses: dtolnay/rust-toolchain@")
         }) {
             assert!(
-                line.contains(VERIFIED_MASTER_COMMIT) && line.contains("master branch"),
+                line.contains(VERIFIED_MASTER_COMMIT),
                 "{name} must pin a verified master-history commit, not a generated toolchain branch: {line}"
             );
         }

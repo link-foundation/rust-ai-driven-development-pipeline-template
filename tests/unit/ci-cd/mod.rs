@@ -62,5 +62,6 @@ mod version_and_commit_tag_order;
 mod wait_for_crate;
 mod workflow_desktop_release;
 mod workflow_release;
+mod workflow_release_gates;
 mod workflow_security;
 mod workspace_manifest_resolution;

@@ -11,6 +11,12 @@ on:
 permissions:
   contents: read
 
+# Configure checkout's git init before the first step runs.
+env:
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
+
 jobs:
   cargo-audit:
     name: Cargo audit
@@ -20,7 +26,7 @@ jobs:
       group: check-${{ github.workflow }}-${{ github.ref }}-cargo-audit
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -51,7 +57,7 @@ jobs:
       matrix:
         language: [rust, actions]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -63,9 +69,37 @@ jobs:
 
       - uses: github/codeql-action/analyze@v4
 
+  dependency-graph:
+    name: Dependency Graph Availability
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-dependency-graph
+      cancel-in-progress: true
+    outputs:
+      enabled: ${{ steps.graph.outputs.enabled }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Probe dependency graph
+        id: graph
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          REQUIRE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && '--require' || '' }}
+        run: |
+          args=("${BASE:-$HEAD}" "$HEAD")
+          if [ -n "$REQUIRE" ]; then args+=("$REQUIRE"); fi
+          bash scripts/check-dependency-graph.sh "${args[@]}"
+
   dependency-review:
     name: Dependency Review
-    if: github.event_name == 'pull_request'
+    needs: dependency-graph
+    if: github.event_name == 'pull_request' && needs.dependency-graph.outputs.enabled == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     concurrency:
@@ -75,7 +109,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -94,11 +128,12 @@ jobs:
       - cargo-audit
       - codeql
       - dependency-review
+      - dependency-graph
     if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -106,6 +141,6 @@ jobs:
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
           IS_MAIN: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-          RUN_SHA: ${{ github.sha }}
-          BRANCH_REF: ${{ github.ref_name }}
+          RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HEAD_REF: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/head', github.event.pull_request.number) || github.ref }}
         run: bash scripts/check-pipeline-status.sh

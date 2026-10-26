@@ -112,6 +112,17 @@ fn every_job_declares_a_timeout_backstop() {
     for name in workflow_names() {
         let content = workflow(&name);
         for job in jobs(&content) {
+            // A reusable-workflow call cannot declare timeout-minutes. Check
+            // its local callee here; the outer loop checks every callee job.
+            if let Some(callee) = job
+                .body
+                .lines()
+                .find_map(|line| line.trim().strip_prefix("uses: ./.github/workflows/"))
+            {
+                let callee = callee.split_whitespace().next().unwrap();
+                assert!(!jobs(&workflow(callee)).is_empty());
+                continue;
+            }
             assert!(
                 job_timeout_minutes(&job.body).is_some(),
                 "job {:?} in {name} has no timeout-minutes; an unbounded job can hang \

@@ -1,3 +1,4 @@
+# Historical issue-38 comparison snapshot; publishing auth synchronized for issue #205.
 name: CI/CD Pipeline
 
 on:
@@ -36,9 +37,6 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUSTFLAGS: -Dwarnings
-  # Support both CARGO_REGISTRY_TOKEN (cargo's native env var) and CARGO_TOKEN (for backwards compatibility)
-  CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
-  CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
 
 jobs:
   # === DETECT CHANGES - determines which jobs should run ===
@@ -290,6 +288,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -327,6 +326,12 @@ jobs:
         if: steps.check.outputs.should_release == 'true'
         run: rust-script scripts/get-version.rs
 
+      - name: Authenticate with crates.io (trusted publishing)
+        id: crates_auth
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+        continue-on-error: true
+        if: steps.check.outputs.should_release == 'true'
+
       - name: Build release
         if: steps.check.outputs.should_release == 'true'
         run: cargo build --release
@@ -335,8 +340,7 @@ jobs:
         if: steps.check.outputs.should_release == 'true'
         id: publish-crate
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
-          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates_auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
         run: rust-script scripts/publish-crate.rs
 
       - name: Create GitHub Release
@@ -366,6 +370,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -391,6 +396,11 @@ jobs:
           DESCRIPTION: ${{ github.event.inputs.description }}
         run: rust-script scripts/version-and-commit.rs --bump-type "${{ github.event.inputs.bump_type }}" --description "${{ github.event.inputs.description }}"
 
+      - name: Authenticate with crates.io (trusted publishing)
+        id: crates_auth
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+        continue-on-error: true
+
       - name: Build release
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         run: cargo build --release
@@ -399,8 +409,7 @@ jobs:
         if: steps.version.outputs.version_committed == 'true' || steps.version.outputs.already_released == 'true'
         id: publish-crate
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
-          CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates_auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}
         run: rust-script scripts/publish-crate.rs
 
       - name: Create GitHub Release

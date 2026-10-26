@@ -255,7 +255,7 @@ fn is_docs_change(file_path: &str) -> bool {
 }
 
 fn code_change_pattern() -> Regex {
-    Regex::new(r"(\.(rs|toml|mjs|js|yml|yaml)$|(^|/)Cargo\.lock$|^\.github/workflows/)").unwrap()
+    Regex::new(r"(\.(rs|toml|mjs|js|sh|py|json|yml|yaml)$|(^|/)Cargo\.lock$|^\.github/(workflows|actions)/)").unwrap()
 }
 
 fn included_changed_files<'a>(prefix: &str, changed_files: &'a [String]) -> Vec<&'a String> {
@@ -423,6 +423,26 @@ mod tests {
         );
 
         repo
+    }
+
+    #[test]
+    fn shell_scripts_and_composite_action_files_are_code() {
+        let pattern = code_change_pattern();
+        for path in [
+            "scripts/simulate-fresh-merge.sh",
+            "scripts/test.py",
+            ".github/actions/tool/data.txt",
+        ] {
+            assert!(pattern.is_match(path), "{path}");
+            assert!(!is_excluded_from_code_changes("", path));
+        }
+        for path in [
+            "docs/example.sh",
+            "changelog.d/example.sh",
+            "dev/log/example.sh",
+        ] {
+            assert!(is_excluded_from_code_changes("", path), "{path}");
+        }
     }
 
     #[test]

@@ -9,10 +9,8 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 TEMP_DIR=$(mktemp -d)
-trap "rm -rf $TEMP_DIR" EXIT
+trap 'rm -rf "$TEMP_DIR"' EXIT
 
 echo "=== Test: detect-code-changes merge commit detection ==="
 echo "Temp dir: $TEMP_DIR"
@@ -44,7 +42,6 @@ git add .gitkeep
 git commit -m "Add .gitkeep only"
 
 PR_HEAD=$(git rev-parse HEAD)
-PR_HEAD_PARENT=$(git rev-parse HEAD^)
 
 # --- Go back to main and create a synthetic merge commit ---
 git checkout main
@@ -56,7 +53,7 @@ git log --oneline --graph --all
 echo ""
 
 echo "=== Merge commit verification ==="
-PARENT_COUNT=$(git cat-file -p HEAD | grep "^parent " | wc -l)
+PARENT_COUNT=$(git cat-file -p HEAD | grep -c "^parent ")
 echo "HEAD parent count: $PARENT_COUNT (expected: 2)"
 
 HEAD_SECOND_PARENT=$(git rev-parse HEAD^2)

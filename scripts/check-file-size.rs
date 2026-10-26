@@ -25,21 +25,10 @@ const MAX_DOC_LINES: usize = 2500;
 const WARN_DOC_LINES: usize = 2250;
 const FILE_EXTENSIONS: &[&str] = &[".rs", ".md"];
 const EXCLUDE_PATTERNS: &[&str] = &["target", ".git", "node_modules"];
-// Existing size debt is capped at its checked-in level instead of making the
-// repository permanently unbuildable. These exceptions allow no further
-// growth and should disappear when the files are split.
-const LEGACY_SOURCE_LIMITS: &[(&str, usize)] = &[
-    ("scripts/version-and-commit.rs", 1332),
-    ("tests/unit/ci-cd/workflow_release.rs", 1048),
-];
-
 /// The warning and hard limits for a file, keyed by extension. Matched the
 /// same case-sensitive way `has_valid_extension` does, so a `.MD` file is
 /// neither size-checked nor given the docs budget.
 fn limits_for(file: &str) -> (usize, usize) {
-    if let Some((_, max)) = LEGACY_SOURCE_LIMITS.iter().find(|(path, _)| *path == file) {
-        return (max.saturating_sub(100), *max);
-    }
     let is_doc = Path::new(file).extension().is_some_and(|ext| ext == "md");
     if is_doc {
         (WARN_DOC_LINES, MAX_DOC_LINES)
@@ -356,11 +345,11 @@ mod tests {
     }
 
     #[test]
-    fn existing_size_debt_cannot_grow_and_generated_history_is_excluded() {
-        assert_eq!(limits_for("scripts/version-and-commit.rs"), (1232, 1332));
+    fn all_source_files_share_limits_and_generated_history_is_excluded() {
+        assert_eq!(limits_for("scripts/version-and-commit.rs"), (900, 1000));
         assert_eq!(
             limits_for("tests/unit/ci-cd/workflow_release.rs"),
-            (948, 1048)
+            (900, 1000)
         );
         assert!(should_exclude(Path::new("CHANGELOG.md")));
         assert!(should_exclude(Path::new("rust/CHANGELOG.md")));
