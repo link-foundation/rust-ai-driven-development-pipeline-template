@@ -143,7 +143,19 @@ fn pipeline_status_script_handles_all_conclusions() {
             .arg("scripts/check-pipeline-status.sh")
             .current_dir(env!("CARGO_MANIFEST_DIR"))
             .env("NEEDS_JSON", needs_json)
-            .env("IS_MAIN", is_main);
+            .env("IS_MAIN", is_main)
+            .env(
+                "GITHUB_REF",
+                if is_main == "true" {
+                    "refs/heads/main"
+                } else {
+                    "refs/pull/7/merge"
+                },
+            )
+            .env("WORKFLOW_FILE", ".github/workflows/release.yml")
+            .env_remove("RUN_SHA")
+            .env_remove("BRANCH_HEAD_SHA")
+            .env_remove("HEAD_REF");
         for (key, value) in extra_env {
             command.env(key, value);
         }

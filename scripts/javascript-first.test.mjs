@@ -56,3 +56,8 @@ test('every Rust operation in the mixed caller needs the gate and its tested rev
   const workflow = readFileSync(new URL('.github/workflows/javascript-first-gate.yml', root), 'utf8');
   assert.doesNotMatch(workflow, /cargo |rust-toolchain@/);
 });
+test('the mixed caller does not execute arbitrary dispatch inputs in the default branch cache scope', () => {
+  const text = readFileSync(new URL('.github/workflows/javascript-first-example.yml', root), 'utf8');
+  assert.doesNotMatch(text, /workflow_dispatch|candidate-sha/);
+  assert.match(text, /source-sha: \$\{\{ github.sha \}\}/);
+});

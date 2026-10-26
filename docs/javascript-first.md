@@ -83,9 +83,12 @@ generated drift and a mismatched revision, and check every downstream dependency
 A workflow-level skipped gate also prevents those jobs through their explicit
 `needs` and success condition. No toolchain is installed in the prerequisite.
 
-For a release that generates a new candidate commit, pass its full SHA using the
-example dispatch's `candidate-sha` input. Validate that candidate through this
-same gate before any compilation, package, container or publishing operation.
+For a release that generates a new candidate commit, pass its full SHA as the
+reusable gate's `source-sha` from the trusted candidate-generation job. Validate
+that candidate through this same gate before any compilation, package, container
+or publishing operation. The example uses its PR/push event revision. It does
+not accept arbitrary checkout revisions in a default-branch dispatch: untrusted
+code must execute in a context that cannot poison the default branch's caches.
 Actual publishing remains a separately authorized writer operation, serialized
 with other writers and bound to that tested candidate. The example only performs
 `cargo publish --dry-run`; it does not publish its demonstration package.

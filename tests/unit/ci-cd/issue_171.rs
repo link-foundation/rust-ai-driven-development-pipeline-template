@@ -27,6 +27,7 @@ fn run_gate(workflow: &Path, job: &str) -> std::process::Output {
             format!(r#"{{"{job}":{{"result":"cancelled"}}}}"#),
         )
         .env("IS_MAIN", "true")
+        .env("GITHUB_REF", "refs/heads/main")
         .env("RUN_SHA", "1111111111111111111111111111111111111111")
         .env("BRANCH_REF", "main")
         .env(
@@ -86,7 +87,7 @@ fn expressions_and_missing_concurrency_fail_closed() {
     let workflow = dir.join("workflow.yml");
     fs::write(
         &workflow,
-        "jobs:\n  expression:\n    concurrency:\n      group: tests\n      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}\n  none:\n    runs-on: ubuntu-latest\n",
+        "jobs:\n  expression:\n    concurrency:\n      group: tests\n      cancel-in-progress: ${{ github.event_name == 'pull_request' }}\n  none:\n    runs-on: ubuntu-latest\n",
     )
     .expect("write workflow fixture");
 

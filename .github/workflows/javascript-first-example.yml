@@ -6,12 +6,6 @@ on:
   push:
     branches: [main]
     paths: ['examples/javascript-first/**', 'scripts/run-javascript-first.sh', 'scripts/javascript-first.test.mjs', '.github/workflows/javascript-first-*.yml']
-  workflow_dispatch:
-    inputs:
-      candidate-sha:
-        description: Immutable generated release candidate revision (defaults to the event revision)
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -26,7 +20,7 @@ jobs:
     # A relative call binds the gate to the same candidate commit as this caller.
     uses: ./.github/workflows/javascript-first-gate.yml # zizmor: ignore[self-repository]
     with:
-      source-sha: ${{ inputs.candidate-sha || github.sha }}
+      source-sha: ${{ github.sha }}
       javascript-command: node --test examples/javascript-first/native.test.mjs scripts/javascript-first.test.mjs
       parity-command: node examples/javascript-first/check-parity.mjs
       translation-command: node examples/javascript-first/generate.mjs --check

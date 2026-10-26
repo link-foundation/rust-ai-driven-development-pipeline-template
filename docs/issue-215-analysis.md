@@ -34,6 +34,23 @@ prepared base. The Node gate's mutation cases then prove each prerequisite fails
 closed. `scripts/test-scripts.sh` includes both suites alongside all existing
 inline Rust tests and the older real-Git and mocked-publishing regressions.
 
+## First candidate CI findings
+
+The first pushed candidate `9c84388` exposed two inherited test assumptions in
+[CI run 40408441155](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/actions/runs/40408441155),
+saved as `ci-logs/ci-cd-40408441155.log`, lines 5007 and 5021 (also on Linux, macOS and
+coverage). Both tests inherited CI's PR `GITHUB_REF`, while their expected result
+described main or an unsupported expression. Re-running those tests locally with
+the CI ref reproduced both failures. Their fixtures now set the intended ref and
+workflow explicitly and use an actually unsupported expression for the unknown
+case; production cancellation rules and all assertions remain enforced.
+
+The CodeQL Actions analysis also found two cache-poisoning paths through the
+example's optional arbitrary-revision manual dispatch. A new regression first
+failed on that trigger. The example now runs on PR/push revisions; release callers
+still pass an immutable candidate through the reusable gate's required input.
+No security query or finding was disabled to make the checks pass.
+
 ## Trusted-publishing rollout scope
 
 The checked-in workflow and the historical `rust-template-release-after.yml` snapshot
