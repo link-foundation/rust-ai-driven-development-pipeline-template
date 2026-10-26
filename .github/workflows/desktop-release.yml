@@ -20,12 +20,17 @@ on: # zizmor: ignore[dangerous-triggers]
 permissions:
   contents: read
 
-concurrency:
-  group: desktop-release-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# Configure checkout's git init before the first step runs.
+env:
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
 
 jobs:
   resolve:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-resolve
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     name: Resolve release
     if: ${{ vars.DESKTOP_RELEASE_ENABLED == 'true' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-24.04
@@ -34,7 +39,7 @@ jobs:
       tag: ${{ steps.release.outputs.tag }}
       should_build: ${{ steps.release.outputs.should_build }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Resolve release tag
@@ -48,6 +53,9 @@ jobs:
         run: bash scripts/desktop-release-resolve.sh
 
   build:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-build-${{ matrix.label }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     name: Build ${{ matrix.label }}
     needs: resolve
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || needs.resolve.outputs.should_build == 'true') }}
@@ -59,7 +67,7 @@ jobs:
           - { label: linux-arm64, runner: ubuntu-24.04-arm }
           - { label: macos-x64, runner: macos-15-intel }
           - { label: macos-arm64, runner: macos-14 }
-          - { label: windows-x64, runner: windows-latest }
+          - { label: windows-x64, runner: windows-2025 }
           - { label: windows-arm64, runner: windows-11-arm }
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
@@ -69,11 +77,11 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
           ref: ${{ github.event_name != 'pull_request' && needs.resolve.outputs.tag || '' }}
-      - uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067 # master branch @ 2026-10-01
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -127,6 +135,10 @@ jobs:
           retention-days: 7
 
   finalize:
+    concurrency:
+      group: main-writer-${{ github.repository }}
+      cancel-in-progress: false
+      queue: max
     name: Publish checksums and provenance
     needs: [resolve, build]
     if: ${{ !cancelled() && github.event_name != 'pull_request' && needs.build.result == 'success' && needs.resolve.outputs.should_build == 'true' }}
@@ -202,7 +214,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -210,6 +222,6 @@ jobs:
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
           IS_MAIN: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-          RUN_SHA: ${{ github.sha }}
-          BRANCH_REF: ${{ github.ref_name }}
+          RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HEAD_REF: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/head', github.event.pull_request.number) || github.ref }}
         run: bash scripts/check-pipeline-status.sh

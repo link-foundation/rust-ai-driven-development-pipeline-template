@@ -28,6 +28,8 @@ fn workflow_names() -> Vec<String> {
                 .is_some_and(|extension| extension == "yml" || extension == "yaml")
         })
         .map(|name| name.to_string_lossy().into_owned())
+        // Callable workflows report their result through the caller observer.
+        .filter(|name| !workflow(name).contains("  workflow_call:"))
         .collect();
     names.sort();
     assert!(!names.is_empty(), "there should be at least one workflow");
@@ -139,8 +141,8 @@ fn the_gate_receives_what_supersede_detection_needs() {
             .unwrap();
 
         for required in [
-            "RUN_SHA: ${{ github.sha }}",
-            "BRANCH_REF: ${{ github.ref_name }}",
+            "RUN_SHA: ${{ github.event.pull_request.head.sha || github.sha }}",
+            "HEAD_REF: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/head'",
         ] {
             assert!(
                 gate.body.contains(required),

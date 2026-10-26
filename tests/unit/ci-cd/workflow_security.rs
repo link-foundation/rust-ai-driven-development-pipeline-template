@@ -169,8 +169,9 @@ fn release_workflow_separates_check_and_write_concurrency() {
 
     let write_concurrency = concat!(
         "    concurrency:\n",
-        "      group: ${{ github.workflow }}-main-write\n",
+        "      group: main-writer-${{ github.repository }}\n",
         "      cancel-in-progress: false\n",
+        "      queue: max\n",
     );
     for job_name in [
         "auto-release",
@@ -184,9 +185,10 @@ fn release_workflow_separates_check_and_write_concurrency() {
         );
     }
 
-    assert!(
-        !workflow.contains("\n      queue:"),
-        "GitHub Actions concurrency does not support a queue key"
+    assert_eq!(
+        workflow.matches("queue: max").count(),
+        6,
+        "every repository or registry writer must queue instead of replacing pending work"
     );
 }
 
@@ -239,7 +241,7 @@ fn security_workflow_audits_the_committed_cargo_lock() {
     assert!(header.contains("schedule:"));
     assert!(audit.contains("name: Cargo audit"));
     assert!(audit.contains("timeout-minutes: 10"));
-    assert!(audit.contains("uses: actions/checkout@v6"));
+    assert!(audit.contains("uses: actions/checkout@v7"));
     assert!(audit.contains("tool: cargo-audit@0.22.2"));
     assert!(
         audit.contains("run: cargo audit --file Cargo.lock --deny warnings"),

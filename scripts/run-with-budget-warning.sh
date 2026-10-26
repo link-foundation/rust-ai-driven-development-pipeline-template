@@ -46,6 +46,8 @@ if ! status_dir="$(mktemp -d "${state_parent%/}/budget-status.XXXXXX")"; then
   echo "Could not create budget control state under ${state_parent}." >&2; exit 2
 fi
 status_file="${status_dir}/status"; stdout_file="${status_dir}/stdout"; stderr_file="${status_dir}/stderr"
+# Invoked by the EXIT trap.
+# shellcheck disable=SC2329
 cleanup() { rm -rf -- "$status_dir"; }
 trap cleanup EXIT
 trace "control state: ${status_dir}"
@@ -105,9 +107,12 @@ signal_command() {
   fi
 }
 command_is_running() { [ -f "$status_file" ] && return 1; group_is_populated; }
+# SECONDS crosses wall-clock boundaries and can over-read by almost a second.
+# Strictly greater proves the full requested interval has actually elapsed.
+has_elapsed() { [ "$SECONDS" -gt "$1" ]; }
 wait_while_running() {
   local deadline=$((SECONDS + $1))
-  while command_is_running && [ "$SECONDS" -lt "$deadline" ]; do relay_output; sleep "$poll_seconds"; done
+  while command_is_running && ! has_elapsed "$deadline"; do relay_output; sleep "$poll_seconds"; done
 }
 report_survivors() {
   local survivors
@@ -128,6 +133,8 @@ terminate_over_budget() {
   echo "::error title=${label} exceeded its execution budget::${label} ran for ${measured}s against its ${budget_seconds}s budget (detected at ${poll_seconds}s poll granularity) and was terminated. Command: $*"
   exit 124
 }
+# Invoked by the signal traps.
+# shellcheck disable=SC2329
 forward() { signal_command TERM; wait "$command_pid" 2>/dev/null || true; relay_output; exit 143; }
 trap forward TERM INT
 
@@ -137,7 +144,7 @@ while command_is_running; do
     warned=true
     echo "::warning title=${label} is approaching its execution budget::${label} has run for ${SECONDS}s of its ${budget_seconds}s budget."
   fi
-  if [ "$SECONDS" -ge "$budget_seconds" ]; then terminate_over_budget "$@"; fi
+  if has_elapsed "$budget_seconds"; then terminate_over_budget "$@"; fi
   relay_output; sleep "$poll_seconds"
 done
 wait "$command_pid" 2>/dev/null; wait_status=$?; relay_output
