@@ -109,6 +109,7 @@ jobs:
         id: recheck
         run: node scripts/recheck-broken-links.mjs
         env:
+          LYCHEE_EXIT_CODE: ${{ steps.lychee.outputs.exit_code }}
           LYCHEE_OUTPUT: lychee/out.md
           RECOVERED_OUTPUT: lychee/recovered.txt
 
@@ -121,6 +122,7 @@ jobs:
         id: webarchive
         run: node scripts/check-web-archive.mjs
         env:
+          LYCHEE_EXIT_CODE: ${{ steps.lychee.outputs.exit_code }}
           LYCHEE_OUTPUT: lychee/out.md
           RECOVERED_URLS: lychee/recovered.txt
 

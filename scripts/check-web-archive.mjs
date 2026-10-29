@@ -14,6 +14,7 @@
  *
  * Environment variables:
  *   - LYCHEE_OUTPUT: Path to lychee markdown output file (default: lychee/out.md)
+ *   - LYCHEE_EXIT_CODE: Checker exit status; failed checks require error entries.
  *   - RECOVERED_URLS: Path to a file listing URLs the re-check
  *     (scripts/recheck-broken-links.mjs) found healthy after lychee got no
  *     answer (default: lychee/recovered.txt). Listed URLs are skipped; a
@@ -31,6 +32,7 @@
 import { readFileSync, appendFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 
 const WAYBACK_API = 'https://archive.org/wayback/available?url=';
 
@@ -155,45 +157,69 @@ export function splitRecoveredUrls(urls, recoveredText) {
  * @param {string} url - The URL to check
  * @returns {Promise<{available: boolean, archiveUrl: string|null, timestamp: string|null}>}
  */
-async function checkWaybackMachine(url) {
+export async function checkWaybackMachine(url, {
+  fetchImpl = globalThis.fetch, attempts = 3, delayMs = 2000,
+  timeoutMs = 10000, sleepImpl = sleep,
+} = {}) {
+  if (!Number.isInteger(attempts) || attempts < 1 || attempts > 10 ||
+      !Number.isFinite(delayMs) || delayMs < 0 ||
+      !Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    throw new Error('Invalid Wayback retry configuration');
+  }
   const apiUrl = `${WAYBACK_API}${encodeURIComponent(url)}`;
-
-  const controller = new AbortController();
-  const timeoutId = globalThis.setTimeout(() => controller.abort(), 10000);
-
-  try {
-    const response = await fetch(apiUrl, {
-      headers: {
-        'User-Agent': 'broken-link-checker/1.0 (GitHub Actions CI)',
-      },
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      console.warn(`  Wayback API returned ${response.status} for ${url}`);
-      return { available: false, archiveUrl: null, timestamp: null };
+  const absent = { available: false, archiveUrl: null, timestamp: null };
+  let failure = '';
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    if (attempt > 1) {
+      console.log(`  Retrying Wayback API (attempt ${attempt} of ${attempts}): ${failure}`);
+      await sleepImpl(delayMs * 2 ** (attempt - 2));
     }
-
-    const data = await response.json();
-
-    if (data.archived_snapshots?.closest?.available === true) {
-      const snapshot = data.archived_snapshots.closest;
-      const archiveUrl = snapshot.url.replace(/^http:\/\//, 'https://');
-      return {
-        available: true,
-        archiveUrl,
-        timestamp: snapshot.timestamp,
-      };
+    try {
+      const response = await fetchImpl(apiUrl, {
+        headers: { 'User-Agent': 'broken-link-checker/1.0 (GitHub Actions CI)' },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (!response.ok) {
+        failure = `HTTP ${response.status}`;
+        await response.body?.cancel();
+        if (response.status !== 429 && response.status < 500) {
+          return { ...absent, error: failure };
+        }
+        continue;
+      }
+      const data = await response.json();
+      const snapshots = data?.archived_snapshots;
+      if (!snapshots || typeof snapshots !== 'object' || Array.isArray(snapshots)) {
+        throw new Error('unreadable answer: missing archived_snapshots object');
+      }
+      if (Object.keys(snapshots).length === 0) return absent;
+      const snapshot = snapshots.closest;
+      if (snapshot?.available === false) return absent;
+      if (snapshot?.available !== true || typeof snapshot.url !== 'string' ||
+          !/^https?:\/\//.test(snapshot.url) || typeof snapshot.timestamp !== 'string') {
+        throw new Error('unreadable answer: malformed snapshot');
+      }
+      return { available: true, archiveUrl: snapshot.url.replace(/^http:\/\//, 'https://'),
+        timestamp: snapshot.timestamp };
+    } catch (error) {
+      const cause = error.cause?.code ?? error.cause?.message;
+      failure = cause ? `${error.message}: ${cause}` : error.message;
     }
+  }
+  return { ...absent, error: `${failure} (after ${attempts} attempts)` };
+}
 
-    return { available: false, archiveUrl: null, timestamp: null };
-  } catch (error) {
-    console.warn(
-      `  Failed to check Wayback Machine for ${url}: ${error.message}`
-    );
-    return { available: false, archiveUrl: null, timestamp: null };
-  } finally {
-    globalThis.clearTimeout(timeoutId);
+/** Validate before either archive or recovery code emits a successful verdict. */
+export function validateLycheeReport(content, exitCode = process.env.LYCHEE_EXIT_CODE) {
+  const section = extractErrorsSection(content);
+  const entries = [...section.matchAll(/^\s*(?:\*|-)\s+\[(?:4\d\d|5\d\d|ERROR|TIMEOUT|UNKNOWN)\]\s+<?[^\s>|)]+>?/gim)];
+  const bullets = [...section.matchAll(/^\s*(?:\*|-)\s+\[/gm)];
+  const reported = /\|[^|\n]*Errors\s*\|\s*(\d+)\s*\|/.exec(content);
+  const failed = exitCode !== undefined && exitCode !== '0';
+  if (!content.trim() || entries.length !== bullets.length ||
+      (reported && Number(reported[1]) !== entries.length) ||
+      (entries.length === 0 && (failed || !reported || Number(reported[1]) !== 0))) {
+    throw new Error('Missing, empty, malformed or incomplete lychee report; re-run the link checker');
   }
 }
 
@@ -304,19 +330,22 @@ function reportUnarchivedUrls(withoutArchive) {
 /**
  * Main function
  */
-async function main() {
+export async function main({ lookup = checkWaybackMachine, pause = sleep } = {}) {
   const lycheeOutput = process.env.LYCHEE_OUTPUT || 'lychee/out.md';
 
   console.log('=== Web Archive Fallback Check ===\n');
   console.log(`Reading lychee output from: ${lycheeOutput}\n`);
 
-  if (!existsSync(lycheeOutput)) {
-    console.log('No lychee output file found. Skipping web archive check.');
-    setOutput('all_archived', 'true');
-    process.exit(0);
+  // Fail closed even when reading or validating the report throws.
+  let content;
+  try {
+    content = readFileSync(lycheeOutput, 'utf-8');
+    validateLycheeReport(content);
+  } catch (error) {
+    setOutput('all_archived', 'false');
+    console.error(`::error title=Lychee report failed::${error.message}`);
+    return 1;
   }
-
-  const content = readFileSync(lycheeOutput, 'utf-8');
   const { urls: extractedUrls, others: unarchivableLinks } =
     extractBrokenLinks(content);
 
@@ -339,7 +368,7 @@ async function main() {
     console.log('No broken URLs found in lychee output.');
     const clean = unarchivableLinks.length === 0;
     setOutput('all_archived', clean ? 'true' : 'false');
-    process.exit(clean ? 0 : 1);
+    return clean ? 0 : 1;
   }
 
   console.log(
@@ -348,12 +377,16 @@ async function main() {
 
   const withArchive = [];
   const withoutArchive = [];
+  const lookupFailures = [];
 
   for (const url of brokenUrls) {
     console.log(`Checking: ${url}`);
-    const result = await checkWaybackMachine(url);
+    const result = await lookup(url);
 
-    if (result.available) {
+    if (result.error) {
+      lookupFailures.push({ url, error: result.error });
+      console.error(`::error title=Broken link - Web Archive lookup failed::${url}: ${result.error}. Re-run the job. If lookup keeps failing, fix or remove the link.`);
+    } else if (result.available) {
       const date = formatTimestamp(result.timestamp);
       console.log(`  ✓ Archived on ${date}: ${result.archiveUrl}`);
       withArchive.push({ url, archiveUrl: result.archiveUrl, date });
@@ -363,7 +396,7 @@ async function main() {
     }
 
     // Small delay to avoid rate-limiting the Wayback API
-    await new Promise((resolve) => globalThis.setTimeout(resolve, 500));
+    await pause(500);
   }
 
   console.log('\n=== Web Archive Check Summary ===\n');
@@ -372,22 +405,25 @@ async function main() {
   reportUnarchivedUrls(withoutArchive);
 
   const allArchived =
-    withoutArchive.length === 0 && unarchivableLinks.length === 0;
+    withoutArchive.length === 0 && unarchivableLinks.length === 0 && lookupFailures.length === 0;
   setOutput('all_archived', allArchived ? 'true' : 'false');
 
   if (!allArchived) {
-    console.log(
-      '\nAction required: Fix or remove the broken links listed above.'
-    );
+    if (lookupFailures.length) {
+      console.log('\nAction required: Re-run the job after the Web Archive lookup service recovers.');
+    }
+    if (withoutArchive.length || unarchivableLinks.length) {
+      console.log('\nAction required: Fix or remove the broken links listed above.');
+    }
     console.log(
       'For links with Web Archive versions, you can replace them with the suggested archive.org URLs.'
     );
-    process.exit(1);
+    return 1;
   } else {
     console.log(
       '\nAll broken links have Web Archive versions. Consider replacing them with the suggested archive.org URLs.'
     );
-    process.exit(0);
+    return 0;
   }
 }
 
@@ -396,8 +432,9 @@ const isDirectExecution =
   fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 
 if (isDirectExecution) {
-  main().catch((error) => {
+  main().then((code) => { process.exitCode = code; }).catch((error) => {
     console.error('Unexpected error:', error);
-    process.exit(1);
+    setOutput('all_archived', 'false');
+    process.exitCode = 1;
   });
 }
