@@ -1,61 +1,17 @@
 use super::*;
 
-#[cfg(not(test))]
 pub(super) fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
-    let url = format!("https://crates.io/api/v1/crates/{}/{}", crate_name, version);
-    match ureq::get(&url)
-        .set("User-Agent", "rust-script-version-and-commit")
-        .call()
-    {
-        Ok(response) => response.status() == 200,
-        Err(_) => false,
-    }
+    registry::or_exit(
+        "crates.io version lookup",
+        registry::version_exists(crate_name, version),
+    )
 }
 
-#[cfg(not(test))]
 pub(super) fn get_max_published_version(crate_name: &str) -> Option<(u32, u32, u32)> {
-    let url = format!("https://crates.io/api/v1/crates/{}", crate_name);
-    match ureq::get(&url)
-        .set("User-Agent", "rust-script-version-and-commit")
-        .call()
-    {
-        Ok(response) => {
-            if response.status() == 200 {
-                if let Ok(body) = response.into_string() {
-                    if let Ok(data) = serde_json::from_str::<CratesIoCrate>(&body) {
-                        if let Some(versions) = data.versions {
-                            let mut max: Option<(u32, u32, u32)> = None;
-                            for v in &versions {
-                                if v.yanked {
-                                    continue;
-                                }
-                                let base = match v.num.split('-').next() {
-                                    Some(b) => b,
-                                    None => continue,
-                                };
-                                let parts: Vec<&str> = base.split('.').collect();
-                                if parts.len() == 3 {
-                                    if let (Ok(a), Ok(b), Ok(c)) = (
-                                        parts[0].parse::<u32>(),
-                                        parts[1].parse::<u32>(),
-                                        parts[2].parse::<u32>(),
-                                    ) {
-                                        let tuple = (a, b, c);
-                                        if max.map_or(true, |m| tuple > m) {
-                                            max = Some(tuple);
-                                        }
-                                    }
-                                }
-                            }
-                            return max;
-                        }
-                    }
-                }
-            }
-            None
-        }
-        Err(_) => None,
-    }
+    registry::or_exit(
+        "crates.io maximum-version lookup",
+        registry::max_published(crate_name),
+    )
 }
 
 #[cfg(not(test))]

@@ -26,8 +26,6 @@
 #[cfg(not(test))]
 use chrono::Utc;
 use regex::Regex;
-#[cfg(not(test))]
-use serde::Deserialize;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -37,6 +35,9 @@ use std::process::Command;
 
 #[path = "release-index.rs"]
 mod release_index;
+
+#[path = "release-content.rs"]
+mod release_content;
 
 #[path = "release-naming.rs"]
 mod release_naming;
@@ -251,19 +252,6 @@ fn update_cargo_lock(
     Ok(true)
 }
 
-#[cfg(not(test))]
-#[derive(Deserialize)]
-struct CratesIoCrate {
-    versions: Option<Vec<CratesIoVersionEntry>>,
-}
-
-#[cfg(not(test))]
-#[derive(Deserialize)]
-struct CratesIoVersionEntry {
-    num: String,
-    yanked: bool,
-}
-
 fn get_crate_name(cargo_toml_path: &str) -> Result<String, String> {
     let content = fs::read_to_string(cargo_toml_path)
         .map_err(|e| format!("Failed to read {}: {}", cargo_toml_path, e))?;
@@ -282,12 +270,14 @@ fn check_tag_exists(tag_prefix: &str, version: &str) -> bool {
 }
 
 #[cfg(not(test))]
+#[path = "registry.rs"]
+mod registry;
+
+#[cfg(not(test))]
 #[path = "version-and-commit/crates-io.rs"]
 mod crates_io;
 #[cfg(not(test))]
-use crates_io::{
-    check_version_on_crates_io, ensure_version_exceeds_published, get_max_published_version,
-};
+use crates_io::{ensure_version_exceeds_published, get_max_published_version};
 
 fn strip_frontmatter(content: &str) -> String {
     let re = Regex::new(r"(?s)^---\s*\n.*?\n---\s*\n(.*)$").unwrap();
@@ -348,21 +338,8 @@ fn collect_changelog_with_date(
 
     let mut content = changelog_files::read_file(Path::new(changelog_file))
         .unwrap_or_else(|error| panic!("{error}"));
-    let lines: Vec<&str> = content.lines().collect();
-    let mut insert_index = None;
-
-    for (i, line) in lines.iter().enumerate() {
-        if line.starts_with("## [") {
-            insert_index = Some(i);
-            break;
-        }
-    }
-
-    if let Some(idx) = insert_index {
-        let mut new_lines: Vec<String> = lines[..idx].iter().map(|s| s.to_string()).collect();
-        new_lines.push(new_entry.clone());
-        new_lines.extend(lines[idx..].iter().map(|s| s.to_string()));
-        content = new_lines.join("\n");
+    if let Some(heading) = release_content::release_headings(&content).first() {
+        content.insert_str(heading.start, &new_entry);
     } else {
         content.push_str(&new_entry);
     }
@@ -407,7 +384,10 @@ fn verify_release_write(
             regex::escape(new_version)
         ))
         .map_err(|e| format!("Failed to build changelog verification regex: {}", e))?;
-        if !entry.is_match(&changelog) {
+        if !release_content::release_headings(&changelog)
+            .iter()
+            .any(|heading| entry.is_match(&changelog[heading.start..heading.body_start]))
+        {
             return Err(format!(
                 "CHANGELOG verification failed: {} does not contain a well-formed \
                  '## [{}] - YYYY-MM-DD' entry after collecting the fragments",

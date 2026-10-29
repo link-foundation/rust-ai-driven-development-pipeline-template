@@ -414,3 +414,43 @@ fn fragment_counting_ignores_the_readme() {
     fs::write(dir.join("20260909_b.md"), "b\n").unwrap();
     assert_eq!(count_changelog_fragments(dir.to_str().unwrap()), 2);
 }
+
+#[test]
+fn collection_and_verification_ignore_fenced_release_headings() {
+    let repo = temp_dir("fenced-release");
+    let dir = repo.join("changelog.d");
+    fs::create_dir(&dir).unwrap();
+    let prefix = "# Changelog\r\n\r\n```md\r\n## [0.2.0] - 2026-09-09\r\n```\r\n\r\n";
+    let previous = "## [0.1.0]\r\n  Previous notes.\r\n";
+    let changelog = repo.join("CHANGELOG.md");
+    fs::write(&changelog, format!("{prefix}{previous}")).unwrap();
+    assert!(verify_release_write(
+        changelog.to_str().unwrap(),
+        dir.to_str().unwrap(),
+        &repo.join("Cargo.lock"),
+        "crate",
+        "0.2.0",
+        true
+    )
+    .is_err());
+    fs::write(dir.join("fix.md"), "### Fixed\n- New notes").unwrap();
+    collect_changelog_with_date(
+        dir.to_str().unwrap(),
+        changelog.to_str().unwrap(),
+        "0.2.0",
+        "2026-09-09",
+    );
+    let content = fs::read_to_string(&changelog).unwrap();
+    assert!(content.starts_with(prefix));
+    assert!(content.ends_with(previous));
+    verify_release_write(
+        changelog.to_str().unwrap(),
+        dir.to_str().unwrap(),
+        &repo.join("Cargo.lock"),
+        "crate",
+        "0.2.0",
+        true,
+    )
+    .unwrap();
+    fs::remove_dir_all(repo).unwrap();
+}
