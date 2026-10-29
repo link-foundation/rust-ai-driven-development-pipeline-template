@@ -10,11 +10,11 @@ fn workflow() -> String {
 }
 
 #[test]
-fn download_artifact_v8_steps_suppress_only_the_reviewed_buffer_warning() {
+fn artifact_downloads_bypass_deprecated_extraction_without_hiding_warnings() {
     let workflow = workflow();
     let download_steps = workflow
         .split("\n      - ")
-        .filter(|step| step.contains("uses: actions/download-artifact@v8"))
+        .filter(|step| step.contains("uses: ./.github/actions/download-artifact"))
         .collect::<Vec<_>>();
 
     assert_eq!(
@@ -22,11 +22,18 @@ fn download_artifact_v8_steps_suppress_only_the_reviewed_buffer_warning() {
         2,
         "expected both desktop artifact download steps"
     );
-    for step in download_steps {
-        assert!(
-            step.contains("env:\n          NODE_OPTIONS: --disable-warning=DEP0005"),
-            "every download-artifact v8 step must suppress only DEP0005"
-        );
+    let adapter = fs::read_to_string(format!(
+        "{}/.github/actions/download-artifact/action.yml",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .unwrap();
+    assert!(adapter.contains("actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333"));
+    assert!(adapter.contains("skip-decompress: true"));
+    assert!(adapter.contains("digest-mismatch: error"));
+    assert!(adapter.contains("NODE_OPTIONS: --throw-deprecation"));
+    assert!(adapter.contains("scripts/extract-artifacts.py"));
+    for step in download_steps.into_iter().chain([adapter.as_str()]) {
+        assert!(!step.contains("--disable-warning"));
         assert!(
             !step.contains("--no-warnings"),
             "download steps must not hide unrelated Node.js warnings"
@@ -52,6 +59,7 @@ fn desktop_release_is_opt_in_and_runs_a_six_target_dry_run() {
     }
     assert!(workflow.contains("scripts/package-desktop.sh"));
     assert!(workflow.contains("github.event_name != 'pull_request'"));
+    assert!(workflow.contains("label: macos-arm64, runner: macos-15 }"));
 }
 
 #[test]
