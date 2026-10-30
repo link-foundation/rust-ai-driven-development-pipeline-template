@@ -22,6 +22,10 @@ Raw GitHub and template comparison data is stored in this directory:
 
 The downloaded CI logs have more than 1500 lines, so the analysis references narrow uncompressed line ranges instead of embedding full logs.
 
+The historical after-snapshot received the issue #205 OIDC-first/token-fallback
+authentication update on 2026-10-26; its other historical settings remain as
+recorded below. The before-snapshot is unchanged.
+
 ## Timeline
 
 - 2026-04-15 16:12:07 UTC: Rust template `main` release run `24465255225` started at commit `353d893ba0a26ecec6fb1ba1716b6a9ad27e1fef`.

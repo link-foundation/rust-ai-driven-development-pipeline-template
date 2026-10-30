@@ -10,7 +10,7 @@
 //! Only two steps need the credentials, and both declare them at step level.
 //! These tests pin the invariant in both directions: no workflow-level `env:`
 //! value anywhere under `.github/workflows` may reference `secrets.`, and the
-//! two publish steps must still receive the tokens.
+//! two publish steps must still receive OIDC credentials or token fallback.
 
 use std::fs;
 
@@ -115,15 +115,10 @@ fn both_publish_steps_declare_the_crates_io_credentials() {
             .expect("a step body should be present");
         assert!(
             step.contains(
-                "CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}"
+                "CARGO_REGISTRY_TOKEN: ${{ steps.crates_auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN }}"
             ),
             "the publish step must declare CARGO_REGISTRY_TOKEN itself, since it is no \
              longer inherited from the workflow-level env"
-        );
-        assert!(
-            step.contains("CARGO_TOKEN: ${{ secrets.CARGO_TOKEN }}"),
-            "the publish step must declare CARGO_TOKEN itself, since it is no longer \
-             inherited from the workflow-level env"
         );
     }
 }

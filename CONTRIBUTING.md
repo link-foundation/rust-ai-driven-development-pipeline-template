@@ -343,3 +343,7 @@ Thank you for contributing!
 ## JavaScript-first mixed-language projects
 
 Follow [the JavaScript-first gate and single push workflow](docs/javascript-first.md) before enabling production Rust jobs for a mixed-language project.
+The gate automatically detects production JavaScript counterparts. Tooling and
+examples alone do not require a JavaScript port, and Rust-only projects pass
+without one. Detected counterparts require real native, strict parity and
+regeneration commands before any Rust work.

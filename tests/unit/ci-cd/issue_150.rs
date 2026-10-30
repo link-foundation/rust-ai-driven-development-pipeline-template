@@ -77,7 +77,7 @@ fn the_release_path_is_gated_on_the_script_tests() {
     let release = read(".github/workflows/release.yml");
 
     assert!(
-        release.contains("needs: [lint, test, script-tests]"),
+        release.contains("needs: [javascript-first, lint, test, script-tests]"),
         "build must depend on script-tests, so a broken release script cannot \
          reach auto-release"
     );
@@ -118,8 +118,8 @@ fn the_runner_covers_every_script_that_has_tests() {
     let scripts = scripts_with_tests();
     assert_eq!(
         scripts.len(),
-        17,
-        "expected seventeen scripts with inline test suites, found: {scripts:?}"
+        19,
+        "expected nineteen scripts with inline test suites, found: {scripts:?}"
     );
 }
 

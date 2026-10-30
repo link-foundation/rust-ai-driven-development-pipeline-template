@@ -92,6 +92,11 @@ check_crates_io() {
   local token="${CARGO_REGISTRY_TOKEN:-${CARGO_TOKEN:-}}"
   local crate_name result probe_status
   printf 'crates.io:\n'
+  if [ "${CRATES_PREFLIGHT_PHASE:-publish}" = availability ] &&
+     [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+    ok 'OIDC is available; the publishing job will exchange it and prove the selected credential before building'
+    return 0
+  fi
   if [ -z "$token" ]; then
     bad 'crates.io has no publish credential: neither CARGO_REGISTRY_TOKEN nor CARGO_TOKEN is set -- cargo publish would fail with 401'
     return 0

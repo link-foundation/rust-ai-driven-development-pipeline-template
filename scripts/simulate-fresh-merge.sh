@@ -10,12 +10,13 @@
 #
 # Environment:
 #   GITHUB_BASE_REF - base branch name (set automatically for pull_request events)
-#   FRESH_MERGE_CHECKS - optional space-separated override of the commands to run
+#   FRESH_MERGE_CHECKS - optional newline-separated override of the commands to run
 #   FRESH_MERGE_FETCH_ATTEMPTS - retries for the base fetch before giving up (default 5)
 #   FRESH_MERGE_RETRY_DELAY_SECONDS - base of the linear backoff between fetch attempts (default 5)
 set -euo pipefail
 
 BASE_REF="${GITHUB_BASE_REF:-main}"
+PREREQUISITE_RUNNER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/run-javascript-first-auto.mjs"
 
 if [ -z "${GITHUB_BASE_REF:-}" ]; then
   echo "GITHUB_BASE_REF is not set; assuming base branch '${BASE_REF}'"
@@ -62,7 +63,7 @@ fetch_with_retry() {
 echo "Fetching origin/${BASE_REF}..."
 fetch_with_retry
 
-BASE_SHA="$(git rev-parse "origin/${BASE_REF}")"
+BASE_SHA="$(git rev-parse FETCH_HEAD)"
 HEAD_SHA="$(git rev-parse HEAD)"
 echo "Base: ${BASE_REF} (${BASE_SHA})"
 echo "Head: ${HEAD_SHA}"
@@ -74,7 +75,7 @@ fi
 
 # Merge into a detached checkout of the base tip so the working branch is untouched.
 git config user.name "${GIT_AUTHOR_NAME:-github-actions[bot]}"
-git config user.email "${GIT_AUTHOR_EMAIL:-github-actions[bot]@users.noreply.github.com}"
+git config user.email "${GIT_AUTHOR_EMAIL:-41898282+github-actions[bot]@users.noreply.github.com}"
 git checkout --detach "${BASE_SHA}"
 
 if ! git merge --no-edit "${HEAD_SHA}"; then
@@ -86,31 +87,23 @@ fi
 
 echo "Merge succeeded. Running checks on the merged tree..."
 
-status=0
-if [ -n "${FRESH_MERGE_CHECKS:-}" ]; then
-  # shellcheck disable=SC2086
-  for check in ${FRESH_MERGE_CHECKS}; do
-    echo "::group::${check}"
-    eval "${check}" || status=1
-    echo "::endgroup::"
-  done
-else
-  echo "::group::cargo fmt --all -- --check"
-  cargo fmt --all -- --check || status=1
-  echo "::endgroup::"
-
-  echo "::group::Cargo manifest warnings"
-  bash scripts/check-cargo-warnings.sh || status=1
-  echo "::endgroup::"
-
-  echo "::group::cargo clippy --all-targets --all-features"
-  cargo clippy --all-targets --all-features || status=1
-  echo "::endgroup::"
-
-  echo "::group::cargo test --all-features"
-  cargo test --all-features || status=1
-  echo "::endgroup::"
+# The simulated merge is a new revision and may introduce a native counterpart.
+if ! EXPECTED_SHA="$(git rev-parse HEAD)" node "$PREREQUISITE_RUNNER"; then
+  git checkout --force - >/dev/null 2>&1 || true
+  exit 1
 fi
+
+DEFAULT_CHECKS='cargo fmt --all -- --check
+bash scripts/check-cargo-warnings.sh
+cargo clippy --all-targets --all-features
+cargo test --all-features'
+status=0
+while IFS= read -r check; do
+  [ -n "$check" ] || continue
+  echo "::group::${check}"
+  bash -e -o pipefail -c "$check" || status=1
+  echo "::endgroup::"
+done <<<"${FRESH_MERGE_CHECKS:-$DEFAULT_CHECKS}"
 
 if [ "${status}" -ne 0 ]; then
   echo "::error::Checks failed on the simulated merge with origin/${BASE_REF} even though they pass on the pull request head. This is a semantic merge conflict."

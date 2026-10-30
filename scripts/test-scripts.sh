@@ -45,7 +45,19 @@ fi
 if ! python3 experiments/issue-192-release-io-regressions.py -v; then
   status=1
 fi
-if ! node --test scripts/*.test.mjs; then
+if ! python3 experiments/issue-215-regressions.py -v; then
+  status=1
+fi
+if ! python3 experiments/issue-218-registry-regressions.py -v; then
+  status=1
+fi
+if ! python3 experiments/issue-224-regressions.py -v; then
+  status=1
+fi
+if ! python3 experiments/issue-223-artifact-tests.py -v; then
+  status=1
+fi
+if ! node --test experiments/issue-224-native.mjs experiments/issue-196-*.mjs scripts/*.test.mjs; then
   status=1
 fi
 exit "$status"

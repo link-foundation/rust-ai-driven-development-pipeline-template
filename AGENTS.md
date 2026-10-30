@@ -2,7 +2,10 @@
 
 Read CONTRIBUTING.md and docs/javascript-first.md before changing behavior or CI.
 
-Draft and validate native JavaScript behavior first. Record every incomplete port,
+Auto-detect a native JavaScript counterpart in the selected Rust project; tooling
+scripts and examples alone do not require a port. Rust-only projects remain valid.
+When a counterpart exists, draft and validate native JavaScript behavior first.
+Record every incomplete port,
 unsupported translation and native adapter; a strict readiness gate must reject
 missing or carried behavior before Rust CI starts. Preserve acceptance assertions.
 

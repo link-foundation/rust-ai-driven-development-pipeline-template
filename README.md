@@ -222,6 +222,39 @@ Release scripts auto-detect the Rust layout with no extra configuration. A root 
 
 GitHub release notes include a crates.io badge that links to the exact published version page, for example `https://crates.io/crates/<crate>/<version>`.
 
+### Publishing credentials and generated release PRs
+
+Crates.io publishing tries trusted publishing (OIDC) first in both automatic and
+manual release jobs. Configure the crate's trusted publisher with the repository,
+top-level `release.yml` workflow and any environment used by your publishing job.
+The jobs request `id-token: write` and exchange identity with the pinned
+`rust-lang/crates-io-auth-action`. If that exchange is unavailable, publishing
+falls back to `CARGO_REGISTRY_TOKEN`, then `CARGO_TOKEN`. Keep those optional
+secrets: they remain supported fallback credentials. The publisher proves the
+selected credential before building; the earlier preflight checks OIDC
+availability or the configured token, without publishing.
+
+For a new crate, bootstrap its first publication and trust registration with
+`package-registry-manager setup --registry crates-io --execute` after reviewing
+the selected repository/package and authenticating with a short-lived bootstrap
+token. Existing crates can register the trusted publisher in crates.io settings.
+The migration operation is `package-registry-manager setup --repository . --registry crates-io --migrate --execute`
+after the workflow is merged. Use a
+version that supports **OIDC first with token fallback** (tracked in
+[package-registry-manager#62](https://github.com/link-foundation/package-registry-manager/issues/62)),
+review its plan and preserve token secrets; older token-retirement migrations do
+not implement this policy. Verify a real OIDC release before treating trust setup
+as complete. This template's default example package deliberately skips publishing.
+
+For manual `release_mode: changelog-pr`, configure `RELEASE_PR_TOKEN` as a GitHub
+App token or fine-grained PAT with repository contents and pull-request write
+permissions. The job fails before opening a PR when this secret is absent. The
+PR uses that dedicated identity so its normal pull-request checks can run; the
+built-in Actions token is not used to create the PR.
+
+For mixed-language adoption, the [JavaScript-first guide](docs/javascript-first.md)
+includes the executable example and exact-revision prerequisite contract.
+
 ### Template-Safe Defaults
 
 The default package name `example-sum-package-name` triggers skip logic in CI/CD scripts:

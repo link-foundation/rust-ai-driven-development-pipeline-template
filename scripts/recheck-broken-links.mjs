@@ -38,6 +38,7 @@
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { validateLycheeReport } from './check-web-archive.mjs';
 
 // Environment-derived settings are read inside main(), not here: a test run
 // with a restricted environment must be able to import this module without
@@ -267,6 +268,7 @@ async function main() {
   const workflowText = readFileSync('.github/workflows/links.yml', 'utf8');
   const options = extractLycheeRequestOptions(workflowText);
   const content = readFileSync(lycheeOutput, 'utf8');
+  validateLycheeReport(content);
   const failures = parseLycheeFailures(content);
 
   const finalFailures = failures.filter(

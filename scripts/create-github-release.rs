@@ -14,8 +14,6 @@
 //! ```
 
 #[cfg(not(test))]
-use regex::Regex;
-#[cfg(not(test))]
 use serde::Serialize;
 #[cfg(not(test))]
 use std::env;
@@ -23,8 +21,6 @@ use std::env;
 use std::fs;
 #[cfg(not(test))]
 use std::io::Write;
-#[cfg(not(test))]
-use std::path::Path;
 #[cfg(not(test))]
 use std::process::{exit, Command, Stdio};
 
@@ -104,44 +100,14 @@ fn docker_hub_badge(url: &str, version: &str) -> String {
     )
 }
 
+#[path = "release-content.rs"]
+mod release_content;
+
 #[cfg(not(test))]
-fn get_changelog_for_version(changelog_path: &str, version: &str) -> String {
-    if !Path::new(changelog_path).exists() {
-        return format!("Release v{version}");
-    }
-
-    let content = match fs::read_to_string(changelog_path) {
-        Ok(content) => content,
-        Err(_) => return format!("Release v{version}"),
-    };
-
-    let escaped_version = regex::escape(version);
-    let header_pattern = format!(r"(?m)^## \[{escaped_version}\]");
-    let header_re = Regex::new(&header_pattern).unwrap();
-
-    if let Some(version_header) = header_re.find(&content) {
-        let after_header = &content[version_header.end()..];
-        let body_start = after_header
-            .find('\n')
-            .map_or(after_header.len(), |i| i + 1);
-        let body = &after_header[body_start..];
-
-        let next_section_re = Regex::new(r"(?m)^## \[").unwrap();
-        let section_body = if let Some(next) = next_section_re.find(body) {
-            &body[..next.start()]
-        } else {
-            body
-        };
-
-        let trimmed = section_body.trim();
-        if trimmed.is_empty() {
-            format!("Release v{version}")
-        } else {
-            trimmed.to_string()
-        }
-    } else {
-        format!("Release v{version}")
-    }
+fn get_changelog_for_version(changelog_path: &str, version: &str) -> Result<String, String> {
+    let content = fs::read_to_string(changelog_path)
+        .map_err(|error| format!("Cannot read required changelog {changelog_path}: {error}"))?;
+    release_content::release_notes(&content, version)
 }
 
 #[cfg_attr(not(test), derive(Serialize))]
@@ -315,7 +281,11 @@ fn main() {
     }
 
     let changelog_path = get_changelog_path(&rust_root);
-    let mut release_notes = get_changelog_for_version(&changelog_path, &normalized_version);
+    let mut release_notes = get_changelog_for_version(&changelog_path, &normalized_version)
+        .unwrap_or_else(|error| {
+            eprintln!("::error::{error}");
+            exit(1);
+        });
     let mut badges = Vec::new();
     if !package_info.name.trim().is_empty() {
         let crate_name = &package_info.name;

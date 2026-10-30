@@ -26,8 +26,6 @@
 #[cfg(not(test))]
 use chrono::Utc;
 use regex::Regex;
-#[cfg(not(test))]
-use serde::Deserialize;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -37,6 +35,9 @@ use std::process::Command;
 
 #[path = "release-index.rs"]
 mod release_index;
+
+#[path = "release-content.rs"]
+mod release_content;
 
 #[path = "release-naming.rs"]
 mod release_naming;
@@ -251,19 +252,6 @@ fn update_cargo_lock(
     Ok(true)
 }
 
-#[cfg(not(test))]
-#[derive(Deserialize)]
-struct CratesIoCrate {
-    versions: Option<Vec<CratesIoVersionEntry>>,
-}
-
-#[cfg(not(test))]
-#[derive(Deserialize)]
-struct CratesIoVersionEntry {
-    num: String,
-    yanked: bool,
-}
-
 fn get_crate_name(cargo_toml_path: &str) -> Result<String, String> {
     let content = fs::read_to_string(cargo_toml_path)
         .map_err(|e| format!("Failed to read {}: {}", cargo_toml_path, e))?;
@@ -282,120 +270,14 @@ fn check_tag_exists(tag_prefix: &str, version: &str) -> bool {
 }
 
 #[cfg(not(test))]
-fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
-    let url = format!("https://crates.io/api/v1/crates/{}/{}", crate_name, version);
-    match ureq::get(&url)
-        .set("User-Agent", "rust-script-version-and-commit")
-        .call()
-    {
-        Ok(response) => response.status() == 200,
-        Err(_) => false,
-    }
-}
+#[path = "registry.rs"]
+mod registry;
 
 #[cfg(not(test))]
-fn get_max_published_version(crate_name: &str) -> Option<(u32, u32, u32)> {
-    let url = format!("https://crates.io/api/v1/crates/{}", crate_name);
-    match ureq::get(&url)
-        .set("User-Agent", "rust-script-version-and-commit")
-        .call()
-    {
-        Ok(response) => {
-            if response.status() == 200 {
-                if let Ok(body) = response.into_string() {
-                    if let Ok(data) = serde_json::from_str::<CratesIoCrate>(&body) {
-                        if let Some(versions) = data.versions {
-                            let mut max: Option<(u32, u32, u32)> = None;
-                            for v in &versions {
-                                if v.yanked {
-                                    continue;
-                                }
-                                let base = match v.num.split('-').next() {
-                                    Some(b) => b,
-                                    None => continue,
-                                };
-                                let parts: Vec<&str> = base.split('.').collect();
-                                if parts.len() == 3 {
-                                    if let (Ok(a), Ok(b), Ok(c)) = (
-                                        parts[0].parse::<u32>(),
-                                        parts[1].parse::<u32>(),
-                                        parts[2].parse::<u32>(),
-                                    ) {
-                                        let tuple = (a, b, c);
-                                        if max.map_or(true, |m| tuple > m) {
-                                            max = Some(tuple);
-                                        }
-                                    }
-                                }
-                            }
-                            return max;
-                        }
-                    }
-                }
-            }
-            None
-        }
-        Err(_) => None,
-    }
-}
-
+#[path = "version-and-commit/crates-io.rs"]
+mod crates_io;
 #[cfg(not(test))]
-fn ensure_version_exceeds_published(
-    version_str: &str,
-    crate_name: &str,
-    tag_prefix: &str,
-    max_published: Option<(u32, u32, u32)>,
-) -> String {
-    let parts: Vec<&str> = version_str
-        .split('-')
-        .next()
-        .unwrap_or(version_str)
-        .split('.')
-        .collect();
-    if parts.len() != 3 {
-        return version_str.to_string();
-    }
-
-    let mut major: u32 = parts[0].parse().unwrap_or(0);
-    let mut minor: u32 = parts[1].parse().unwrap_or(0);
-    let mut patch: u32 = parts[2].parse().unwrap_or(0);
-
-    if let Some((pub_major, pub_minor, pub_patch)) = max_published {
-        if (major, minor, patch) <= (pub_major, pub_minor, pub_patch) {
-            println!(
-                "Version {}.{}.{} is not greater than max published {}.{}.{}, adjusting to {}.{}.{}",
-                major, minor, patch,
-                pub_major, pub_minor, pub_patch,
-                pub_major, pub_minor, pub_patch + 1
-            );
-            major = pub_major;
-            minor = pub_minor;
-            patch = pub_patch + 1;
-        }
-    }
-
-    let mut candidate = format!("{}.{}.{}", major, minor, patch);
-    let mut safety_counter = 0;
-    while (check_tag_exists(tag_prefix, &candidate)
-        || check_version_on_crates_io(crate_name, &candidate))
-        && safety_counter < 100
-    {
-        println!(
-            "Version {} already has a git tag or is published on crates.io, bumping patch",
-            candidate
-        );
-        patch += 1;
-        candidate = format!("{}.{}.{}", major, minor, patch);
-        safety_counter += 1;
-    }
-
-    if safety_counter >= 100 {
-        eprintln!("Error: Could not find an unpublished version after 100 attempts");
-        exit(1);
-    }
-
-    candidate
-}
+use crates_io::{ensure_version_exceeds_published, get_max_published_version};
 
 fn strip_frontmatter(content: &str) -> String {
     let re = Regex::new(r"(?s)^---\s*\n.*?\n---\s*\n(.*)$").unwrap();
@@ -456,21 +338,8 @@ fn collect_changelog_with_date(
 
     let mut content = changelog_files::read_file(Path::new(changelog_file))
         .unwrap_or_else(|error| panic!("{error}"));
-    let lines: Vec<&str> = content.lines().collect();
-    let mut insert_index = None;
-
-    for (i, line) in lines.iter().enumerate() {
-        if line.starts_with("## [") {
-            insert_index = Some(i);
-            break;
-        }
-    }
-
-    if let Some(idx) = insert_index {
-        let mut new_lines: Vec<String> = lines[..idx].iter().map(|s| s.to_string()).collect();
-        new_lines.push(new_entry.clone());
-        new_lines.extend(lines[idx..].iter().map(|s| s.to_string()));
-        content = new_lines.join("\n");
+    if let Some(heading) = release_content::release_headings(&content).first() {
+        content.insert_str(heading.start, &new_entry);
     } else {
         content.push_str(&new_entry);
     }
@@ -515,7 +384,10 @@ fn verify_release_write(
             regex::escape(new_version)
         ))
         .map_err(|e| format!("Failed to build changelog verification regex: {}", e))?;
-        if !entry.is_match(&changelog) {
+        if !release_content::release_headings(&changelog)
+            .iter()
+            .any(|heading| entry.is_match(&changelog[heading.start..heading.body_start]))
+        {
             return Err(format!(
                 "CHANGELOG verification failed: {} does not contain a well-formed \
                  '## [{}] - YYYY-MM-DD' entry after collecting the fragments",
@@ -577,428 +449,8 @@ fn verify_release_write(
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{
-        classify_push_failure, collect_changelog_with_date, count_changelog_fragments,
-        update_cargo_lock, verify_release_write, PushFailure,
-    };
-    use std::fs;
-    use std::path::PathBuf;
-    use std::process::Command;
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    fn temp_dir(name: &str) -> PathBuf {
-        let nanos = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
-        let path = std::env::temp_dir().join(format!("version-and-commit-{name}-{nanos}"));
-        fs::create_dir_all(&path).unwrap();
-        path
-    }
-
-    #[test]
-    fn cargo_lock_update_scopes_to_named_package_entry() {
-        let repo = temp_dir("lock-update");
-        let cargo_lock = repo.join("Cargo.lock");
-        fs::write(
-            &cargo_lock,
-            r#"[[package]]
-name = "example-sum-package-name-helper"
-version = "9.9.9"
-
-[[package]]
-name = "example-sum-package-name"
-version = "0.13.0"
-dependencies = [
- "clap",
-]
-
-[[package]]
-name = "regex"
-version = "1.12.3"
-"#,
-        )
-        .unwrap();
-
-        assert!(update_cargo_lock(&cargo_lock, "example-sum-package-name", "0.14.0").unwrap());
-
-        let updated = fs::read_to_string(&cargo_lock).unwrap();
-        assert!(updated.contains("name = \"example-sum-package-name\"\nversion = \"0.14.0\""));
-        assert!(updated.contains("name = \"example-sum-package-name-helper\"\nversion = \"9.9.9\""));
-        assert!(updated.contains("name = \"regex\"\nversion = \"1.12.3\""));
-    }
-
-    #[test]
-    fn cargo_lock_update_is_idempotent_when_version_already_matches() {
-        let repo = temp_dir("lock-idempotent");
-        let cargo_lock = repo.join("Cargo.lock");
-        let content = r#"[[package]]
-name = "example-sum-package-name"
-version = "0.14.0"
-"#;
-        fs::write(&cargo_lock, content).unwrap();
-
-        assert!(!update_cargo_lock(&cargo_lock, "example-sum-package-name", "0.14.0").unwrap());
-        assert_eq!(fs::read_to_string(&cargo_lock).unwrap(), content);
-    }
-
-    #[test]
-    fn cargo_lock_update_returns_false_when_lock_file_is_absent() {
-        let repo = temp_dir("lock-absent");
-        let cargo_lock = repo.join("Cargo.lock");
-
-        assert!(!update_cargo_lock(&cargo_lock, "example-sum-package-name", "0.14.0").unwrap());
-        assert!(!cargo_lock.exists());
-    }
-
-    #[test]
-    fn cargo_lock_update_returns_false_when_package_entry_is_absent() {
-        let repo = temp_dir("lock-entry-absent");
-        let cargo_lock = repo.join("Cargo.lock");
-        let content = r#"[[package]]
-name = "regex"
-version = "1.12.3"
-"#;
-        fs::write(&cargo_lock, content).unwrap();
-
-        assert!(!update_cargo_lock(&cargo_lock, "example-sum-package-name", "0.14.0").unwrap());
-        assert_eq!(fs::read_to_string(&cargo_lock).unwrap(), content);
-    }
-
-    #[test]
-    fn changelog_collection_removes_consumed_fragments_and_keeps_readme() {
-        let repo = temp_dir("changelog-cleanup");
-        let changelog_dir = repo.join("changelog.d");
-        fs::create_dir_all(&changelog_dir).unwrap();
-
-        let first_fragment = changelog_dir.join("20260608_fix_release_loop.md");
-        let second_fragment = changelog_dir.join("20260608_note_release_loop.md");
-        fs::write(
-            &first_fragment,
-            r#"---
-bump: patch
----
-
-### Fixed
-- Prevent already-collected changelog fragments from triggering another release.
-"#,
-        )
-        .unwrap();
-        fs::write(
-            &second_fragment,
-            r#"### Changed
-- Keep release commits from leaving stale changelog fragments behind.
-"#,
-        )
-        .unwrap();
-        fs::write(changelog_dir.join("README.md"), "Fragment instructions\n").unwrap();
-
-        let changelog = repo.join("CHANGELOG.md");
-        fs::write(
-            &changelog,
-            r#"# Changelog
-
-## [0.1.0] - 2026-01-01
-
-### Added
-- Initial release
-"#,
-        )
-        .unwrap();
-
-        collect_changelog_with_date(
-            changelog_dir.to_str().unwrap(),
-            changelog.to_str().unwrap(),
-            "0.2.0",
-            "2026-06-08",
-        );
-
-        let updated = fs::read_to_string(&changelog).unwrap();
-        assert!(updated.contains("## [0.2.0] - 2026-06-08"));
-        assert!(updated.contains("Prevent already-collected changelog fragments"));
-        assert!(updated.contains("Keep release commits from leaving stale changelog fragments"));
-        assert!(!updated.contains("bump: patch"));
-        assert!(!first_fragment.exists());
-        assert!(!second_fragment.exists());
-        assert!(changelog_dir.join("README.md").exists());
-    }
-
-    /// Regression test for issue #67: the Rust release job failed with
-    /// "cannot rebase: Your index contains uncommitted changes." because the
-    /// script staged the version bump (`git add`) and only afterwards ran
-    /// `git rebase origin/<branch>`. `git rebase` refuses to run with a dirty
-    /// index, so the release must rebase onto the remote BEFORE staging.
-    ///
-    /// This test reproduces both orderings against a real temporary repository
-    /// and asserts the buggy order fails while the fixed order succeeds.
-    #[test]
-    fn rebase_must_run_before_staging_the_version_bump() {
-        let repo = temp_dir("rebase-order");
-        let git = |args: &[&str]| -> std::process::Output {
-            Command::new("git")
-                .args(args)
-                .current_dir(&repo)
-                .output()
-                .expect("failed to run git")
-        };
-
-        // Some CI images default to `master`; force the initial branch to main.
-        git(&["init", "-q", "."]);
-        git(&["checkout", "-q", "-b", "main"]);
-        git(&["config", "user.email", "ci@example.com"]);
-        git(&["config", "user.name", "ci"]);
-
-        // Commit A: the state the release job checks out.
-        fs::write(repo.join("Cargo.toml"), "version = \"0.1.0\"\n").unwrap();
-        git(&["add", "Cargo.toml"]);
-        git(&["commit", "-qm", "A: initial"]);
-
-        // Commit B on a parallel ref simulates origin/main advancing while the
-        // release job was running (e.g. a concurrent release pushed to main).
-        git(&["checkout", "-q", "-b", "upstream"]);
-        fs::write(repo.join("remote.txt"), "remote change\n").unwrap();
-        git(&["add", "remote.txt"]);
-        git(&["commit", "-qm", "B: remote advanced"]);
-        git(&["checkout", "-q", "main"]);
-
-        // BUGGY ORDER: stage the bump first, then rebase -> git rejects the
-        // dirty index. This is exactly what broke the release job.
-        fs::write(repo.join("Cargo.toml"), "version = \"0.1.1\"\n").unwrap();
-        git(&["add", "Cargo.toml"]);
-        let buggy = git(&["rebase", "upstream"]);
-        assert!(
-            !buggy.status.success(),
-            "rebase unexpectedly succeeded with a dirty index"
-        );
-        let buggy_err = String::from_utf8_lossy(&buggy.stderr);
-        assert!(
-            buggy_err.contains("cannot rebase") || buggy_err.contains("uncommitted changes"),
-            "unexpected rebase error: {buggy_err}"
-        );
-
-        // Reset back to a clean tree at commit A.
-        let _ = git(&["rebase", "--abort"]);
-        git(&["reset", "-q", "--hard", "HEAD"]);
-
-        // FIXED ORDER: rebase while the tree is clean, THEN stage and commit.
-        let fixed = git(&["rebase", "upstream"]);
-        assert!(
-            fixed.status.success(),
-            "rebase with a clean tree failed: {}",
-            String::from_utf8_lossy(&fixed.stderr)
-        );
-        fs::write(repo.join("Cargo.toml"), "version = \"0.1.1\"\n").unwrap();
-        git(&["add", "Cargo.toml"]);
-        let commit = git(&["commit", "-qm", "chore: release 0.1.1"]);
-        assert!(
-            commit.status.success(),
-            "commit after clean rebase failed: {}",
-            String::from_utf8_lossy(&commit.stderr)
-        );
-
-        // The bump rides on top of the upstream commit, proving no work was lost.
-        let log = git(&["log", "--oneline"]);
-        let log_out = String::from_utf8_lossy(&log.stdout);
-        assert!(log_out.contains("release 0.1.1"));
-        assert!(log_out.contains("B: remote advanced"));
-    }
-
-    // --- issue #162: classify push failures before retrying -------------------
-
-    #[test]
-    fn repository_rules_are_classified_before_the_rebase_retry() {
-        // A ruleset rejection also contains the word "rejected"; policy must
-        // win over the retry heuristic.
-        let ruleset = concat!(
-            "Command `git` failed.\n",
-            "stdout: To github.com:org/repo.git\n",
-            "stderr: ! [remote rejected] main -> main (GH006: Protected branch update failed)\n",
-            "error: GH013: Repository rule violations found for refs/heads/main.\n",
-            "The push was rejected because changes must be made through a pull request.\n"
-        );
-        assert_eq!(
-            classify_push_failure(ruleset),
-            PushFailure::RepositoryRules,
-            "a ruleset refusal must never be treated as a rebaseable race"
-        );
-
-        let lowercase_rules = "remote: error: push declined due to repository rule violations";
-        assert_eq!(
-            classify_push_failure(lowercase_rules),
-            PushFailure::RepositoryRules
-        );
-    }
-
-    #[test]
-    fn a_lost_race_is_classified_for_the_rebase_retry() {
-        let raced = concat!(
-            "Command `git` failed.\n",
-            "stderr: To github.com:org/repo.git\n",
-            " ! [rejected]        main -> main (fetch first)\n",
-            "error: failed to push some refs to 'github.com:org/repo.git'\n",
-            "hint: Updates were rejected because the remote contains work that you do not have locally.\n"
-        );
-        assert_eq!(classify_push_failure(raced), PushFailure::LostRace);
-    }
-
-    #[test]
-    fn an_unknown_push_failure_is_not_masked_as_a_race() {
-        for real_error in [
-            "ssh: connect to host github.com port 22: Connection timed out",
-            "fatal: unable to access 'https://github.com/': Could not resolve host: github.com",
-            "fatal: Authentication failed for 'https://github.com/org/repo.git/'",
-        ] {
-            assert_eq!(
-                classify_push_failure(&format!("Command `git` failed.\nstderr: {real_error}")),
-                PushFailure::Other,
-                "{real_error} must surface as a real error, not trigger a rebase"
-            );
-        }
-    }
-
-    // --- issue #159: verify the release write before committing ---------------
-
-    fn write_changelog(repo: &std::path::Path, body: &str) {
-        fs::write(repo.join("CHANGELOG.md"), body).unwrap();
-    }
-
-    /// The verification paths must be anchored inside the temporary repo --
-    /// relative paths would silently read the real repository's CHANGELOG.md.
-    fn anchored(repo: &std::path::Path) -> (String, String, PathBuf) {
-        (
-            repo.join("CHANGELOG.md").to_string_lossy().to_string(),
-            repo.join("changelog.d").to_string_lossy().to_string(),
-            repo.join("Cargo.lock"),
-        )
-    }
-
-    #[test]
-    fn verification_accepts_a_consistent_release_write() {
-        let repo = temp_dir("verify-ok");
-        fs::create_dir_all(repo.join("changelog.d")).unwrap();
-        write_changelog(
-            &repo,
-            "# Changelog\n\n## [0.2.0] - 2026-09-09\n\n### Fixed\n\n- something\n",
-        );
-        fs::write(
-            repo.join("Cargo.lock"),
-            "[[package]]\nname = \"crate\"\nversion = \"0.2.0\"\n",
-        )
-        .unwrap();
-        let (changelog, dir, lock) = anchored(&repo);
-
-        verify_release_write(&changelog, &dir, &lock, "crate", "0.2.0", true)
-            .unwrap_or_else(|error| panic!("consistent write should verify: {error}"));
-    }
-
-    #[test]
-    fn verification_requires_the_changelog_entry_only_when_fragments_were_collected() {
-        let repo = temp_dir("verify-optional-entry");
-        fs::create_dir_all(repo.join("changelog.d")).unwrap();
-        // A version-only release (docs-only changes) legitimately collects no
-        // fragments, so the changelog gains no entry.
-        write_changelog(&repo, "# Changelog\n\n## [0.1.0] - 2026-01-01\n");
-        let (changelog, dir, lock) = anchored(&repo);
-
-        verify_release_write(&changelog, &dir, &lock, "crate", "0.2.0", false)
-            .unwrap_or_else(|error| panic!("fragment-free release should verify: {error}"));
-
-        // The same state with fragments collected must fail: the entry is missing.
-        let error =
-            verify_release_write(&changelog, &dir, &lock, "crate", "0.2.0", true).unwrap_err();
-        assert!(
-            error.contains("0.2.0"),
-            "the failure must name the missing version entry, got: {error}"
-        );
-    }
-
-    #[test]
-    fn verification_fails_when_a_fragment_leaks_past_the_release() {
-        let repo = temp_dir("verify-leftover");
-        fs::create_dir_all(repo.join("changelog.d")).unwrap();
-        write_changelog(&repo, "# Changelog\n\n## [0.2.0] - 2026-09-09\n");
-        fs::write(
-            repo.join("changelog.d/20260909_unconsumed.md"),
-            "leftover\n",
-        )
-        .unwrap();
-        let (changelog, dir, lock) = anchored(&repo);
-
-        let error =
-            verify_release_write(&changelog, &dir, &lock, "crate", "0.2.0", true).unwrap_err();
-        assert!(
-            error.contains("20260909_unconsumed.md"),
-            "the failure must name the leaked fragment, got: {error}"
-        );
-    }
-
-    #[test]
-    fn collection_rejects_unreadable_fragments_before_mutation() {
-        let repo = temp_dir("unreadable-fragment");
-        let dir = repo.join("changelog.d");
-        fs::create_dir_all(dir.join("broken.md")).unwrap();
-        fs::write(dir.join("good.md"), "### Fixed\n- Keep this fragment.\n").unwrap();
-        let changelog = repo.join("CHANGELOG.md");
-        fs::write(&changelog, "# Changelog\n").unwrap();
-        let result = std::panic::catch_unwind(|| {
-            collect_changelog_with_date(
-                dir.to_str().unwrap(),
-                changelog.to_str().unwrap(),
-                "1.0.0",
-                "2026-10-10",
-            );
-        });
-        assert!(result.is_err(), "unreadable fragment must be fatal");
-        assert_eq!(fs::read_to_string(changelog).unwrap(), "# Changelog\n");
-        assert!(dir.join("good.md").is_file());
-        fs::remove_dir_all(repo).unwrap();
-    }
-
-    #[test]
-    fn counting_and_verification_reject_fragment_directory_read_errors() {
-        let repo = temp_dir("unreadable-directory");
-        fs::write(repo.join("changelog.d"), "not a directory").unwrap();
-        let (changelog, dir, lock) = anchored(&repo);
-        assert!(std::panic::catch_unwind(|| count_changelog_fragments(&dir)).is_err());
-        let error =
-            verify_release_write(&changelog, &dir, &lock, "crate", "1.0.0", false).unwrap_err();
-        assert!(error.contains("changelog.d"));
-        fs::remove_dir_all(repo).unwrap();
-    }
-
-    #[test]
-    fn verification_fails_when_the_lock_disagrees_with_the_manifest() {
-        let repo = temp_dir("verify-lock");
-        fs::create_dir_all(repo.join("changelog.d")).unwrap();
-        write_changelog(&repo, "# Changelog\n\n## [0.2.0] - 2026-09-09\n");
-        fs::write(
-            repo.join("Cargo.lock"),
-            "[[package]]\nname = \"crate\"\nversion = \"0.1.9\"\n",
-        )
-        .unwrap();
-        let (changelog, dir, lock) = anchored(&repo);
-
-        let error =
-            verify_release_write(&changelog, &dir, &lock, "crate", "0.2.0", true).unwrap_err();
-        assert!(
-            error.contains("Cargo.lock verification failed") && error.contains("0.1.9"),
-            "the failure must show the disagreement, got: {error}"
-        );
-    }
-
-    #[test]
-    fn fragment_counting_ignores_the_readme() {
-        let repo = temp_dir("count-fragments");
-        let dir = repo.join("changelog.d");
-        fs::create_dir_all(&dir).unwrap();
-        fs::write(dir.join("README.md"), "explanatory\n").unwrap();
-        assert_eq!(count_changelog_fragments(dir.to_str().unwrap()), 0);
-        fs::write(dir.join("20260909_a.md"), "a\n").unwrap();
-        fs::write(dir.join("20260909_b.md"), "b\n").unwrap();
-        assert_eq!(count_changelog_fragments(dir.to_str().unwrap()), 2);
-    }
-}
+#[path = "version-and-commit/tests.rs"]
+mod tests;
 
 #[cfg(not(test))]
 fn main() -> std::io::Result<()> {

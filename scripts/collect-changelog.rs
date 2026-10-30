@@ -27,6 +27,9 @@ use std::process::exit;
 mod changelog_files;
 use changelog_files::{list_fragments, path_error, read_file};
 
+#[path = "release-content.rs"]
+mod release_content;
+
 const INSERT_MARKER: &str = "<!-- changelog-insert-here -->";
 
 fn get_arg(name: &str) -> Option<String> {
@@ -130,25 +133,9 @@ fn update_changelog(changelog_file: &str, version: &str, fragments: &str) -> std
         if content.contains(INSERT_MARKER) {
             content = content.replace(INSERT_MARKER, &format!("{}{}", INSERT_MARKER, new_entry));
         } else {
-            // Insert after the first ## heading
-            let lines: Vec<&str> = content.lines().collect();
-            let mut insert_index = None;
-
-            for (i, line) in lines.iter().enumerate() {
-                if line.starts_with("## [") {
-                    insert_index = Some(i);
-                    break;
-                }
-            }
-
-            if let Some(idx) = insert_index {
-                let mut new_lines: Vec<String> =
-                    lines[..idx].iter().map(|s| s.to_string()).collect();
-                new_lines.push(new_entry.clone());
-                new_lines.extend(lines[idx..].iter().map(|s| s.to_string()));
-                content = new_lines.join("\n");
+            if let Some(heading) = release_content::release_headings(&content).first() {
+                content.insert_str(heading.start, &new_entry);
             } else {
-                // Append after the main heading
                 content.push_str(&new_entry);
             }
         }
@@ -223,5 +210,28 @@ mod cleanup_tests {
         std::fs::remove_dir_all(root).unwrap();
         let error = result.expect_err("fragment deletion must fail");
         assert!(error.to_string().contains("fragment.md"));
+    }
+
+    #[test]
+    fn insertion_ignores_fenced_examples_and_preserves_existing_bytes() {
+        let root = std::env::temp_dir().join(format!("collect-fenced-{}", std::process::id()));
+        std::fs::create_dir(&root).unwrap();
+        let changelog = root.join("CHANGELOG.md");
+        let prefix = "# Changelog\r\n\r\n~~~md\r\n## [9.9.9]\r\n~~~\r\n\r\n";
+        let previous = "## [1.0.0]\r\n  Preserve these bytes.\r\n";
+        std::fs::write(&changelog, format!("{prefix}{previous}")).unwrap();
+        super::update_changelog(
+            changelog.to_str().unwrap(),
+            "1.1.0",
+            "### Fixed\n- New notes",
+        )
+        .unwrap();
+        let content = std::fs::read_to_string(&changelog).unwrap();
+        assert!(content.starts_with(prefix));
+        assert!(content.ends_with(previous));
+        assert!(super::release_content::release_notes(&content, "1.1.0")
+            .unwrap()
+            .contains("New notes"));
+        std::fs::remove_dir_all(root).unwrap();
     }
 }

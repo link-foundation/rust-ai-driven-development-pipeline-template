@@ -148,7 +148,16 @@ fn is_changelog_fragment(file_path: &str, rust_root: &str) -> bool {
         && path.file_name().is_some_and(|name| name != "README.md")
 }
 
+fn is_exempt_author(author: &str) -> bool {
+    author == "dependabot[bot]"
+}
+
 fn main() {
+    let author = env::var("PR_AUTHOR").unwrap_or_default();
+    if is_exempt_author(&author) {
+        println!("Skipping changelog requirement for PR author {author}");
+        return;
+    }
     println!("Checking for changelog fragment in PR diff...\n");
 
     let rust_root =
@@ -236,6 +245,14 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_dependabot_author_is_exempt() {
+        assert!(is_exempt_author("dependabot[bot]"));
+        for author in ["", "human", "dependabot", "dependabot/branch", "Dependabot[bot]"] {
+            assert!(!is_exempt_author(author));
+        }
+    }
 
     #[test]
     fn command_failure_is_not_an_empty_success() {

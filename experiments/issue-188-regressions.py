@@ -134,6 +134,16 @@ class Regressions(unittest.TestCase):
         result = self.script("check-changelog-fragment.rs")
         self.assertNotEqual(result.returncode, 0, result.stdout)
 
+    def test_dependabot_exemption_uses_author_even_on_a_spoofed_branch(self):
+        self.repository()
+        self.write("src/lib.rs", "pub fn changed() {}\n")
+        self.commit()
+        self.env["GITHUB_HEAD_REF"] = "dependabot/cargo/update"
+        for author, exempt in (("dependabot[bot]", True), ("human", False), ("", False)):
+            self.env["PR_AUTHOR"] = author
+            result = self.script("check-changelog-fragment.rs")
+            self.assertEqual(result.returncode == 0, exempt, result.stdout + result.stderr)
+
     def test_new_nested_fragment_satisfies_guard(self):
         self.repository("rust/")
         self.write("rust/src/lib.rs", "pub fn changed() {}\n")
