@@ -68,6 +68,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.21.0] - 2026-10-30
+
+### Added
+- Add an opt-in JavaScript-first prerequisite with a working mixed-language example, strict readiness inventory, deterministic translation and exact-revision Rust/container checks.
+- Audit every tracked shell script and probe Dependency Graph availability with bounded retries and actionable main-branch failures.
+
+### Fixed
+- Gate releases on every required check, preserve queued writers, and prefer crates.io trusted publishing with token fallback.
+- Use pull request head revisions for cancellation checks, support the template's ref-based concurrency expressions, and prevent execution budgets from expiring early.
+- Support multiline fresh-merge checks, author-based Dependabot changelog exemptions and dedicated release-PR credentials.
+- Update action versions and runner labels, persist link-check caches and reports, and remove legacy file-size exceptions by splitting large modules.
+
+### Fixed
+- Check source file sizes using relative path components, including `.github` and files whose names contain `target`.
+- Retry transient registry and Wayback failures and stop release or archive decisions when the lookup remains unavailable.
+- Reject missing or malformed link reports and unresolved CodeQL findings while retaining diagnostic artifacts.
+- Preserve fenced changelog examples and all following release notes; refuse missing required entries.
+- Download digest-verified artifact ZIPs without deprecated Buffer constructors and safely extract them with Python.
+- Keep macOS arm64 desktop builds running on the supported macOS 15 runner after macOS 14 brownouts.
 ## [0.20.2] - 2026-10-10
 
 ### Fixed
