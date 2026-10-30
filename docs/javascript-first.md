@@ -43,7 +43,10 @@ they run relative to `project-directory`. Nested packages can use root scripts t
 orchestrate all native implementations. The template supplies no default generator
 or placeholder successful command. Depend on its successful
 job with `needs:` before every Rust test/build/package/container/publish job;
-consume its `tested-sha` output as the checkout ref. A skipped gate is not success.
+consume its `tested-sha` output to bind the checkout. Event-revision jobs also
+require that output to equal `github.sha` and check out that event commit.
+Release-tag consumers check HEAD against `tested-sha` immediately after checkout,
+before any toolchain, native action or build can execute. A skipped gate is not success.
 For projects whose JavaScript port is unfinished, keep the readiness gate red and
 report the blockers rather than representing the rollout as complete. Adoption of
 this workflow does not by itself migrate this template's Rust-only sample.
@@ -53,6 +56,14 @@ excluded from root detection. Release writers revalidate after versioning and
 expose that candidate SHA to the container prerequisite. Desktop release tags are
 resolved to an immutable SHA before validation. Fresh-merge checks also validate
 their newly generated revision before compiling.
+
+The prerequisite validates provenance from its own workflow checkout before
+checking out candidate code. A PR run uses the PR cache scope. In other contexts,
+an alternative to the trusted event SHA must be reachable from the repository's
+default branch, fetched by the bootstrap checkout. This permits committed release
+candidates and older releases while refusing arbitrary branch commits in a
+default-branch cache context. Preserve this trust check when adapting the workflow;
+a forty-character SHA alone does not establish trusted provenance.
 
 Avoid `workflow_run` when same-workflow `needs:` or reusable workflows suffice.
 If a separate workflow is required, check the source conclusion, repository/event

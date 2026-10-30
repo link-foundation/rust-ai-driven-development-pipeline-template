@@ -12,7 +12,14 @@ for (const workflow of ['release', 'desktop-release', 'security', 'workflows', '
       assert.match(block, /needs:[^\n]*javascript-first/, `${workflow}/${name} missing dependency`);
       const gate = name === 'docker-publish' ? 'release-javascript-first' : 'javascript-first';
       assert.ok(block.includes(`needs.${gate}.result == 'success'`), `${workflow}/${name} permits failed/skipped gate`);
-      assert.ok(block.includes(`ref: \${{ needs.${gate}.outputs.tested-sha }}`), `${workflow}/${name} does not use tested SHA`);
+      const direct = block.includes(`ref: \${{ needs.${gate}.outputs.tested-sha }}`);
+      const eventPinned = block.includes(`ref: \${{ needs.${gate}.outputs.tested-sha == github.sha && github.sha }}`) &&
+        block.includes(`needs.${gate}.result == 'success' && needs.${gate}.outputs.tested-sha == github.sha`);
+      const verifiedTag = (workflow === 'desktop-release' || name === 'docker-publish') &&
+        block.includes(`TESTED_SHA: \${{ needs.${gate}.outputs.tested-sha }}`) &&
+        block.includes('test "$(git rev-parse HEAD)" = "$TESTED_SHA"') &&
+        block.indexOf('name: Verify prerequisite revision') < block.search(/rust-toolchain@|docker\/login-action@/);
+      assert.ok(direct || eventPinned || verifiedTag, `${workflow}/${name} does not enforce the tested SHA`);
     }
     assert.match(text, /- javascript-first\n/, 'terminal observer must collect gate failures');
   });
@@ -55,7 +62,15 @@ test('release writers attach a branch without moving away from the tested revisi
 });
 test('older release tags use prerequisite tools preserved from the workflow revision', () => {
   const text = read('javascript-first-gate');
-  assert.ok(text.indexOf('ref: ${{ github.workflow_sha }}') < text.indexOf('ref: ${{ inputs.source-sha }}'));
+  assert.ok(text.indexOf('ref: ${{ github.workflow_sha }}') < text.indexOf('ref: ${{ steps.provenance.outputs.revision }}'));
   assert.match(text, /cp scripts\/detect-javascript.mjs scripts\/run-javascript-first-auto.mjs/);
   assert.match(text, /node "\$RUNNER_TEMP\/javascript-first-tools\/run-javascript-first-auto.mjs"/);
+});
+test('candidate provenance is checked before checkout or execution in the reusable gate', () => {
+  const text = read('javascript-first-gate');
+  assert.match(text, /fetch-depth: 0/);
+  assert.match(text, /PREREQUISITE_EVENT: \$\{\{ github.event_name \}\}/);
+  assert.match(text, /DEFAULT_BRANCH: \$\{\{ github.event.repository.default_branch \}\}/);
+  assert.ok(text.indexOf('id: provenance') < text.indexOf('ref: ${{ steps.provenance.outputs.revision }}'));
+  assert.ok(text.indexOf('verify-javascript-provenance.mjs"') < text.indexOf('ref: ${{ steps.provenance.outputs.revision }}'));
 });

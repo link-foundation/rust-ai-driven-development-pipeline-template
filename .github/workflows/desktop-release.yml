@@ -103,7 +103,12 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-          ref: ${{ needs.javascript-first.outputs.tested-sha }}
+          ref: ${{ github.event_name == 'pull_request' && github.sha || needs.resolve.outputs.tag }}
+      - name: Verify prerequisite revision
+        shell: bash
+        env:
+          TESTED_SHA: ${{ needs.javascript-first.outputs.tested-sha }}
+        run: test "$(git rev-parse HEAD)" = "$TESTED_SHA"
       - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;

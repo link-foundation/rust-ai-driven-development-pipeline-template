@@ -17,7 +17,8 @@ existing acceptance assertion, then extend it for automatic adoption.
 | Native checks precede all Rust work | Reusable read-only prerequisite wired into CI, desktop, security and workflow-tool Rust jobs | `experiments/issue-196-workflows.mjs` checks every Rust/toolchain/container job |
 | Failed/skipped JavaScript and incomplete parity block Rust | Commands run sequentially and must exit zero; every downstream job requires gate success | Existing gate regressions retained; automatic-gate mutations cover failure/skip exits, missing commands, missing/partial/carried/unsupported entries |
 | Regeneration drift fails | Existing pinned typed IR generator and strict inventory retained | Existing stale-source/drift mutations and automatic-gate drift test; example regeneration |
-| Exact source revision | SHA verified before/after checks and clean worktree required; every downstream checkout uses tested SHA | Wrong-SHA and untracked-source tests, workflow checkout assertions, clean committed-revision replay |
+| Exact source revision | SHA verified before/after checks and clean worktree required; downstream event commits are guarded by tested-SHA equality and release tags verify HEAD before execution | Wrong-SHA and untracked-source tests, workflow checkout assertions, clean committed-revision replay |
+| Safe candidate provenance | Trusted bootstrap approves event/PR commits or candidates in default-branch history before candidate checkout | `scripts/javascript-first-provenance.test.mjs` refuses arbitrary branch commits in dispatch, scheduled, push and workflow-run cache contexts |
 | Generated release candidates are checked | Revalidate after version commit, expose candidate SHA and run reusable candidate gate before image builds | Candidate ordering assertions; image checkout bound to candidate gate; desktop tag resolved to SHA |
 | Fresh merges cannot introduce an unchecked counterpart | Re-run detection and prerequisite on simulated merge revision before Cargo | `experiments/issue-196-fresh-merge.mjs`, script ordering assertions and existing integration regressions |
 | Writer cannot be cancelled by read-only checks | Preserve job-scoped read-only concurrency and shared non-cancellable queued writer group | Writer concurrency assertions across release and desktop workflows |
@@ -42,3 +43,12 @@ Plan and completion checks:
    same-revision workflows and download any failing logs before a follow-up batch.
 7. Update PR description and closing reference, confirm clean tree/current main,
    all acceptance evidence and passing CI, then mark PR ready without merging.
+
+The first complete CI batch at `290772d` identified two issues, collected before
+the follow-up batch: [Windows](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/actions/runs/41066472749)
+needed CRLF normalization in the new timeout assertion, and
+[CodeQL Actions](https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/actions/runs/41066472378)
+reported 25 potential cache-poisoning paths through dynamic SHA checkouts.
+The follow-up preserves the timeout assertion, adds native provenance refusal
+fixtures, guards event pins by tested-SHA equality and verifies release-tag HEADs
+before executing code. The SARIF gate and its assertions remain unchanged.

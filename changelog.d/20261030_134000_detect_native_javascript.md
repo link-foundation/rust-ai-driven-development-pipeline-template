@@ -7,3 +7,4 @@ bump: minor
 
 ### Added
 - Regression coverage for automatic detection, Rust-only bypasses, failed or skipped prerequisites, incomplete inventories, generated drift and every downstream Rust dependency.
+- Validate alternative candidate provenance before checking out code in default-branch cache contexts; enforce tested-revision equality before release-tag builds.

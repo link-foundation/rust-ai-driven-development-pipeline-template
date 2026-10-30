@@ -211,7 +211,8 @@ fn release_workflow_jobs_have_explicit_timeouts() {
                 "{}/.github/workflows/javascript-first-gate.yml",
                 env!("CARGO_MANIFEST_DIR")
             ))
-            .unwrap();
+            .unwrap()
+            .replace("\r\n", "\n");
             assert!(gate.contains("    timeout-minutes: 30\n"));
             continue;
         }

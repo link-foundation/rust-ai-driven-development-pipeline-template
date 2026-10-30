@@ -55,24 +55,33 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.workflow_sha }}
+          fetch-depth: 0
           persist-credentials: false
       - name: Preserve prerequisite tools outside the candidate checkout
         run: |
           mkdir -p "$RUNNER_TEMP/javascript-first-tools"
           cp scripts/detect-javascript.mjs scripts/run-javascript-first-auto.mjs \
-            scripts/run-javascript-first.sh scripts/run-with-budget-warning.sh \
+            scripts/run-javascript-first.sh scripts/run-with-budget-warning.sh scripts/verify-javascript-provenance.mjs \
             "$RUNNER_TEMP/javascript-first-tools/"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - name: Validate candidate provenance before checkout
+        id: provenance
+        env:
+          EXPECTED_SHA: ${{ inputs.source-sha }}
+          EVENT_SHA: ${{ github.sha }}
+          PREREQUISITE_EVENT: ${{ github.event_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: node "$RUNNER_TEMP/javascript-first-tools/verify-javascript-provenance.mjs"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.source-sha }}
+          ref: ${{ steps.provenance.outputs.revision }}
           persist-credentials: false
       - name: Check exact checkout revision
         env:
           EXPECTED_SHA: ${{ inputs.source-sha }}
         run: 'test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"'
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: '24'
       - name: Native checks, strict parity and regeneration
         id: revision
         env:

@@ -182,7 +182,7 @@ jobs:
         run: git ls-files -z '*.sh' | xargs -0 pipx run --spec shellcheck-py==0.11.0.1 shellcheck
 
   workflow-tools:
-    if: needs.javascript-first.result == 'success'
+    if: needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha
     needs: [javascript-first]
     name: Workflow Tool Installation
     runs-on: ubuntu-24.04
@@ -193,7 +193,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.javascript-first.outputs.tested-sha }}
+          ref: ${{ needs.javascript-first.outputs.tested-sha == github.sha && github.sha }}
           persist-credentials: false
 
       - name: Setup Rust

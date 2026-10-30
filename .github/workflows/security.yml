@@ -27,7 +27,7 @@ jobs:
       source-sha: ${{ github.sha }}
 
   cargo-audit:
-    if: needs.javascript-first.result == 'success'
+    if: needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha
     needs: [javascript-first]
     name: Cargo audit
     runs-on: ubuntu-24.04
@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.javascript-first.outputs.tested-sha }}
+          ref: ${{ needs.javascript-first.outputs.tested-sha == github.sha && github.sha }}
           persist-credentials: false
 
       - uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
@@ -54,7 +54,7 @@ jobs:
         run: cargo audit --file Cargo.lock --deny warnings
 
   codeql:
-    if: needs.javascript-first.result == 'success'
+    if: needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha
     needs: [javascript-first]
     name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-24.04
@@ -72,7 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.javascript-first.outputs.tested-sha }}
+          ref: ${{ needs.javascript-first.outputs.tested-sha == github.sha && github.sha }}
           persist-credentials: false
 
       - uses: github/codeql-action/init@v4
