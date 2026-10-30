@@ -38,6 +38,7 @@ jobs:
     outputs:
       tag: ${{ steps.release.outputs.tag }}
       should_build: ${{ steps.release.outputs.should_build }}
+      sha: ${{ steps.revision.outputs.sha }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -52,13 +53,35 @@ jobs:
           WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: bash scripts/desktop-release-resolve.sh
 
+      - name: Resolve immutable release revision
+        id: revision
+        if: steps.release.outputs.should_build == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          sha="$(gh api "repos/$REPO/commits/$TAG" --jq .sha)"
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]]
+          printf 'sha=%s\n' "$sha" >> "$GITHUB_OUTPUT"
+
+  javascript-first:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-javascript-first-caller
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    needs: resolve
+    if: ${{ !cancelled() && (github.event_name == 'pull_request' || needs.resolve.outputs.should_build == 'true') }}
+    uses: ./.github/workflows/javascript-first-gate.yml # zizmor: ignore[self-repository]
+    with:
+      source-sha: ${{ github.event_name == 'pull_request' && github.sha || needs.resolve.outputs.sha }}
+
   build:
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-build-${{ matrix.label }}
       cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
     name: Build ${{ matrix.label }}
-    needs: resolve
-    if: ${{ !cancelled() && (github.event_name == 'pull_request' || needs.resolve.outputs.should_build == 'true') }}
+    needs: [resolve, javascript-first]
+    if: ${{ !cancelled() && needs.javascript-first.result == 'success' && (github.event_name == 'pull_request' || needs.resolve.outputs.should_build == 'true') }}
     strategy:
       fail-fast: false
       matrix:
@@ -80,7 +103,12 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-          ref: ${{ github.event_name != 'pull_request' && needs.resolve.outputs.tag || '' }}
+          ref: ${{ github.event_name == 'pull_request' && github.sha || needs.resolve.outputs.tag }}
+      - name: Verify prerequisite revision
+        shell: bash
+        env:
+          TESTED_SHA: ${{ needs.javascript-first.outputs.tested-sha }}
+        run: test "$(git rev-parse HEAD)" = "$TESTED_SHA"
       - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
@@ -207,6 +235,7 @@ jobs:
   pipeline-status:
     name: Pipeline Status
     needs:
+      - javascript-first
       - resolve
       - build
       - finalize

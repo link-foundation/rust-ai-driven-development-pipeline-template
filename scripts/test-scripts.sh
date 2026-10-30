@@ -57,7 +57,7 @@ fi
 if ! python3 experiments/issue-223-artifact-tests.py -v; then
   status=1
 fi
-if ! node --test experiments/issue-224-native.mjs scripts/*.test.mjs; then
+if ! node --test experiments/issue-224-native.mjs experiments/issue-196-*.mjs scripts/*.test.mjs; then
   status=1
 fi
 exit "$status"

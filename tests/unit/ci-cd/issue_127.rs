@@ -54,7 +54,7 @@ fn manifest_merge_publishes_and_verifies_both_platforms() {
     let merge = job_block(&workflow, "docker-merge-manifest");
 
     assert!(
-        merge.contains("needs: [auto-release, manual-release, docker-publish, release-preflight]")
+        merge.contains("needs: [javascript-first, auto-release, manual-release, docker-publish, release-preflight]")
     );
     assert!(merge.contains("docker buildx imagetools create"));
     assert!(merge.contains("${DOCKERHUB_IMAGE}:latest"));
@@ -74,5 +74,7 @@ fn github_release_does_not_wait_for_docker_publication() {
     }
 
     let publish = job_block(&workflow, "docker-publish");
-    assert!(publish.contains("needs: [auto-release, manual-release, release-preflight]"));
+    assert!(publish.contains(
+        "needs: [release-javascript-first, auto-release, manual-release, release-preflight]"
+    ));
 }
