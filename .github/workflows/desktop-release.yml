@@ -66,7 +66,7 @@ jobs:
           - { label: linux-x64, runner: ubuntu-24.04 }
           - { label: linux-arm64, runner: ubuntu-24.04-arm }
           - { label: macos-x64, runner: macos-15-intel }
-          - { label: macos-arm64, runner: macos-14 }
+          - { label: macos-arm64, runner: macos-15 }
           - { label: windows-x64, runner: windows-2025 }
           - { label: windows-arm64, runner: windows-11-arm }
     runs-on: ${{ matrix.runner }}
@@ -150,15 +150,15 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/download-artifact@v8
-        env:
-          NODE_OPTIONS: --disable-warning=DEP0005
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # actionlint 1.7.12 rejects the newer $/ syntax; use the checked-out adapter.
+      - uses: ./.github/actions/download-artifact # zizmor: ignore[self-repository]
         with:
           pattern: desktop-assets-*
           path: release-assets
-      - uses: actions/download-artifact@v8
-        env:
-          NODE_OPTIONS: --disable-warning=DEP0005
+      - uses: ./.github/actions/download-artifact # zizmor: ignore[self-repository]
         with:
           pattern: desktop-checksums-*
           path: checksums

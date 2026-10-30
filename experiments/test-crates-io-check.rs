@@ -9,42 +9,14 @@
 //! serde_json = "1"
 //! ```
 
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-struct CratesIoVersion {
-    version: Option<CratesIoVersionInfo>,
-}
-
-#[derive(Deserialize)]
-struct CratesIoVersionInfo {
-    #[allow(dead_code)]
-    num: String,
-}
+#[path = "../scripts/registry.rs"]
+mod registry;
 
 fn check_version_on_crates_io(crate_name: &str, version: &str) -> bool {
-    let url = format!("https://crates.io/api/v1/crates/{}/{}", crate_name, version);
-
-    match ureq::get(&url)
-        .set("User-Agent", "rust-script-version-and-commit")
-        .call()
-    {
-        Ok(response) => {
-            if response.status() == 200 {
-                if let Ok(body) = response.into_string() {
-                    if let Ok(data) = serde_json::from_str::<CratesIoVersion>(&body) {
-                        return data.version.is_some();
-                    }
-                }
-            }
-            false
-        }
-        Err(ureq::Error::Status(404, _)) => false,
-        Err(e) => {
-            eprintln!("Warning: Could not check crates.io: {}", e);
-            false
-        }
-    }
+    registry::or_exit(
+        "crates.io lookup",
+        registry::version_exists(crate_name, version),
+    )
 }
 
 fn main() {

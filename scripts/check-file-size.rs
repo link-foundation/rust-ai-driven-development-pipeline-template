@@ -43,10 +43,11 @@ fn should_exclude(path: &Path) -> bool {
     if path.file_name().is_some_and(|name| name == "CHANGELOG.md") {
         return true;
     }
-    let path_str = path.to_string_lossy();
-    EXCLUDE_PATTERNS
-        .iter()
-        .any(|pattern| path_str.contains(pattern))
+    path.components().any(|component| {
+        EXCLUDE_PATTERNS
+            .iter()
+            .any(|excluded| component.as_os_str() == *excluded)
+    })
 }
 
 fn has_valid_extension(path: &Path) -> bool {
@@ -111,14 +112,18 @@ fn check_directory(cwd: &Path) -> CheckResult {
 
     for entry in WalkDir::new(cwd)
         .into_iter()
+        .filter_entry(|entry| {
+            !should_exclude(
+                entry
+                    .path()
+                    .strip_prefix(cwd)
+                    .unwrap_or_else(|_| entry.path()),
+            )
+        })
         .filter_map(std::result::Result::ok)
         .filter(|e| e.file_type().is_file())
     {
         let path = entry.path();
-
-        if should_exclude(path) {
-            continue;
-        }
 
         if !has_valid_extension(path) {
             continue;
@@ -294,6 +299,26 @@ mod tests {
             writeln!(&mut content, "// line {line}").unwrap();
         }
         fs::write(path, content).unwrap();
+    }
+
+    #[test]
+    fn exclusions_match_whole_relative_components_and_prune_real_trees() {
+        let repo = temp_dir("target-cli.git-node_modules");
+        let checked = [
+            "src/retarget.rs",
+            "src/target_matcher.rs",
+            ".github/scripts/tool.rs",
+        ];
+        let excluded = ["target/big.rs", ".git/big.rs", "nested/node_modules/big.rs"];
+        for file in checked.iter().chain(excluded.iter()) {
+            let path = repo.join(file);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            write_rust_file_with_lines(&path, MAX_LINES + 1);
+        }
+        let result = check_directory(&repo);
+        let actual: BTreeSet<_> = result.violations.iter().map(|f| f.file.as_str()).collect();
+        assert_eq!(actual, checked.into_iter().collect());
+        fs::remove_dir_all(repo).unwrap();
     }
 
     #[test]

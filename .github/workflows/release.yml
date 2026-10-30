@@ -1153,8 +1153,13 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       RELEASE_VERSION: ${{ needs.auto-release.outputs.release_version || needs.manual-release.outputs.release_version }}
     steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
       - name: Download digests
-        uses: actions/download-artifact@v8
+        # actionlint 1.7.12 rejects $/; the adapter reads the checked-out scripts.
+        uses: ./.github/actions/download-artifact # zizmor: ignore[self-repository]
         with:
           path: /tmp/digests
           pattern: docker-digest-*
