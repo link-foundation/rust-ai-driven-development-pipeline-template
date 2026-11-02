@@ -16,6 +16,7 @@
 set -euo pipefail
 
 BASE_REF="${GITHUB_BASE_REF:-main}"
+PREREQUISITE_RUNNER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/run-javascript-first-auto.mjs"
 
 if [ -z "${GITHUB_BASE_REF:-}" ]; then
   echo "GITHUB_BASE_REF is not set; assuming base branch '${BASE_REF}'"
@@ -85,6 +86,12 @@ if ! git merge --no-edit "${HEAD_SHA}"; then
 fi
 
 echo "Merge succeeded. Running checks on the merged tree..."
+
+# The simulated merge is a new revision and may introduce a native counterpart.
+if ! EXPECTED_SHA="$(git rev-parse HEAD)" node "$PREREQUISITE_RUNNER"; then
+  git checkout --force - >/dev/null 2>&1 || true
+  exit 1
+fi
 
 DEFAULT_CHECKS='cargo fmt --all -- --check
 bash scripts/check-cargo-warnings.sh

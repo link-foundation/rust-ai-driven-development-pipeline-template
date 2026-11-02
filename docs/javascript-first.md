@@ -16,15 +16,54 @@ A successful source round trip establishes preservation of source text; executio
 parity still requires observations from both native runtimes. Handwritten native
 adapters must be explicit inventory entries with their own tests.
 
-Use `.github/workflows/javascript-first-gate.yml` as a callable workflow. Supply
-real repository commands for the native JavaScript suite, strict readiness/parity
-inventory check and regenerate-and-diff check. The template deliberately supplies
-no default generator or placeholder successful command. Depend on its successful
+Use `.github/workflows/javascript-first-gate.yml` as a callable workflow. It
+automatically detects tracked production JavaScript or TypeScript in the selected
+`project-directory` (the repository root by default). Rust-only projects pass at
+the checked revision without requiring a JavaScript implementation or commands.
+Tool scripts, tests, fixtures, examples, experiments, documentation, configuration,
+standalone `web/`, `frontend/`, `ui/` and asset directories, dependencies and
+build directories do not imply a counterpart. Selecting an example
+directory explicitly includes its production sources. Production sources in
+`src/`, `lib/`, `javascript/`, `js/`, workspace packages and root entry points are
+detected even without a package manifest; a missing manifest cannot bypass checks.
+Only tracked files establish detection; the final clean-checkout guard also
+rejects untracked source. Detection identifies a potential counterpart, not parity:
+a detected wrapper must still prove the complete inventory before it can pass.
+A standalone browser UI does not require a native port of the Rust application.
+
+For a detected counterpart, supply real repository commands for the native suite,
+strict readiness/parity inventory and regenerate-and-diff check through optional
+workflow inputs, or define `javascript-first:native`, `javascript-first:parity`
+and `javascript-first:translation` scripts in the selected root's `package.json`.
+An existing script declaration keeps an adopted port gated even if its production
+sources are removed; missing code must not turn an incomplete port into a bypass.
+These scripts must install any needed dependencies themselves. Missing commands
+fail closed. Explicit command inputs also opt in even outside detected locations;
+they run relative to `project-directory`. Nested packages can use root scripts to
+orchestrate all native implementations. The template supplies no default generator
+or placeholder successful command. Depend on its successful
 job with `needs:` before every Rust test/build/package/container/publish job;
-consume its `tested-sha` output as the checkout ref. A skipped gate is not success.
+consume its `tested-sha` output to bind the checkout. Event-revision jobs also
+require that output to equal `github.sha` and check out that event commit.
+Release-tag consumers check HEAD against `tested-sha` immediately after checkout,
+before any toolchain, native action or build can execute. A skipped gate is not success.
 For projects whose JavaScript port is unfinished, keep the readiness gate red and
 report the blockers rather than representing the rollout as complete. Adoption of
-this opt-in workflow does not by itself migrate this template's Rust-only sample.
+this workflow does not by itself migrate this template's Rust-only sample.
+The root CI, security, workflow-tool and desktop Rust jobs already depend on this
+automatic prerequisite and check out its `tested-sha`; the independent example is
+excluded from root detection. Release writers revalidate after versioning and
+expose that candidate SHA to the container prerequisite. Desktop release tags are
+resolved to an immutable SHA before validation. Fresh-merge checks also validate
+their newly generated revision before compiling.
+
+The prerequisite validates provenance from its own workflow checkout before
+checking out candidate code. A PR run uses the PR cache scope. In other contexts,
+an alternative to the trusted event SHA must be reachable from the repository's
+default branch, fetched by the bootstrap checkout. This permits committed release
+candidates and older releases while refusing arbitrary branch commits in a
+default-branch cache context. Preserve this trust check when adapting the workflow;
+a forty-character SHA alone does not establish trusted provenance.
 
 Avoid `workflow_run` when same-workflow `needs:` or reusable workflows suffice.
 If a separate workflow is required, check the source conclusion, repository/event
@@ -69,13 +108,15 @@ to every feature of your actual application before adopting it for production.
 Run the prerequisite checks without installing Rust:
 
 ```sh
-node --test examples/javascript-first/native.test.mjs scripts/javascript-first.test.mjs
+node --test examples/javascript-first/native.test.mjs scripts/*javascript*.test.mjs experiments/issue-196-*.mjs
 node examples/javascript-first/check-parity.mjs
 node examples/javascript-first/generate.mjs --check
 ```
 
 The example caller is `.github/workflows/javascript-first-example.yml`. It runs
-these real commands through the reusable gate. Only success schedules the Rust
+`project-directory: examples/javascript-first` through the reusable gate, which
+detects its native source and runs its three package scripts. Only success
+schedules the Rust
 job (tests, build, packaging and publish dry run) and the container build. Both
 check out `tested-sha`. The failure tests cover native failure/skip exit, absent
 commands, missing/partial/carried inventory entries, stale source hashes,

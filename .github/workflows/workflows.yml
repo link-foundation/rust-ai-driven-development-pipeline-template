@@ -18,6 +18,14 @@ env:
   GIT_CONFIG_VALUE_0: main
 
 jobs:
+  javascript-first:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-javascript-first-caller
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    uses: ./.github/workflows/javascript-first-gate.yml # zizmor: ignore[self-repository]
+    with:
+      source-sha: ${{ github.sha }}
+
   artifact-roundtrip:
     name: Artifact round trip
     runs-on: ubuntu-24.04
@@ -174,6 +182,8 @@ jobs:
         run: git ls-files -z '*.sh' | xargs -0 pipx run --spec shellcheck-py==0.11.0.1 shellcheck
 
   workflow-tools:
+    if: needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha
+    needs: [javascript-first]
     name: Workflow Tool Installation
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -183,6 +193,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.javascript-first.outputs.tested-sha == github.sha && github.sha }}
           persist-credentials: false
 
       - name: Setup Rust
@@ -202,6 +213,7 @@ jobs:
   pipeline-status:
     name: Pipeline Status
     needs:
+      - javascript-first
       - artifact-roundtrip
       - actionlint
       - zizmor

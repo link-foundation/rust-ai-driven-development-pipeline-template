@@ -18,7 +18,17 @@ env:
   GIT_CONFIG_VALUE_0: main
 
 jobs:
+  javascript-first:
+    concurrency:
+      group: check-${{ github.workflow }}-${{ github.ref }}-javascript-first-caller
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    uses: ./.github/workflows/javascript-first-gate.yml # zizmor: ignore[self-repository]
+    with:
+      source-sha: ${{ github.sha }}
+
   cargo-audit:
+    if: needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha
+    needs: [javascript-first]
     name: Cargo audit
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -28,6 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.javascript-first.outputs.tested-sha == github.sha && github.sha }}
           persist-credentials: false
 
       - uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
@@ -43,6 +54,8 @@ jobs:
         run: cargo audit --file Cargo.lock --deny warnings
 
   codeql:
+    if: needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha
+    needs: [javascript-first]
     name: CodeQL (${{ matrix.language }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -59,6 +72,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.javascript-first.outputs.tested-sha == github.sha && github.sha }}
           persist-credentials: false
 
       - uses: github/codeql-action/init@v4
@@ -142,6 +156,7 @@ jobs:
   pipeline-status:
     name: Pipeline Status
     needs:
+      - javascript-first
       - cargo-audit
       - codeql
       - dependency-review

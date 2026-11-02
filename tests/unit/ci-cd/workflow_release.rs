@@ -79,7 +79,7 @@ fn documentation_deploy_is_independent_from_release_publication() {
     let workflow = release_workflow();
     let deploy_docs = job_block(&workflow, "deploy-docs");
 
-    assert!(deploy_docs.contains("needs: [build]"));
+    assert!(deploy_docs.contains("needs: [javascript-first, build]"));
     assert!(deploy_docs.contains("needs.build.result == 'success'"));
     assert!(deploy_docs.contains("github.ref == 'refs/heads/main'"));
     assert!(!deploy_docs.contains("needs: [auto-release, manual-release]"));
@@ -164,6 +164,7 @@ fn documentation_deploy_publishes_working_pages_root() {
 fn release_workflow_jobs_have_explicit_timeouts() {
     let workflow = release_workflow();
     let expected_timeouts = [
+        ("javascript-first", 0),
         ("detect-changes", 5),
         // Docs validation (issue #161): required documents and their sections.
         ("validate-docs", 5),
@@ -187,6 +188,7 @@ fn release_workflow_jobs_have_explicit_timeouts() {
         ("build", 10),
         ("auto-release", 60),
         ("manual-release", 60),
+        ("release-javascript-first", 0),
         ("docker-publish", 60),
         ("docker-merge-manifest", 10),
         ("changelog-pr", 10),
@@ -203,6 +205,17 @@ fn release_workflow_jobs_have_explicit_timeouts() {
 
     for (job_name, timeout_minutes) in expected_timeouts {
         let job = job_block(&workflow, job_name);
+        if timeout_minutes == 0 {
+            assert!(job.contains("uses: ./.github/workflows/javascript-first-gate.yml"));
+            let gate = fs::read_to_string(format!(
+                "{}/.github/workflows/javascript-first-gate.yml",
+                env!("CARGO_MANIFEST_DIR")
+            ))
+            .unwrap()
+            .replace("\r\n", "\n");
+            assert!(gate.contains("    timeout-minutes: 30\n"));
+            continue;
+        }
         let expected = format!("    timeout-minutes: {timeout_minutes}\n");
         assert!(
             job.contains(&expected),
@@ -299,7 +312,7 @@ fn test_job_is_gated_by_detected_code_changes_not_changelog_result() {
     let test = job_block(&workflow, "test");
 
     assert!(
-        test.contains("needs: [detect-changes, cargo-lock]"),
+        test.contains("needs: [javascript-first, detect-changes, cargo-lock]"),
         "test job should depend on change detection and the Cargo.lock guard"
     );
     assert!(
@@ -371,7 +384,7 @@ fn cargo_lock_guard_blocks_cached_cargo_jobs() {
     for job_name in ["lint", "test", "coverage"] {
         let job = job_block(&workflow, job_name);
         assert!(
-            job.contains("needs: [detect-changes, cargo-lock]"),
+            job.contains("needs: [javascript-first, detect-changes, cargo-lock]"),
             "{job_name} should depend on the Cargo.lock guard before restoring cargo caches"
         );
         assert!(
@@ -486,7 +499,9 @@ fn release_workflow_publishes_optional_docker_hub_image_after_crate_is_visible()
     );
 
     let docker_publish = job_block(&workflow, "docker-publish");
-    assert!(docker_publish.contains("needs: [auto-release, manual-release, release-preflight]"));
+    assert!(docker_publish.contains(
+        "needs: [release-javascript-first, auto-release, manual-release, release-preflight]"
+    ));
     assert!(docker_publish.contains("push-by-digest=true"));
 }
 

@@ -211,8 +211,8 @@ fn release_yml_runs_the_check_from_the_detect_changes_output() {
         .expect("release.yml must declare a validate-docs job (issue #161)");
 
     for required in [
-        "needs: [detect-changes]",
-        "if: needs.detect-changes.outputs.docs-changed == 'true'",
+        "needs: [javascript-first, detect-changes]",
+        "needs.detect-changes.outputs.docs-changed == 'true'",
         "timeout-minutes: 5",
         "persist-credentials: false",
         "bash scripts/check-required-docs.sh",
