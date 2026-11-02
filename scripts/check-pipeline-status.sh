@@ -86,6 +86,22 @@ classify_cancellations() {
   done <<<"$names"
 }
 
+# Jobs GitHub never started (no runner, no steps, "not acquired" annotation) are
+# infrastructure, not code (issue #226). They still fail the gate because nothing
+# was tested, but the error names the cause. Best effort: needs GH_TOKEN with
+# actions: read and checks: read; without it the gate behaves as before.
+report_unacquired_jobs() {
+  if [ -z "${GH_TOKEN:-}" ] || [ -z "${GITHUB_RUN_ID:-}" ] || [ -z "${GITHUB_REPOSITORY:-}" ]; then
+    trace "GH_TOKEN, GITHUB_RUN_ID or GITHUB_REPOSITORY unset; skipping the runner-acquisition check"
+    return 0
+  fi
+  local names
+  names="$(python3 "$SCRIPT_DIR/unacquired-jobs.py" list --repository "$GITHUB_REPOSITORY" \
+    --run-id "$GITHUB_RUN_ID" --attempt "${GITHUB_RUN_ATTEMPT:-1}" || true)"
+  [ -n "$names" ] || return 0
+  echo "::error title=Hosted runner not acquired::$(join_names "$names"). GitHub could not provide a runner, so no code ran in these jobs; rerun-infrastructure-failures.yml reruns them automatically, or run: gh run rerun ${GITHUB_RUN_ID} --failed --repo ${GITHUB_REPOSITORY}"
+}
+
 [ "$VERBOSE" != "1" ] || trace "needs: $NEEDS_JSON"
 failed_lines="$(select_by_result other)"; cancelled_lines="$(select_by_result cancelled)"
 failed="$(join_names "$failed_lines")"; cancelled="$(join_names "$cancelled_lines")"
@@ -95,6 +111,7 @@ status=0
 if [ -n "$failed" ]; then
   echo "::error title=Pipeline failed::Failing jobs: ${failed}"; status=1
 fi
+if [ -n "$failed" ] || [ -n "$cancelled" ]; then report_unacquired_jobs; fi
 if [ -n "$cancelled" ]; then
   superseded=no; if run_is_superseded; then superseded=yes; fi
   superseded_lines=""; overrun_lines=""
