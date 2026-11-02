@@ -13,6 +13,7 @@ This guide covers common CI/CD issues and their solutions for Rust projects usin
 7. [Docker Hub Publishing Fails](#docker-hub-publishing-fails)
 8. [Secret Configuration Issues](#secret-configuration-issues)
 9. [Multi-Language Repository Issues](#multi-language-repository-issues)
+10. [Hosted Runner Not Acquired](#hosted-runner-not-acquired)
 
 ---
 
@@ -389,6 +390,49 @@ steps:
 
 ### Reference
 - [browser-commander Issue #31](https://github.com/link-foundation/browser-commander/issues/31)
+
+---
+
+## Hosted Runner Not Acquired
+
+### Symptom
+
+A job (usually a macOS arm64 leg such as `Build macos-arm64`) ends `cancelled`
+or `failed` with no steps and an empty runner name, and carries the annotation
+"The job was not acquired by Runner of type hosted even after multiple
+attempts". Pipeline Status fails and, on `main`, the release is skipped.
+
+### Root Cause
+
+GitHub ran out of hosted capacity for that runner label and gave up on the
+queued job. No code ran, so the failure says nothing about the change.
+
+### How This Template Handles It
+
+- `scripts/check-pipeline-status.sh` still fails the run, because nothing was
+  tested, but adds a `Hosted runner not acquired` error naming those jobs.
+- `.github/workflows/rerun-infrastructure-failures.yml` watches every workflow
+  with a Pipeline Status gate. When a run fails and at least one job matches
+  all of: conclusion `cancelled`/`failure`, no steps, no runner and the "not
+  acquired" annotation, it runs `gh run rerun <run-id> --failed`, which also
+  re-evaluates the release and status gates. It reruns attempts 1 and 2 only,
+  skips runs that a newer run of the same workflow and branch has superseded,
+  and never reruns a job that ran steps. On attempt 3 it reports an error with
+  the manual command instead.
+
+The decision lives in `scripts/unacquired-jobs.py` (offline tests:
+`experiments/issue-226-regressions.py`). Set the repository variable
+`UNACQUIRED_JOBS_VERBOSE=1` for a trace. To check a run by hand:
+
+```bash
+python3 scripts/unacquired-jobs.py rerun --dry-run \
+  --repository owner/repo --run-id <run-id> --attempt <attempt>
+```
+
+### Solution When Retries Are Exhausted
+
+Wait for capacity and run
+`gh run rerun <run-id> --failed --repo owner/repo`.
 
 ---
 
