@@ -27,6 +27,12 @@ on: # zizmor: ignore[dangerous-triggers]
 permissions:
   contents: read
 
+# Configure checkout's git init before the first step runs.
+env:
+  GIT_CONFIG_COUNT: '1'
+  GIT_CONFIG_KEY_0: init.defaultBranch
+  GIT_CONFIG_VALUE_0: main
+
 jobs:
   rerun:
     name: Rerun jobs that never got a runner
