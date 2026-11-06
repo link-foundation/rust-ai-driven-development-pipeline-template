@@ -245,7 +245,7 @@ jobs:
         run: rust-script scripts/check-version-modification.rs
 
   # === SECRETS SCAN ===
-  # Language-agnostic credential scan; runs via npx so no Node dependency is committed.
+  # Language-agnostic credential scan with locked tooling and tracked evidence.
   secrets-scan:
     if: needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha
     needs: [javascript-first]
@@ -261,8 +261,19 @@ jobs:
           ref: ${{ needs.javascript-first.outputs.tested-sha == github.sha && github.sha }}
           persist-credentials: false
 
-      - name: Run secretlint
-        run: npx --yes -p secretlint@13.0.7 -p @secretlint/secretlint-rule-preset-recommend@13.0.7 secretlint --secretlintignore .gitignore "**/*"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Install locked secretlint
+        # secretlint@13.0.7 and @secretlint/secretlint-rule-preset-recommend@13.0.7
+        run: npm ci --prefix .github/secretlint --ignore-scripts --no-audit --no-fund
+
+      - name: Test tracked evidence scanner
+        run: node --test .github/scripts/check-secrets.test.mjs
+
+      - name: Run secretlint on tracked evidence
+        run: node .github/scripts/check-secrets.mjs
 
   # === FRESH MERGE SIMULATION ===
   # Catches semantic merge conflicts: a pull request that is green in isolation but

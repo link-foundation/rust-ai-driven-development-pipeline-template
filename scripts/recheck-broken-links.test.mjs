@@ -50,6 +50,26 @@ function once(fn) {
 }
 
 describe('lychee report classification', () => {
+  it('preserves adjacent description-free failures and ignores other sections', () => {
+    for (const newline of ['\n', '\r\n']) {
+      const report = [
+        '## Successful links', '* [200] https://example.com/ok',
+        '## Errors per input', '### Errors in README.md',
+        '* [404] https://example.com/missing',
+        '* [ERROR] https://example.com/reset',
+        '- [TIMEOUT] <https://example.com/slow> (at 1:2)',
+        '- [ERROR] <https://example.com/busy> | Rejected status code: 503',
+        '## Redirects per input', '* [301] https://example.com/moved',
+      ].join(newline);
+      assert.deepEqual(parseLycheeFailures(report), [
+        { marker: '404', url: 'https://example.com/missing', detail: '', answered: true, retryable: false },
+        { marker: 'ERROR', url: 'https://example.com/reset', detail: '', answered: false, retryable: true },
+        { marker: 'TIMEOUT', url: 'https://example.com/slow', detail: '', answered: false, retryable: true },
+        { marker: 'ERROR', url: 'https://example.com/busy', detail: 'Rejected status code: 503', answered: true, retryable: true },
+      ]);
+    }
+  });
+
   it('marks a failure carrying a status code as final', () => {
     const failures = parseLycheeFailures(fixtureReport);
     const answered = failures.filter((failure) => failure.answered);

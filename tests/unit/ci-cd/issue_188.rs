@@ -94,6 +94,13 @@ fn security_scanners_and_secretlint_are_pinned() {
     let release = read(".github/workflows/release.yml");
     assert!(release.contains("secretlint@13.0.7"));
     assert!(release.contains("@secretlint/secretlint-rule-preset-recommend@13.0.7"));
+    assert!(release.contains("npm ci --prefix .github/secretlint --ignore-scripts"));
+    assert!(release.contains("node --test .github/scripts/check-secrets.test.mjs"));
+    assert!(release.contains("node .github/scripts/check-secrets.mjs"));
+    let manifest = read(".github/secretlint/package.json");
+    assert!(manifest.contains("\"secretlint\": \"13.0.7\""));
+    assert!(manifest.contains("\"@secretlint/secretlint-rule-preset-recommend\": \"13.0.7\""));
+    assert!(read(".github/secretlint/package-lock.json").contains("\"lockfileVersion\": 3"));
 }
 
 #[test]

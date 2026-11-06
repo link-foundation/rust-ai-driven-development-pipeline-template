@@ -54,28 +54,31 @@ use std::process::Command;
 #[path = "rust-paths.rs"]
 mod rust_paths;
 
-fn exec_in(command: &str, args: &[&str], current_dir: Option<&Path>) -> String {
+fn exec_in(command: &str, args: &[&str], current_dir: Option<&Path>) -> std::io::Result<String> {
     let mut process = Command::new(command);
     process.args(args);
     if let Some(current_dir) = current_dir {
         process.current_dir(current_dir);
     }
-
-    match process.output() {
-        Ok(output) => {
-            if output.status.success() {
-                String::from_utf8_lossy(&output.stdout).trim().to_string()
-            } else {
-                eprintln!("Error executing {} {:?}", command, args);
-                eprintln!("{}", String::from_utf8_lossy(&output.stderr));
-                String::new()
-            }
-        }
-        Err(e) => {
-            eprintln!("Failed to execute {} {:?}: {}", command, args, e);
-            String::new()
-        }
+    let output = process.output().map_err(|error| {
+        std::io::Error::new(
+            error.kind(),
+            format!("Failed to execute {command} {args:?}: {error}"),
+        )
+    })?;
+    if !output.status.success() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!(
+                "Error executing {command} {args:?} ({}): {}",
+                output.status,
+                String::from_utf8_lossy(&output.stderr).trim()
+            ),
+        ));
     }
+    String::from_utf8(output.stdout)
+        .map(|value| value.trim().to_string())
+        .map_err(|error| std::io::Error::new(std::io::ErrorKind::InvalidData, error))
 }
 
 #[path = "github-output.rs"]
@@ -87,86 +90,67 @@ fn set_output(name: &str, value: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-fn is_merge_commit_in_repo(repo_path: &Path) -> bool {
-    let output = exec_in("git", &["cat-file", "-p", "HEAD"], Some(repo_path));
-    output
+fn commit_parents(repo_path: &Path, revision: &str) -> std::io::Result<Vec<String>> {
+    // Inspect the commit's headers independently of its diff. Even a shallow
+    // commit records its parent, so unavailable history fails rather than being
+    // mistaken for an initial commit. Ignore parent-like lines in the message.
+    let output = exec_in("git", &["cat-file", "-p", revision], Some(repo_path))?;
+    Ok(output
         .lines()
-        .filter(|line| line.starts_with("parent "))
-        .count()
-        > 1
+        .take_while(|line| !line.is_empty())
+        .filter_map(|line| line.strip_prefix("parent ").map(String::from))
+        .collect())
 }
 
-fn get_changed_files() -> Vec<String> {
+fn get_changed_files() -> std::io::Result<Vec<String>> {
     let event_name = env::var("GITHUB_EVENT_NAME").unwrap_or_default();
     get_changed_files_in_repo(Path::new("."), &event_name)
 }
 
-fn get_changed_files_in_repo(repo_path: &Path, event_name: &str) -> Vec<String> {
-    // Disable rename detection in every diff so moving code into an excluded
-    // folder still reports the deleted source path and activates the code jobs.
-    // GitHub Actions checks out a synthetic merge commit for pull_request
-    // events: HEAD is the merge commit, HEAD^ is the base branch, HEAD^2
-    // is the actual PR head. To get the per-commit diff (what the latest
-    // push actually changed), we compare HEAD^2^ to HEAD^2.
-    // For push events, including real merge commits pushed to main, compare
-    // HEAD's first parent to HEAD so the full merge diff is detected.
-    if event_name == "pull_request" && is_merge_commit_in_repo(repo_path) {
-        println!("Merge commit detected (pull_request event)");
-        println!("Comparing HEAD^2^ to HEAD^2 (per-commit diff of PR head)");
-        let output = exec_in(
-            "git",
-            &["diff", "--name-only", "--no-renames", "HEAD^2^", "HEAD^2"],
-            Some(repo_path),
-        );
-        if !output.is_empty() {
-            return output
-                .lines()
-                .filter(|s| !s.is_empty())
-                .map(String::from)
-                .collect();
-        }
-        // Fallback: first commit in PR, compare base to PR head
-        println!("HEAD^2^ not available (first commit in PR), comparing HEAD^ to HEAD^2");
-        let output = exec_in(
-            "git",
-            &["diff", "--name-only", "--no-renames", "HEAD^", "HEAD^2"],
-            Some(repo_path),
-        );
-        if !output.is_empty() {
-            return output
-                .lines()
-                .filter(|s| !s.is_empty())
-                .map(String::from)
-                .collect();
-        }
-    }
-
-    println!("Comparing HEAD^1 to HEAD");
-    let output = exec_in(
+fn get_changed_files_in_repo(repo_path: &Path, event_name: &str) -> std::io::Result<Vec<String>> {
+    exec_in(
         "git",
-        &["diff", "--name-only", "--no-renames", "HEAD^1", "HEAD"],
+        &["rev-parse", "--verify", "HEAD^{commit}"],
         Some(repo_path),
-    );
-
-    if output.is_empty() {
-        println!("HEAD^1 not available, listing all files in HEAD");
-        let output = exec_in(
+    )?;
+    let parents = commit_parents(repo_path, "HEAD")?;
+    // Disable rename detection so moving code into an excluded folder still
+    // reports the deleted source. Preserve the PR's per-commit diff semantics.
+    let output = if event_name == "pull_request" && parents.len() > 1 {
+        println!("Merge commit detected (pull_request event)");
+        let pr_parents = commit_parents(repo_path, "HEAD^2")?;
+        let base = if pr_parents.is_empty() {
+            "HEAD^"
+        } else {
+            "HEAD^2^"
+        };
+        println!("Comparing {base} to HEAD^2 (per-commit diff of PR head)");
+        exec_in(
+            "git",
+            &["diff", "--name-only", "--no-renames", base, "HEAD^2"],
+            Some(repo_path),
+        )?
+    } else if parents.is_empty() {
+        println!("Initial commit, listing all files in HEAD");
+        exec_in(
             "git",
             &["ls-tree", "--name-only", "-r", "HEAD"],
             Some(repo_path),
-        );
-        return output
-            .lines()
-            .filter(|s| !s.is_empty())
-            .map(String::from)
-            .collect();
-    }
-
-    output
+        )?
+    } else {
+        println!("Comparing HEAD^1 to HEAD");
+        exec_in(
+            "git",
+            &["diff", "--name-only", "--no-renames", "HEAD^1", "HEAD"],
+            Some(repo_path),
+        )?
+    };
+    // Ok("") is a real empty diff; it must never select a fallback.
+    Ok(output
         .lines()
-        .filter(|s| !s.is_empty())
+        .filter(|line| !line.is_empty())
         .map(String::from)
-        .collect()
+        .collect())
 }
 
 /// Package path prefix relative to the repository root.
@@ -268,7 +252,7 @@ fn included_changed_files<'a>(prefix: &str, changed_files: &'a [String]) -> Vec<
 fn main() -> std::io::Result<()> {
     println!("Detecting file changes for CI/CD...\n");
 
-    let changed_files = get_changed_files();
+    let changed_files = get_changed_files()?;
 
     println!("Changed files:");
     if changed_files.is_empty() {
@@ -426,6 +410,22 @@ mod tests {
     }
 
     #[test]
+    fn successful_empty_commits_do_not_fall_back_to_listing_all_files() {
+        let repo = create_merge_repo();
+        run_git(&repo, &["checkout", "feature"]);
+        run_git(&repo, &["commit", "--allow-empty", "-m", "Empty commit"]);
+        assert!(get_changed_files_in_repo(&repo, "push").unwrap().is_empty());
+        run_git(&repo, &["checkout", "main"]);
+        run_git(
+            &repo,
+            &["merge", "--no-ff", "feature", "-m", "Merge empty commit"],
+        );
+        assert!(get_changed_files_in_repo(&repo, "pull_request")
+            .unwrap()
+            .is_empty());
+    }
+
+    #[test]
     fn shell_scripts_and_composite_action_files_are_code() {
         let pattern = code_change_pattern();
         for path in [
@@ -512,7 +512,7 @@ mod tests {
                 "docs/case-studies/issue-109/repro.md",
             ] {
                 let repo = create_single_change_merge_repo(file_path);
-                let changed_files = get_changed_files_in_repo(&repo, event_name);
+                let changed_files = get_changed_files_in_repo(&repo, event_name).unwrap();
 
                 assert_eq!(changed_files, [file_path]);
                 assert!(
@@ -577,7 +577,7 @@ mod tests {
     #[test]
     fn examples_only_pull_request_activates_no_output_in_multi_language_layout() {
         let repo = create_single_change_merge_repo("rust/examples/demo.rs");
-        let changed_files = get_changed_files_in_repo(&repo, "pull_request");
+        let changed_files = get_changed_files_in_repo(&repo, "pull_request").unwrap();
 
         assert_eq!(changed_files, ["rust/examples/demo.rs"]);
         assert!(
@@ -598,7 +598,7 @@ mod tests {
     fn push_merge_commit_detects_full_first_parent_merge_diff() {
         let repo = create_merge_repo();
 
-        let changed_files = get_changed_files_in_repo(&repo, "push");
+        let changed_files = get_changed_files_in_repo(&repo, "push").unwrap();
 
         assert!(
             changed_files.iter().any(|file| file == "src/lib.rs"),
@@ -625,7 +625,7 @@ mod tests {
     fn pull_request_synthetic_merge_uses_latest_pr_head_commit_diff() {
         let repo = create_merge_repo();
 
-        let changed_files = get_changed_files_in_repo(&repo, "pull_request");
+        let changed_files = get_changed_files_in_repo(&repo, "pull_request").unwrap();
 
         assert_eq!(
             changed_files,
