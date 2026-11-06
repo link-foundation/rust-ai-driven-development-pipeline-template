@@ -69,6 +69,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.22.0] - 2026-11-06
+
+### Changed
+- Automatically require native JavaScript, strict parity and regeneration checks when a production counterpart is detected, while preserving Rust-only projects. Bind Rust CI, desktop builds and release candidates to the successful prerequisite's exact revision.
+
+### Added
+- Regression coverage for automatic detection, Rust-only bypasses, failed or skipped prerequisites, incomplete inventories, generated drift and every downstream Rust dependency.
+- Validate alternative candidate provenance before checking out code in default-branch cache contexts; enforce tested-revision equality before release-tag builds.
+
+### Added
+- `rerun-infrastructure-failures.yml` automatically reruns, at most twice, a failed run whose job GitHub never handed to a hosted runner ("The job was not acquired by Runner of type hosted even after multiple attempts"), so a macOS capacity shortage no longer blocks a release on `main` until someone reruns it by hand. Jobs that ran steps and failed, and superseded runs, are never rerun (issue #226).
+
+### Changed
+- The Pipeline Status gate names jobs that never got a runner with a `Hosted runner not acquired` error. It stays red because nothing was tested; its job now has `actions: read` and `checks: read` to read the run's jobs and annotations.
+
+### Fixed
+- Preserve adjacent lychee failures and restrict retry parsing to the error section.
+- Reject incomplete CodeQL extraction and configuration diagnostics even when analysis reports success with no findings.
+- Scan every tracked file for credentials regardless of build ignores, including bounded decompression of gzip evidence, using locked secretlint dependencies.
+- Fail change detection on unreadable Git evidence and preserve successful empty diffs without falling back to an all-files listing.
 ## [0.21.0] - 2026-10-30
 
 ### Added
