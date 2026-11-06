@@ -54,6 +54,9 @@ fi
 if ! python3 experiments/issue-224-regressions.py -v; then
   status=1
 fi
+if ! python3 experiments/issue-228-git-regressions.py -v; then
+  status=1
+fi
 if ! python3 experiments/issue-226-regressions.py -v; then
   status=1
 fi

@@ -13,10 +13,35 @@ function reportsIn(directory) {
   });
 }
 
+// Invocation success does not guarantee complete extraction. SARIF defaults an
+// omitted notification level to warning, including configuration diagnostics.
+function invocationDiagnostics(invocation, context) {
+  const failures = [];
+  for (const field of ['toolExecutionNotifications', 'toolConfigurationNotifications']) {
+    if (!Object.hasOwn(invocation, field)) continue;
+    if (!Array.isArray(invocation[field])) throw new Error(`Malformed SARIF notification array: ${context}, ${field}`);
+    for (const notification of invocation[field]) {
+      const level = notification?.level ?? 'warning';
+      if (!notification || typeof notification !== 'object' || Array.isArray(notification) ||
+          !(typeof notification.message?.text === 'string' || typeof notification.message?.markdown === 'string') ||
+          (Object.hasOwn(notification, 'level') && !['error', 'warning', 'note', 'none'].includes(notification.level))) {
+        throw new Error(`Malformed SARIF notification: ${context}, ${field}`);
+      }
+      if (level === 'note' || level === 'none') continue;
+      const location = notification.locations?.[0]?.physicalLocation;
+      failures.push(`${context}, ${field}: ${notification.descriptor?.id ?? notification.descriptor?.index ?? '?'} (${level}) ` +
+        `${location?.artifactLocation?.uri ?? '?'}:${location?.region?.startLine ?? '?'}: ` +
+        `${notification.message.text ?? notification.message.markdown}`);
+    }
+  }
+  return failures;
+}
+
 export function checkCodeqlResults(directory) {
   const reports = reportsIn(directory).sort();
   if (!reports.length) throw new Error(`No SARIF reports in ${directory}`);
   const findings = [];
+  const diagnostics = [];
   for (const file of reports) {
     const data = JSON.parse(readFileSync(file, 'utf8'));
     if (data?.version !== '2.1.0' || !Array.isArray(data.runs) || !data.runs.length) {
@@ -28,6 +53,9 @@ export function checkCodeqlResults(directory) {
           !Array.isArray(run.invocations) || !run.invocations.length ||
           run.invocations.some((invocation) => invocation?.executionSuccessful !== true)) {
         throw new Error(`Missing or unsuccessful CodeQL analysis: ${context}`);
+      }
+      for (const [invocationIndex, invocation] of run.invocations.entries()) {
+        diagnostics.push(...invocationDiagnostics(invocation, `${context}, invocation ${invocationIndex + 1}`));
       }
       for (const result of run.results) {
         if (!result || typeof result.ruleId !== 'string' ||
@@ -42,6 +70,7 @@ export function checkCodeqlResults(directory) {
       }
     }
   }
+  if (diagnostics.length) throw new Error(`${diagnostics.length} incomplete CodeQL analysis diagnostic(s):\n${diagnostics.join('\n')}`);
   if (findings.length) throw new Error(`${findings.length} unresolved CodeQL finding(s):\n${findings.join('\n')}`);
   return reports.length;
 }
