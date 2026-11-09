@@ -119,7 +119,7 @@ fn pipeline_status_script_handles_all_conclusions() {
                     "1111111111111111111111111111111111111111",
                 ),
             ],
-            false,
+            true,
         ),
         (
             "cancelled on main while still the branch head",

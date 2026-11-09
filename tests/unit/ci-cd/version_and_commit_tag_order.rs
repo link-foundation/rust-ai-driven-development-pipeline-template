@@ -18,7 +18,7 @@ fn tag_is_created_after_the_push_retry_loop() {
     let source = script();
 
     let rebase = source
-        .find(r#"&["pull", "--rebase", "origin", &current_branch]"#)
+        .rfind(r#"&["rebase", &remote]"#)
         .expect("push-retry rebase not found");
     let tag = source
         .find(r#"&["tag", "-a", &tag_name, "-m", &tag_msg]"#)

@@ -141,3 +141,18 @@ its output with the inventory. The gate requires a clean worktree after checking
 commands must generate temporary artifacts outside tracked source or in ignored
 build directories. A caller cannot substitute a source round trip or placeholder
 command for executable native checks and complete feature parity.
+
+Release synchronization also preserves the source tree validated by the current
+run. `version-and-commit.rs` records its starting HEAD and checks fetched immutable
+commits before each rebase and the resulting tree afterward. Only regular release
+metadata files may differ: package versions in Cargo/npm manifests and locks,
+`CHANGELOG.md`, and deleted consumed `changelog.d/*.md` fragments. All remaining
+parsed manifest and lock values must match. New manifests, dependency changes,
+script changes, symlinks, fragment additions/edits and unrelated paths fail closed;
+let the newer commit's own CI run release them. Unsupported lock formats are
+refused rather than assumed equivalent. This guard supplements ReleaseIndex's
+checks on uncommitted writes.
+
+Read-only checks cancel superseded work on every ref, including main. The status
+gate excuses a cancelled job only when its workflow opts into cancellation and
+the branch has moved; current-run cancellations and cancelled writers still fail.
