@@ -132,15 +132,15 @@ class PipelineRegressions(unittest.TestCase):
 
     def test_real_release_cancel_policies_and_unknowns_fail_closed(self):
         names = re.findall(r'^  ([\w-]+):$', (WORKFLOWS / 'release.yml').read_text(), re.M)
-        for ref, expected in [('refs/pull/7/merge', 'true'), ('refs/heads/main', 'false')]:
+        for ref, expected in [('refs/pull/7/merge', 'true'), ('refs/heads/main', 'true')]:
             p = run(['bash', str(SCRIPTS / 'read-job-cancel-in-progress.sh'), *names], env={
                 'WORKFLOW_FILE': str(WORKFLOWS / 'release.yml'), 'GITHUB_REF': ref})
             values = dict(line.split('\t') for line in p.stdout.splitlines())
             self.assertNotIn('unknown', values.values(), p.stdout)
             self.assertEqual(values['test'], expected)
         for ref, head, expected in [('refs/pull/7/merge', 'b'*40, 0),
-                                    ('refs/heads/main', 'b'*40, 1),
-                                    ('refs/pull/7/merge', 'a'*40, 1), ('', 'b'*40, 1)]:
+                                    ('refs/heads/main', 'b'*40, 0),
+                                    ('refs/pull/7/merge', 'a'*40, 1), ('', 'b'*40, 0)]:
             p = run(['bash', str(SCRIPTS / 'check-pipeline-status.sh')], env={
                 'NEEDS_JSON': '{"test":{"result":"cancelled"}}', 'RUN_SHA': 'a'*40,
                 'BRANCH_HEAD_SHA': head, 'GITHUB_REF': ref,

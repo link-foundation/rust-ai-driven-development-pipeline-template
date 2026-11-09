@@ -21,7 +21,7 @@ jobs:
   javascript-first:
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-javascript-first-caller
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     uses: ./.github/workflows/javascript-first-gate.yml # zizmor: ignore[self-repository]
     with:
       source-sha: ${{ github.sha }}

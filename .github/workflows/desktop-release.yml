@@ -30,7 +30,7 @@ jobs:
   resolve:
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-resolve
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     name: Resolve release
     if: ${{ vars.DESKTOP_RELEASE_ENABLED == 'true' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-24.04
@@ -68,7 +68,7 @@ jobs:
   javascript-first:
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-javascript-first-caller
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: resolve
     if: ${{ !cancelled() && (github.event_name == 'pull_request' || needs.resolve.outputs.should_build == 'true') }}
     uses: ./.github/workflows/javascript-first-gate.yml # zizmor: ignore[self-repository]
@@ -78,7 +78,7 @@ jobs:
   build:
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-build-${{ matrix.label }}
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     name: Build ${{ matrix.label }}
     needs: [resolve, javascript-first]
     if: ${{ !cancelled() && needs.javascript-first.result == 'success' && (github.event_name == 'pull_request' || needs.resolve.outputs.should_build == 'true') }}

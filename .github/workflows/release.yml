@@ -56,9 +56,8 @@ env:
   DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
 
 # Concurrency is intentionally job-scoped. Each read-only job cancels only its
-# superseded counterpart for the same non-main ref. Main checks are not
-# cancelled, so a cancelled main job is always exceptional and the terminal
-# status gate can safely report it as a failure. Jobs that can
+# superseded counterpart for the same ref, including main. The terminal status
+# gate excuses cancellation only for a superseded cancellable job. Jobs that can
 # mutate repositories, registries, releases, or Pages all use one shared
 # concurrency group instead. A write that has started is never cancelled, and
 # GitHub queues up to 100 pending writers without replacing them.
@@ -66,7 +65,7 @@ jobs:
   javascript-first:
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-javascript-first-caller
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     uses: ./.github/workflows/javascript-first-gate.yml # zizmor: ignore[self-repository]
     with:
       source-sha: ${{ github.sha }}
@@ -79,7 +78,7 @@ jobs:
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-detect-changes
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     if: ${{ needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha && (github.event_name != 'workflow_dispatch') }}
     outputs:
       rs-changed: ${{ steps.changes.outputs.rs-changed }}
@@ -122,7 +121,7 @@ jobs:
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-validate-docs
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: [javascript-first, detect-changes]
     if: ${{ needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha && (needs.detect-changes.outputs.docs-changed == 'true') }}
     steps:
@@ -183,7 +182,7 @@ jobs:
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-changelog
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: [javascript-first, detect-changes]
     if: ${{ needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha && (github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true') }}
     steps:
@@ -218,7 +217,7 @@ jobs:
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-version-check
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     if: ${{ needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha && (github.event_name == 'pull_request') }}
     steps:
       - uses: actions/checkout@v7
@@ -254,7 +253,7 @@ jobs:
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-secrets-scan
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v7
         with:
@@ -284,7 +283,7 @@ jobs:
     timeout-minutes: 30
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-fresh-merge
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: [javascript-first, detect-changes]
     if: ${{ needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha && (github.event_name == 'pull_request' && needs.detect-changes.outputs.any-code-changed == 'true') }}
     steps:
@@ -337,7 +336,7 @@ jobs:
     timeout-minutes: 60
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-docker-build
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: [javascript-first, detect-changes]
     if: ${{ needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha && (!cancelled() && (github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.any-code-changed == 'true')) }}
     steps:
@@ -384,7 +383,7 @@ jobs:
     timeout-minutes: 5
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-cargo-lock
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: [javascript-first, detect-changes]
     if: |
       needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha &&
@@ -423,7 +422,7 @@ jobs:
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-lint
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: [javascript-first, detect-changes, cargo-lock]
     # Note: !cancelled() is required because detect-changes is skipped on workflow_dispatch,
     # and without it, this job would also be skipped even though its condition includes workflow_dispatch.
@@ -520,7 +519,7 @@ jobs:
     timeout-minutes: 30
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: [javascript-first, detect-changes, cargo-lock]
     # Note: !cancelled() is required because detect-changes is skipped on workflow_dispatch,
     # and without it, this job would also be skipped even though its condition includes workflow_dispatch.
@@ -596,7 +595,7 @@ jobs:
     timeout-minutes: 20
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-script-tests
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: [javascript-first, detect-changes, cargo-lock]
     # Note: !cancelled() is required because detect-changes is skipped on workflow_dispatch,
     # and without it, this job would also be skipped even though its condition includes workflow_dispatch.
@@ -652,7 +651,7 @@ jobs:
     timeout-minutes: 15
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-coverage
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: [javascript-first, detect-changes, cargo-lock]
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -725,7 +724,7 @@ jobs:
     timeout-minutes: 10
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-build
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: [javascript-first, lint, test, script-tests]
     if: ${{ needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha && (!cancelled() && needs.lint.result == 'success' && needs.test.result == 'success' && needs.script-tests.result == 'success') }}
     steps:
@@ -1145,7 +1144,7 @@ jobs:
   release-javascript-first:
     concurrency:
       group: check-${{ github.workflow }}-${{ github.ref }}-release-javascript-first-caller
-      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+      cancel-in-progress: true
     needs: [auto-release, manual-release]
     if: ${{ !cancelled() && (needs.auto-release.outputs.tested-sha != '' || needs.manual-release.outputs.tested-sha != '') }}
     uses: ./.github/workflows/javascript-first-gate.yml # zizmor: ignore[self-repository]

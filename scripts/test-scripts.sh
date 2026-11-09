@@ -54,6 +54,12 @@ fi
 if ! python3 experiments/issue-224-regressions.py -v; then
   status=1
 fi
+if ! python3 experiments/issue-230-concurrency.py -v; then
+  status=1
+fi
+if ! python3 experiments/issue-231-release-sync.py -v; then
+  status=1
+fi
 if ! python3 experiments/issue-228-git-regressions.py -v; then
   status=1
 fi

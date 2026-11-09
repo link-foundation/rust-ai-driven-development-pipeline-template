@@ -18,6 +18,7 @@
 //! ureq = "2"
 //! serde = { version = "1", features = ["derive"] }
 //! serde_json = "1"
+//! toml = "0.8"
 //! ```
 
 // Test harnesses replace main; the real build still denies unused helpers.
@@ -32,6 +33,9 @@ use std::path::{Path, PathBuf};
 #[cfg(not(test))]
 use std::process::exit;
 use std::process::Command;
+
+#[path = "version-and-commit/source-guard.rs"]
+mod source_guard;
 
 #[path = "release-index.rs"]
 mod release_index;
@@ -500,6 +504,13 @@ fn main() -> std::io::Result<()> {
             exit(1);
         });
 
+    // This immutable tree is the source validated by this CI run. Every later
+    // synchronization must preserve it, including retries after our own commit.
+    let validated_source = exec("git", &["rev-parse", "HEAD"]).unwrap_or_else(|e| {
+        eprintln!("::error::Could not record validated source: {e}");
+        exit(1);
+    });
+
     // Configure git
     let _ = exec("git", &["config", "user.name", "github-actions[bot]"]);
     let _ = exec(
@@ -522,7 +533,8 @@ fn main() -> std::io::Result<()> {
     let current_branch =
         exec("git", &["rev-parse", "--abbrev-ref", "HEAD"]).unwrap_or_else(|_| "main".to_string());
     if let Err(e) = exec("git", &["fetch", "origin", &current_branch]) {
-        eprintln!("Warning: Could not fetch origin/{}: {}", current_branch, e);
+        eprintln!("::error::Could not synchronize validated source: {e}");
+        exit(1);
     } else {
         // Count the commits origin/<branch> has that HEAD does not. Being merely
         // ahead of the remote is not being behind, and needs no rebase.
@@ -534,21 +546,39 @@ fn main() -> std::io::Result<()> {
                 &format!("HEAD..origin/{}", current_branch),
             ],
         )
-        .ok()
-        .and_then(|out| out.trim().parse().ok())
-        .unwrap_or(0);
+        .and_then(|out| {
+            out.parse()
+                .map_err(|e| format!("Invalid behind count: {e}"))
+        })
+        .unwrap_or_else(|e| {
+            eprintln!("::error::Could not inspect validated source: {e}");
+            exit(1);
+        });
         if behind > 0 {
             println!(
                 "Local branch is behind origin/{} by {} commit(s), rebasing...",
                 current_branch, behind
             );
-            if let Err(e) = exec("git", &["rebase", &format!("origin/{}", current_branch)]) {
+            let remote = exec("git", &["rev-parse", "FETCH_HEAD"]).unwrap_or_else(|e| {
+                eprintln!("::error::Could not resolve validated source candidate: {e}");
+                exit(1);
+            });
+            source_guard::verify(&validated_source, &remote).unwrap_or_else(|e| {
+                eprintln!("::error::{e}");
+                exit(1);
+            });
+            if let Err(e) = exec("git", &["rebase", &remote]) {
                 eprintln!("Error rebasing onto origin/{}: {}", current_branch, e);
                 let _ = exec("git", &["rebase", "--abort"]);
                 exit(1);
             }
         }
     }
+
+    source_guard::verify(&validated_source, "HEAD").unwrap_or_else(|e| {
+        eprintln!("::error::{e}");
+        exit(1);
+    });
 
     // Recompute the allowlist after synchronization, including new fragments.
     let release_index = release_index::ReleaseIndex::new(Path::new(&rust_root), &package_manifest)
@@ -726,13 +756,22 @@ fn main() -> std::io::Result<()> {
                 PushFailure::LostRace => {
                     if attempt < max_push_attempts {
                         eprintln!(
-                            "Push rejected as non-fast-forward (attempt {}/{}); the remote branch moved. Pulling with rebase and retrying...",
+                            "Push rejected as non-fast-forward (attempt {}/{}); the remote branch moved. Validating source before rebasing and retrying...",
                             attempt, max_push_attempts
                         );
-                        if let Err(rebase_err) =
-                            exec("git", &["pull", "--rebase", "origin", &current_branch])
-                        {
-                            eprintln!("Error during pull --rebase: {}", rebase_err);
+                        // Never pull here: an implicit fetch could replace the
+                        // inspected remote with an unvalidated revision.
+                        let retry = exec("git", &["fetch", "origin", &current_branch])
+                            .and_then(|_| exec("git", &["rev-parse", "FETCH_HEAD"]))
+                            .and_then(|remote| {
+                                source_guard::verify(&validated_source, &remote)?;
+                                exec("git", &["rebase", &remote])?;
+                                source_guard::verify(&validated_source, "HEAD")
+                            });
+                        if let Err(rebase_err) = retry {
+                            eprintln!(
+                                "::error::Guarded release synchronization failed: {rebase_err}"
+                            );
                             let _ = exec("git", &["rebase", "--abort"]);
                             exit(1);
                         }
@@ -749,7 +788,7 @@ fn main() -> std::io::Result<()> {
     }
 
     // Create tag only after the release commit is on the remote, so that a
-    // `pull --rebase` retry above can never leave the tag on an orphaned
+    // guarded rebase retry above can never leave the tag on an orphaned
     // pre-rebase commit (see issue #94).
     let tag_name = format!("{}{}", tag_prefix, new_version);
     let tag_msg = match &description {
