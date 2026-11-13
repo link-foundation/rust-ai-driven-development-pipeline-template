@@ -38,7 +38,7 @@
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { extractErrorsSection, validateLycheeReport } from './check-web-archive.mjs';
+import { extractFailureSections, validateLycheeReport } from './check-web-archive.mjs';
 
 // Environment-derived settings are read inside main(), not here: a test run
 // with a restricted environment must be able to import this module without
@@ -66,7 +66,7 @@ export function parseLycheeFailures(content) {
   const entryPattern =
     /^[ \t]*(?:\*|-)[ \t]+\[([^\]\r\n]+)\][ \t]+<?([^\s>|)]+)>?(?:[ \t]+\(at [^)\r\n]*\))?[ \t]*\|?[ \t]*([^\r\n]*)\r?$/gim;
 
-  const section = extractErrorsSection(content);
+  const section = extractFailureSections(content);
   let match;
   while ((match = entryPattern.exec(section)) !== null) {
     const marker = match[1].trim();

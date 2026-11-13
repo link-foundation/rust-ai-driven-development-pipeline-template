@@ -150,8 +150,11 @@ metadata files may differ: package versions in Cargo/npm manifests and locks,
 parsed manifest and lock values must match. New manifests, dependency changes,
 script changes, symlinks, fragment additions/edits and unrelated paths fail closed;
 let the newer commit's own CI run release them. Unsupported lock formats are
-refused rather than assumed equivalent. This guard supplements ReleaseIndex's
-checks on uncommitted writes.
+refused rather than assumed equivalent. Independent sibling language roots are excluded when releasing a nested Rust
+root; root files and shared CI/tooling remain guarded. Parent Cargo workspaces,
+external Cargo paths and Rust symlinks retain repository-wide validation. Existing
+regular `.changeset/*.md` fragments may be consumed, while additions/edits remain
+refused. This guard supplements ReleaseIndex's checks on uncommitted writes.
 
 Read-only checks cancel superseded work on every ref, including main. The status
 gate excuses a cancelled job only when its workflow opts into cancellation and

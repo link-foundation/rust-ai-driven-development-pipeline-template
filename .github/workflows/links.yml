@@ -28,6 +28,8 @@ on:
       - 'scripts/recheck-broken-links.mjs'
       - 'scripts/recheck-broken-links.test.mjs'
       - 'scripts/fixtures/lychee-report.md'
+  schedule:
+    - cron: '41 5 * * 1'
   workflow_dispatch:
 
 # Least-privilege default; jobs escalate individually when needed.
@@ -65,11 +67,12 @@ jobs:
         run: node --test scripts/recheck-broken-links.test.mjs
 
       - name: Restore lychee cache
-        uses: actions/cache@v6
+        id: cache-1
+        uses: actions/cache/restore@v6
         with:
           path: .lycheecache
-          key: lychee-${{ runner.os }}-${{ github.run_id }}
-          restore-keys: lychee-${{ runner.os }}-
+          key: lychee-${{ runner.os }}-v2-${{ hashFiles('**/*.md', '**/*.html', 'lychee.toml', '.lycheeignore') }}
+          restore-keys: lychee-${{ runner.os }}-v2-
 
       - name: Check links with lychee
         id: lychee
@@ -105,7 +108,7 @@ jobs:
         # reset is reported broken without one retry. Ask those URLs again
         # outside lychee. Rejected 5xx responses are also never retried by
         # lychee; retry them and 429 here while keeping 404 final.
-        if: steps.lychee.outputs.exit_code != 0
+        if: steps.lychee.outputs.exit_code == '2'
         id: recheck
         run: node scripts/recheck-broken-links.mjs
         env:
@@ -117,7 +120,7 @@ jobs:
         # `!= 'true'`, never `== 'false'`: a skipped re-check leaves the
         # output empty, and only the != form fails safe.
         if: >-
-          steps.lychee.outputs.exit_code != 0 &&
+          steps.lychee.outputs.exit_code == '2' &&
           steps.recheck.outputs.all_recovered != 'true'
         id: webarchive
         run: node scripts/check-web-archive.mjs
@@ -138,8 +141,8 @@ jobs:
       - name: Fail if broken links were found
         if: >-
           always() &&
-          steps.lychee.outputs.exit_code != 0 &&
-          steps.recheck.outputs.all_recovered != 'true'
+          steps.lychee.outputs.exit_code != '0' &&
+          (steps.lychee.outputs.exit_code != '2' || steps.recheck.outputs.all_recovered != 'true')
         run: |
           echo "::error::Broken live links were detected."
           echo ""
@@ -159,6 +162,13 @@ jobs:
           echo ""
           echo "Report location: lychee/out.md (available as the broken-links workflow artifact)."
           exit 1
+
+      - name: Save cache after successful main push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.cache-1.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: .lycheecache
+          key: ${{ steps.cache-1.outputs.cache-primary-key }}
 
   # Terminal status gate (issue #156): GitHub reports jobs killed by
   # timeout-minutes as cancelled. Observe every other job so a timeout on main

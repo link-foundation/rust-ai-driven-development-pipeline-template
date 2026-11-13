@@ -1,5 +1,8 @@
 # Case Study: Issue #34 — detect-code-changes Uses Full PR Diff Instead of Per-Commit Diff
 
+> Historical design: issue #235 supersedes the per-commit PR diff below. With
+> cancelled earlier runs, the current detector must validate the whole PR.
+
 ## Summary
 
 The `detect-code-changes.rs` script compared the full PR diff (base SHA to head SHA) instead of evaluating each commit individually. This caused a commit that only modified non-code files (e.g., `.gitkeep`, `README.md`) to trigger all CI jobs if any earlier commit in the same PR touched code files.

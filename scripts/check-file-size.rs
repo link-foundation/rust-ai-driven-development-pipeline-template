@@ -23,7 +23,7 @@ const WARN_LINES: usize = 900;
 /// file. `check-required-docs.sh` covers the rest of the docs checks.
 const MAX_DOC_LINES: usize = 2500;
 const WARN_DOC_LINES: usize = 2250;
-const FILE_EXTENSIONS: &[&str] = &[".rs", ".md"];
+const FILE_EXTENSIONS: &[&str] = &[".rs", ".md", ".mjs", ".js"];
 const EXCLUDE_PATTERNS: &[&str] = &["target", ".git", "node_modules"];
 /// The warning and hard limits for a file, keyed by extension. Matched the
 /// same case-sensitive way `has_valid_extension` does, so a `.MD` file is
@@ -299,6 +299,22 @@ mod tests {
             writeln!(&mut content, "// line {line}").unwrap();
         }
         fs::write(path, content).unwrap();
+    }
+
+    #[test]
+    fn javascript_uses_source_warning_and_hard_limits() {
+        let repo = temp_dir("javascript");
+        for ext in ["mjs", "js"] {
+            assert!(has_valid_extension(Path::new(&format!("tool.{ext}"))));
+            assert_eq!(limits_for(&format!("tool.{ext}")), (900, 1000));
+            write_rust_file_with_lines(&repo.join(format!("warn.{ext}")), WARN_LINES + 1);
+            write_rust_file_with_lines(&repo.join(format!("fail.{ext}")), MAX_LINES + 1);
+            write_rust_file_with_lines(&repo.join(format!("ok.{ext}")), WARN_LINES);
+        }
+        let result = check_directory(&repo);
+        assert_eq!(result.warnings.len(), 2);
+        assert_eq!(result.violations.len(), 2);
+        fs::remove_dir_all(repo).unwrap();
     }
 
     #[test]
