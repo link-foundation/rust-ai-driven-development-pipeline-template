@@ -39,7 +39,7 @@ snapshots are evidence, not active workflows, and remain preserved.
   [cache scope documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching)
   explains why PR merge-ref entries cannot warm main.
 - [Python venv](https://docs.python.org/3/library/venv.html) supplies an isolated
-  binary path; [shellcheck-py](https://github.com/pycontribs/shellcheck-py)
+  binary path; [shellcheck-py](https://github.com/shellcheck-py/shellcheck-py)
   already provides the pinned ShellCheck distribution. No new installer needed.
 - [GitHub workflow commands](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands)
   use the `::command::` log syntax. JSON string escaping keeps code-controlled

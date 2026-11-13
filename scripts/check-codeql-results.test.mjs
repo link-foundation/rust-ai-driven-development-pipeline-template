@@ -87,13 +87,16 @@ test('SARIF collects malformed items, diagnostics and findings across files with
       { descriptor: { id: payload }, level: 'error', message: { text: 'diagnostic' } }],
       toolConfigurationNotifications: {} }] })));
     writeFileSync(join(dir, 'c.sarif'), JSON.stringify(sarif(run([
+      { ruleId: 'malformed/location', message: { text: 'malformed object' },
+        locations: [{ physicalLocation: { artifactLocation: { uri: { toString: null } },
+          region: { startLine: { toString: null } } } }] },
       { ruleId: 'last/finding', message: { text: 'last file' } },
     ]))));
     const result = spawnSync(process.execPath, [cli.pathname, dir], { encoding: 'utf8', timeout: 5000 });
     assert.equal(result.status, 1);
     for (const text of ['Invalid SARIF report', 'Malformed SARIF notification:',
       'Malformed SARIF notification array', 'Malformed SARIF result', 'diagnostic', 'last/finding',
-      'Missing or unsuccessful', JSON.stringify(payload)]) assert.ok(result.stderr.includes(text), text);
+      'Missing or unsuccessful', JSON.stringify(payload), JSON.stringify(JSON.stringify({ toString: null }))]) assert.ok(result.stderr.includes(text), text);
     assert.doesNotMatch(result.stderr, /^::/m);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

@@ -5,7 +5,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Keep every untrusted value on one log line, including paths and rule IDs.
-const quote = (value) => JSON.stringify(String(value ?? '?'));
+const quote = (value) => JSON.stringify(
+  // JSON objects can shadow toString/valueOf with non-callable properties.
+  // Serialize them directly so malformed fields cannot abort aggregation.
+  value !== null && typeof value === 'object' ? JSON.stringify(value) : String(value ?? '?')
+);
 
 function reportsIn(directory, problems) {
   let entries;
