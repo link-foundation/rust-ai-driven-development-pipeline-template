@@ -24,8 +24,11 @@ fn every_docker_build_uses_the_gha_layer_cache() {
             "Docker build step must restore the shared GHA layer cache:\n{step}"
         );
         assert!(
-            step.contains("cache-to: type=gha,mode=max"),
-            "Docker build step must save all layers to the shared GHA cache:\n{step}"
+            step.contains(
+                "cache-to: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main'"
+            ) && step.contains("type=gha,mode=max,scope=")
+                && step.contains("|| '' }}"),
+            "Docker build step must save all layers only on main pushes:\n{step}"
         );
     }
 }

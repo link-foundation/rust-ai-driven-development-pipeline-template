@@ -347,6 +347,9 @@ fn change_gated_jobs_consult_detector_outputs_for_pull_requests_and_pushes() {
 
     for job_name in ["cargo-lock", "lint", "test", "coverage"] {
         let job = job_block(&workflow, job_name);
+        // Step-level cache saves may require main pushes; only the job gate
+        // controls whether detection can be bypassed.
+        let job = job.split("    steps:").next().unwrap();
         assert!(
             !job.contains("github.event_name == 'push'"),
             "{job_name} must not bypass excluded-path detection on pushes"

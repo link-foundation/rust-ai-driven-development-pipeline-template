@@ -315,7 +315,11 @@ fn links_workflow_fails_for_every_broken_live_link() {
 
     let fail_step = step_block(link_checker, "Fail if broken links were found");
     assert!(fail_step.contains("always() &&"));
-    assert!(fail_step.contains("steps.lychee.outputs.exit_code != 0"));
+    assert!(fail_step.contains("steps.lychee.outputs.exit_code != '0'"));
+    assert!(
+        fail_step.contains("(steps.lychee.outputs.exit_code != '2' ||"),
+        "checker errors must fail even if the re-check output claims recovery"
+    );
     assert!(
         fail_step.contains("steps.recheck.outputs.all_recovered != 'true'"),
         "the re-check verdict must gate the failure step"
@@ -326,7 +330,7 @@ fn links_workflow_fails_for_every_broken_live_link() {
     );
 
     let archive_step = step_block(link_checker, "Check broken links against Web Archive");
-    assert!(archive_step.contains("steps.lychee.outputs.exit_code != 0"));
+    assert!(archive_step.contains("steps.lychee.outputs.exit_code == '2'"));
     assert!(archive_step.contains("steps.recheck.outputs.all_recovered != 'true'"));
     assert!(
         archive_step.contains("RECOVERED_URLS: lychee/recovered.txt"),
