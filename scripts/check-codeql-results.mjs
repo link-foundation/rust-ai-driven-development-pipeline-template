@@ -4,74 +4,102 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-function reportsIn(directory) {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+// Keep every untrusted value on one log line, including paths and rule IDs.
+const quote = (value) => JSON.stringify(
+  // JSON objects can shadow toString/valueOf with non-callable properties.
+  // Serialize them directly so malformed fields cannot abort aggregation.
+  value !== null && typeof value === 'object' ? JSON.stringify(value) : String(value ?? '?')
+);
+
+function reportsIn(directory, problems) {
+  let entries;
+  try { entries = readdirSync(directory, { withFileTypes: true }); }
+  catch (error) {
+    problems.push(`Unreadable SARIF directory: ${quote(directory)}: ${quote(error.message)}`);
+    return [];
+  }
+  return entries.flatMap((entry) => {
     const file = path.join(directory, entry.name);
-    if (entry.isSymbolicLink()) throw new Error(`Unexpected SARIF symlink: ${file}`);
-    if (entry.isDirectory()) return reportsIn(file);
+    if (entry.isSymbolicLink()) {
+      problems.push(`Unexpected SARIF symlink: ${quote(file)}`);
+      return [];
+    }
+    if (entry.isDirectory()) return reportsIn(file, problems);
     return entry.isFile() && entry.name.endsWith('.sarif') ? [file] : [];
   });
 }
 
-// Invocation success does not guarantee complete extraction. SARIF defaults an
-// omitted notification level to warning, including configuration diagnostics.
-function invocationDiagnostics(invocation, context) {
-  const failures = [];
+function describe(item) {
+  const location = item.locations?.[0]?.physicalLocation;
+  return `${quote(location?.artifactLocation?.uri)}:${quote(location?.region?.startLine)}: ` +
+    quote(item.message.text ?? item.message.markdown);
+}
+
+function hasMessage(item) {
+  return typeof item?.message?.text === 'string' || typeof item?.message?.markdown === 'string';
+}
+
+// SARIF defaults an omitted notification level to warning. Even an otherwise
+// successful invocation can contain extraction/configuration diagnostics.
+function invocationDiagnostics(invocation, context, problems) {
   for (const field of ['toolExecutionNotifications', 'toolConfigurationNotifications']) {
     if (!Object.hasOwn(invocation, field)) continue;
-    if (!Array.isArray(invocation[field])) throw new Error(`Malformed SARIF notification array: ${context}, ${field}`);
-    for (const notification of invocation[field]) {
-      const level = notification?.level ?? 'warning';
-      if (!notification || typeof notification !== 'object' || Array.isArray(notification) ||
-          !(typeof notification.message?.text === 'string' || typeof notification.message?.markdown === 'string') ||
+    if (!Array.isArray(invocation[field])) {
+      problems.push(`Malformed SARIF notification array: ${context}, ${field}`);
+      continue;
+    }
+    for (const [index, notification] of invocation[field].entries()) {
+      if (!hasMessage(notification) ||
           (Object.hasOwn(notification, 'level') && !['error', 'warning', 'note', 'none'].includes(notification.level))) {
-        throw new Error(`Malformed SARIF notification: ${context}, ${field}`);
+        problems.push(`Malformed SARIF notification: ${context}, ${field}, item ${index + 1}`);
+        continue;
       }
+      const level = notification.level ?? 'warning';
       if (level === 'note' || level === 'none') continue;
-      const location = notification.locations?.[0]?.physicalLocation;
-      failures.push(`${context}, ${field}: ${notification.descriptor?.id ?? notification.descriptor?.index ?? '?'} (${level}) ` +
-        `${location?.artifactLocation?.uri ?? '?'}:${location?.region?.startLine ?? '?'}: ` +
-        `${notification.message.text ?? notification.message.markdown}`);
+      problems.push(`Incomplete CodeQL analysis diagnostic: ${context}, ${field}: ` +
+        `${quote(notification.descriptor?.id ?? notification.descriptor?.index)} (${quote(level)}) ${describe(notification)}`);
     }
   }
-  return failures;
 }
 
 export function checkCodeqlResults(directory) {
-  const reports = reportsIn(directory).sort();
-  if (!reports.length) throw new Error(`No SARIF reports in ${directory}`);
-  const findings = [];
-  const diagnostics = [];
+  const problems = [];
+  const reports = reportsIn(directory, problems).sort();
+  if (!reports.length) problems.push(`No SARIF reports in ${quote(directory)}`);
   for (const file of reports) {
-    const data = JSON.parse(readFileSync(file, 'utf8'));
+    let data;
+    try { data = JSON.parse(readFileSync(file, 'utf8')); }
+    catch (error) {
+      problems.push(`Invalid SARIF report: ${quote(file)}: ${quote(error.message)}`);
+      continue;
+    }
     if (data?.version !== '2.1.0' || !Array.isArray(data.runs) || !data.runs.length) {
-      throw new Error(`Invalid SARIF report: ${file}`);
+      problems.push(`Invalid SARIF report: ${quote(file)}`);
+      continue;
     }
     for (const [index, run] of data.runs.entries()) {
-      const context = `${file}, run ${index + 1}`;
+      const context = `${quote(file)}, run ${index + 1}`;
       if (run?.tool?.driver?.name !== 'CodeQL' || !Array.isArray(run.results) ||
-          !Array.isArray(run.invocations) || !run.invocations.length ||
-          run.invocations.some((invocation) => invocation?.executionSuccessful !== true)) {
-        throw new Error(`Missing or unsuccessful CodeQL analysis: ${context}`);
+          !Array.isArray(run.invocations) || !run.invocations.length) {
+        problems.push(`Missing or unsuccessful CodeQL analysis: ${context}`);
       }
-      for (const [invocationIndex, invocation] of run.invocations.entries()) {
-        diagnostics.push(...invocationDiagnostics(invocation, `${context}, invocation ${invocationIndex + 1}`));
+      for (const [invocationIndex, invocation] of (Array.isArray(run?.invocations) ? run.invocations : []).entries()) {
+        const at = `${context}, invocation ${invocationIndex + 1}`;
+        if (invocation?.executionSuccessful !== true) problems.push(`Missing or unsuccessful CodeQL analysis: ${at}`);
+        if (invocation && typeof invocation === 'object') invocationDiagnostics(invocation, at, problems);
       }
-      for (const result of run.results) {
-        if (!result || typeof result.ruleId !== 'string' ||
-            !(typeof result.message?.text === 'string' || typeof result.message?.markdown === 'string')) {
-          throw new Error(`Malformed SARIF result: ${context}`);
+      for (const [resultIndex, result] of (Array.isArray(run?.results) ? run.results : []).entries()) {
+        if (typeof result?.ruleId !== 'string' || !hasMessage(result)) {
+          problems.push(`Malformed SARIF result: ${context}, item ${resultIndex + 1}`);
+          continue;
         }
         if (result.baselineState === 'absent') continue;
-        const location = result.locations?.[0]?.physicalLocation;
-        findings.push(`${context}: ${result.ruleId} (${result.level ?? 'warning'}) ` +
-          `${location?.artifactLocation?.uri ?? '?'}:${location?.region?.startLine ?? '?'}: ` +
-          `${result.message.text ?? result.message.markdown}`);
+        problems.push(`Unresolved CodeQL finding: ${context}: ${quote(result.ruleId)} ` +
+          `(${quote(result.level ?? 'warning')}) ${describe(result)}`);
       }
     }
   }
-  if (diagnostics.length) throw new Error(`${diagnostics.length} incomplete CodeQL analysis diagnostic(s):\n${diagnostics.join('\n')}`);
-  if (findings.length) throw new Error(`${findings.length} unresolved CodeQL finding(s):\n${findings.join('\n')}`);
+  if (problems.length) throw new Error(`${problems.length} CodeQL gate problem(s):\n${problems.join('\n')}`);
   return reports.length;
 }
 

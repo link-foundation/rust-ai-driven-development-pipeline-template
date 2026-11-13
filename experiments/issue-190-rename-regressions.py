@@ -125,14 +125,20 @@ class RenameRegressions(unittest.TestCase):
                 with self.subTest(prefix=prefix, context=context):
                     self.repository(prefix, "true")
                     if context == "pull_request_first_commit":
-                        # Exercise the HEAD^ -> HEAD^2 fallback: PR head has no parent.
+                        # A PR head without a parent must still cover the complete merged tree.
                         self.git("checkout", "--orphan", "first-commit")
                     self.move_source(prefix)
                     branch = self.git("branch", "--show-current")
                     if context != "push":
                         self.git("checkout", "main")
-                        self.git("merge", "--no-ff", "--allow-unrelated-histories",
-                                 branch, "-m", "synthetic PR merge")
+                        self.git("merge", "--no-ff", "--no-commit", "--allow-unrelated-histories",
+                                 branch)
+                        if context == "pull_request_first_commit":
+                            # Unrelated histories merge by union: Git cannot infer
+                            # the orphan's intended deletion. Make the actual
+                            # merged tree represent the source move being tested.
+                            self.git("rm", prefix + "src/lib.rs")
+                        self.git("commit", "-qm", "synthetic PR merge")
                     self.env["GITHUB_EVENT_NAME"] = (
                         "push" if context.startswith("push") else "pull_request"
                     )

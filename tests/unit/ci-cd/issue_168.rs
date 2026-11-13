@@ -35,7 +35,7 @@ fn step_block<'a>(job: &'a str, step_name: &str) -> &'a str {
     &rest[..end]
 }
 
-/// The re-check runs only on a lychee failure and writes its verdict where
+/// The re-check runs only on a lychee link failure (exit 2) and writes its verdict where
 /// the downstream steps read it.
 #[test]
 fn the_recheck_step_runs_only_when_lychee_failed() {
@@ -46,7 +46,7 @@ fn the_recheck_step_runs_only_when_lychee_failed() {
         .expect("links.yml should declare jobs");
     let step = step_block(job, "Re-check unanswered and transient links");
 
-    assert!(step.contains("if: steps.lychee.outputs.exit_code != 0"));
+    assert!(step.contains("if: steps.lychee.outputs.exit_code == '2'"));
     assert!(step.contains("id: recheck"));
     assert!(step.contains("run: node scripts/recheck-broken-links.mjs"));
     assert!(step.contains("LYCHEE_OUTPUT: lychee/out.md"));

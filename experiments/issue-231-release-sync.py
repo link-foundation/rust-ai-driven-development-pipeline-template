@@ -117,7 +117,7 @@ class ReleaseSync(unittest.TestCase):
         self.env['PATH'] = str(tools) + os.pathsep + self.env['PATH']
 
     def release(self):
-        self.remote_manifest = self.git(self.root, '--git-dir', str(self.origin), 'show', 'main:Cargo.toml')
+        self.remote_manifest = self.git(self.root, '--git-dir', str(self.origin), 'show', 'main:' + getattr(self, 'manifest_path', 'Cargo.toml'))
         return self.command(self.work, self.runner, str(self.scripts / 'version-and-commit.rs'),
                             '--bump-type', 'patch', check=False)
 
@@ -125,7 +125,63 @@ class ReleaseSync(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('validated source', result.stderr)
         self.assertEqual(self.git(self.root, '--git-dir', str(self.origin), 'tag'), '')
-        self.assertEqual(self.remote_manifest, self.git(self.root, '--git-dir', str(self.origin), 'show', 'main:Cargo.toml'))
+        self.assertEqual(self.remote_manifest, self.git(self.root, '--git-dir', str(self.origin), 'show', 'main:' + getattr(self, 'manifest_path', 'Cargo.toml')))
+
+    def monorepo(self, external=False):
+        (self.work / 'rust').mkdir()
+        for path in ['Cargo.toml', 'Cargo.lock', 'src', 'CHANGELOG.md', 'changelog.d']:
+            self.git(self.work, 'mv', path, 'rust/')
+        self.manifest_path = 'rust/Cargo.toml'
+        if external:
+            with (self.work / self.manifest_path).open('a') as f:
+                f.write('[dependencies]\nshared={path="../shared"}\n')
+            self.write(self.work, 'shared/Cargo.toml', '[package]\nname="shared"\nversion="1.0.0"\n')
+        self.write(self.work, '.changeset/fix.md', '---\n"js": patch\n---\nRelease.\n')
+        self.write(self.work, 'python/pyproject.toml', '[project]\nname="sibling"\nversion="1.0.0"\n')
+        self.write(self.work, 'csharp/Sibling.csproj', '<Project><PropertyGroup><Version>1.0.0</Version></PropertyGroup></Project>\n')
+        self.commit(self.work)
+        self.git(self.work, 'push', '-q', 'origin', 'main')
+        self.git(self.other, 'pull', '-q', '--ff-only')
+        self.validated = self.git(self.work, 'rev-parse', 'HEAD')
+
+    def test_sibling_releases_preserve_rust_release_initially_and_after_push_race(self):
+        for race in [False, True]:
+            with self.subTest(race=race):
+                self.setUp()
+                self.monorepo()
+                self.git(self.other, 'rm', '.changeset/fix.md')
+                self.write(self.other, 'python/pyproject.toml', '[project]\nname="sibling"\nversion="1.0.1"\n')
+                self.write(self.other, 'csharp/Sibling.csproj', '<Project><PropertyGroup><Version>1.0.1</Version></PropertyGroup></Project>\n')
+                if race:
+                    self.race('js/package.json', '{"version":"1.0.1"}\n')
+                else:
+                    self.advance('js/package.json', '{"version":"1.0.1"}\n')
+                result = self.release()
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                remote = self.git(self.work, 'rev-parse', 'HEAD')
+                self.assertEqual(self.git(self.work, 'rev-parse', 'rust_v1.0.1^{}'), remote)
+                self.assertIn('1.0.1', self.git(self.work, 'show', 'HEAD:python/pyproject.toml'))
+                self.assertFalse((self.work / '.changeset/fix.md').exists())
+                self.assertEqual((self.work / 'rust/src/lib.rs').read_text(), 'pub fn fixture() {}\n')
+
+    def test_monorepo_rust_shared_and_external_dependency_changes_still_fail_closed(self):
+        for path, content in {
+            'rust/src/lib.rs': 'pub fn untested() {}\n',
+            '.github/workflows/new.yml': 'name: untested\n',
+            'scripts/new.sh': 'echo untested\n',
+            'Cargo.toml': '[workspace]\nmembers=["rust"]\n',
+            '.changeset/fix.md': 'Untested fragment edit.\n',
+            'rust/Cargo.toml': '[package]\nname="fixture"\nversion="1.0.0"\n[dependencies]\nother="1"\n',
+        }.items():
+            with self.subTest(path=path):
+                self.setUp()
+                self.monorepo()
+                self.advance(path, content)
+                self.assert_refused(self.release())
+        self.setUp()
+        self.monorepo(external=True)
+        self.advance('shared/src/lib.rs', 'pub fn untested_dependency() {}\n')
+        self.assert_refused(self.release())
 
     def test_initial_source_change_is_rejected(self):
         remote = self.advance('src/lib.rs', 'pub fn untested() {}\n')

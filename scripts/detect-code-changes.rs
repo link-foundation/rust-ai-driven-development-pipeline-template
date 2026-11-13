@@ -5,10 +5,8 @@
 //! and outputs the results for use in GitHub Actions workflow conditions.
 //!
 //! Key behavior:
-//! - For PRs: detects GitHub Actions' synthetic merge commit and uses
-//!   HEAD^2^..HEAD^2 to get the per-commit diff of the actual PR head,
-//!   so a commit touching only non-code files correctly skips CI jobs
-//!   even when earlier commits in the same PR touched code files.
+//! - For PRs: compares the synthetic merge commit against its base parent,
+//!   covering the whole PR even after a docs-only follow-up cancels earlier CI.
 //! - For pushes: compares HEAD against its first parent, including real merge
 //!   commits pushed to main
 //! - Excludes certain folders and file types from "code changes" detection
@@ -115,19 +113,12 @@ fn get_changed_files_in_repo(repo_path: &Path, event_name: &str) -> std::io::Res
     )?;
     let parents = commit_parents(repo_path, "HEAD")?;
     // Disable rename detection so moving code into an excluded folder still
-    // reports the deleted source. Preserve the PR's per-commit diff semantics.
+    // reports the deleted source. Never discard earlier unvalidated PR changes.
     let output = if event_name == "pull_request" && parents.len() > 1 {
-        println!("Merge commit detected (pull_request event)");
-        let pr_parents = commit_parents(repo_path, "HEAD^2")?;
-        let base = if pr_parents.is_empty() {
-            "HEAD^"
-        } else {
-            "HEAD^2^"
-        };
-        println!("Comparing {base} to HEAD^2 (per-commit diff of PR head)");
+        println!("Comparing HEAD^1 to HEAD (whole pull request against its base)");
         exec_in(
             "git",
-            &["diff", "--name-only", "--no-renames", base, "HEAD^2"],
+            &["diff", "--name-only", "--no-renames", "HEAD^1", "HEAD"],
             Some(repo_path),
         )?
     } else if parents.is_empty() {
@@ -622,15 +613,15 @@ mod tests {
     }
 
     #[test]
-    fn pull_request_synthetic_merge_uses_latest_pr_head_commit_diff() {
+    fn pull_request_synthetic_merge_checks_code_before_docs_only_followup() {
         let repo = create_merge_repo();
 
         let changed_files = get_changed_files_in_repo(&repo, "pull_request").unwrap();
 
         assert_eq!(
             changed_files,
-            vec!["docs/notes.md"],
-            "pull_request synthetic merge detection should keep the per-commit PR head diff"
+            vec!["docs/notes.md", "src/lib.rs"],
+            "the whole PR must remain covered when earlier code runs are cancelled"
         );
     }
 }

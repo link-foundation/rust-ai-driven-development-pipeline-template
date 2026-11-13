@@ -49,36 +49,29 @@ function setOutput(name, value) {
   console.log(`${name}=${value}`);
 }
 
-/**
- * Extract the "Errors per input" section of a lychee markdown report.
- *
- * Everything after it - most importantly "## Redirects per input" - describes
- * links that resolved successfully, so scanning the whole report would make
- * every redirected link look broken. Reports without that heading (older
- * lychee versions, hand-written fixtures) are parsed in full.
- *
- * @param {string} content - The markdown content from lychee
- * @returns {string} The errors section, or the whole document when there is none
+/** Extract only failure sections, excluding successful redirects and summaries.
+ * Legacy reports without per-input headings are parsed in full.
  */
-export function extractErrorsSection(content) {
+export function extractFailureSections(content) {
   const lines = content.split('\n');
-  const start = lines.findIndex((line) =>
-    /^#+\s+Errors per input\s*$/.test(line)
-  );
-  if (start === -1) {
-    return content;
-  }
-  const heading = /^(#+)\s/.exec(lines[start])[1].length;
-  const section = [];
-  for (const line of lines.slice(start + 1)) {
-    const next = /^(#+)\s/.exec(line);
-    if (next && next[1].length <= heading) {
-      break; // a sibling or parent heading ends the errors section
+  const sections = [];
+  let depth = 0;
+  let hasSections = false;
+  for (const line of lines) {
+    const heading = /^(#+)\s+(.+?)\s*$/.exec(line);
+    if (heading && /per input$/.test(heading[2])) hasSections = true;
+    if (heading && depth && heading[1].length <= depth) depth = 0;
+    if (heading && /^(Errors|Timeouts) per input$/.test(heading[2])) {
+      depth = heading[1].length;
+    } else if (depth) {
+      sections.push(line);
     }
-    section.push(line);
   }
-  return section.join('\n');
+  return hasSections ? sections.join('\n') : content;
 }
+
+// Preserve the exported helper name for callers adopting this template.
+export const extractErrorsSection = extractFailureSections;
 
 /**
  * Extract broken links from lychee markdown output.
@@ -91,7 +84,7 @@ export function extractErrorsSection(content) {
  *   unresolvable root-relative links, ...)
  */
 export function extractBrokenLinks(content) {
-  const section = extractErrorsSection(content);
+  const section = extractFailureSections(content);
   const urls = [];
   const others = [];
 
@@ -211,14 +204,18 @@ export async function checkWaybackMachine(url, {
 
 /** Validate before either archive or recovery code emits a successful verdict. */
 export function validateLycheeReport(content, exitCode = process.env.LYCHEE_EXIT_CODE) {
-  const section = extractErrorsSection(content);
+  const section = extractFailureSections(content);
   const entries = [...section.matchAll(/^\s*(?:\*|-)\s+\[(?:4\d\d|5\d\d|ERROR|TIMEOUT|UNKNOWN)\]\s+<?[^\s>|)]+>?/gim)];
   const bullets = [...section.matchAll(/^\s*(?:\*|-)\s+\[/gm)];
-  const reported = /\|[^|\n]*Errors\s*\|\s*(\d+)\s*\|/.exec(content);
+  const counts = [...content.matchAll(/\|[^|\n]*(?:Errors|Timeouts)\s*\|\s*(\d+)\s*\|/g)];
+  const reported = counts.length ? counts.reduce((sum, row) => sum + Number(row[1]), 0) : undefined;
   const failed = exitCode !== undefined && exitCode !== '0';
+  if (failed && exitCode !== '2') {
+    throw new Error(`Lychee runtime/configuration failure (exit ${exitCode}); cannot recover a failed checker`);
+  }
   if (!content.trim() || entries.length !== bullets.length ||
-      (reported && Number(reported[1]) !== entries.length) ||
-      (entries.length === 0 && (failed || !reported || Number(reported[1]) !== 0))) {
+      (reported !== undefined && reported !== entries.length) ||
+      (entries.length === 0 && (failed || reported === undefined || reported !== 0))) {
     throw new Error('Missing, empty, malformed or incomplete lychee report; re-run the link checker');
   }
 }

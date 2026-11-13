@@ -563,7 +563,7 @@ fn main() -> std::io::Result<()> {
                 eprintln!("::error::Could not resolve validated source candidate: {e}");
                 exit(1);
             });
-            source_guard::verify(&validated_source, &remote).unwrap_or_else(|e| {
+            source_guard::verify(&validated_source, &remote, &rust_root).unwrap_or_else(|e| {
                 eprintln!("::error::{e}");
                 exit(1);
             });
@@ -575,7 +575,7 @@ fn main() -> std::io::Result<()> {
         }
     }
 
-    source_guard::verify(&validated_source, "HEAD").unwrap_or_else(|e| {
+    source_guard::verify(&validated_source, "HEAD", &rust_root).unwrap_or_else(|e| {
         eprintln!("::error::{e}");
         exit(1);
     });
@@ -764,9 +764,9 @@ fn main() -> std::io::Result<()> {
                         let retry = exec("git", &["fetch", "origin", &current_branch])
                             .and_then(|_| exec("git", &["rev-parse", "FETCH_HEAD"]))
                             .and_then(|remote| {
-                                source_guard::verify(&validated_source, &remote)?;
+                                source_guard::verify(&validated_source, &remote, &rust_root)?;
                                 exec("git", &["rebase", &remote])?;
-                                source_guard::verify(&validated_source, "HEAD")
+                                source_guard::verify(&validated_source, "HEAD", &rust_root)
                             });
                         if let Err(rebase_err) = retry {
                             eprintln!(

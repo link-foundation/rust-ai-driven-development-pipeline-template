@@ -56,7 +56,7 @@ test('SARIF invocation diagnostics gate extraction even with no findings', { tim
           { executionSuccessful: true, [field]: [{ ...diagnostic, level }] }]);
         assert.equal(result.status, 1);
         assert.match(result.stderr, /extract\/failure/);
-        assert.match(result.stderr, /src\/lib.rs:42/);
+        assert.match(result.stderr, /"src\/lib.rs":"42"/);
         assert.match(result.stderr, /Extraction failed/);
       }
       for (const value of [null, {}, 'invalid', [null], [1], [{}], [{ level: 'note' }],
@@ -72,5 +72,31 @@ test('SARIF invocation diagnostics gate extraction even with no findings', { tim
       }
       assert.equal(check([{ executionSuccessful: true, [field]: [] }]).status, 0);
     }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('SARIF collects malformed items, diagnostics and findings across files without workflow commands', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'codeql-all-problems-'));
+  const payload = 'x\n::error title=spoof::fake\r::warning::fake';
+  try {
+    writeFileSync(join(dir, 'a.sarif'), '{');
+    writeFileSync(join(dir, 'b.sarif'), JSON.stringify(sarif({ ...run([
+      null, { ruleId: payload, level: payload, message: { text: payload },
+        locations: [{ physicalLocation: { artifactLocation: { uri: payload }, region: { startLine: payload } } }] },
+    ]), invocations: [{ executionSuccessful: false, toolExecutionNotifications: [null,
+      { descriptor: { id: payload }, level: 'error', message: { text: 'diagnostic' } }],
+      toolConfigurationNotifications: {} }] })));
+    writeFileSync(join(dir, 'c.sarif'), JSON.stringify(sarif(run([
+      { ruleId: 'malformed/location', message: { text: 'malformed object' },
+        locations: [{ physicalLocation: { artifactLocation: { uri: { toString: null } },
+          region: { startLine: { toString: null } } } }] },
+      { ruleId: 'last/finding', message: { text: 'last file' } },
+    ]))));
+    const result = spawnSync(process.execPath, [cli.pathname, dir], { encoding: 'utf8', timeout: 5000 });
+    assert.equal(result.status, 1);
+    for (const text of ['Invalid SARIF report', 'Malformed SARIF notification:',
+      'Malformed SARIF notification array', 'Malformed SARIF result', 'diagnostic', 'last/finding',
+      'Missing or unsuccessful', JSON.stringify(payload), JSON.stringify(JSON.stringify({ toString: null }))]) assert.ok(result.stderr.includes(text), text);
+    assert.doesNotMatch(result.stderr, /^::/m);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

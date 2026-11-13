@@ -200,15 +200,105 @@ fn metadata_equivalent(
     }
 }
 
+/// Scope only independent language roots. Root-level files and shared tooling
+/// remain protected. External Cargo paths or symlinks require repository-wide
+/// validation because a sibling may be an input to the Rust build.
+fn independent_root(root: &Path, base: &Tree, next: &Tree) -> Result<bool, String> {
+    if root.as_os_str().is_empty() || root == Path::new(".") {
+        return Ok(false);
+    }
+    // A parent workspace can supply shared dependencies/build configuration.
+    if root.ancestors().skip(1).any(|parent| {
+        let manifest = parent
+            .join("Cargo.toml")
+            .to_string_lossy()
+            .replace('\\', "/");
+        base.contains_key(&manifest) || next.contains_key(&manifest)
+    }) {
+        return Ok(false);
+    }
+    for tree in [base, next] {
+        for (path, (mode, blob)) in tree {
+            if !Path::new(path).starts_with(root) {
+                continue;
+            }
+            if mode == "120000" {
+                return Ok(false);
+            }
+            if Path::new(path)
+                .file_name()
+                .is_some_and(|p| p == "Cargo.toml")
+                && has_external_path(&toml(blob)?)
+            {
+                return Ok(false);
+            }
+        }
+    }
+    Ok(true)
+}
+
+fn has_external_path(value: &toml::Value) -> bool {
+    match value {
+        toml::Value::Table(table) => table.iter().any(|(key, value)| {
+            (matches!(key.as_str(), "path" | "members" | "exclude" | "build")
+                && (value.to_string().contains("..")
+                    || value.as_str().is_some_and(|p| Path::new(p).is_absolute())))
+                || has_external_path(value)
+        }),
+        toml::Value::Array(array) => array.iter().any(has_external_path),
+        _ => false,
+    }
+}
+
+fn unrelated_sibling(path: &str, root: &Path) -> bool {
+    let file = Path::new(path);
+    let Some(top) = file.components().next() else {
+        return false;
+    };
+    let name = top.as_os_str().to_string_lossy();
+    file.components().count() > 1
+        && !file.starts_with(root)
+        && !root.starts_with(Path::new(top.as_os_str()))
+        && !name.starts_with('.')
+        && !matches!(
+            name.as_ref(),
+            "scripts"
+                | "tests"
+                | "fixtures"
+                | "examples"
+                | "experiments"
+                | "docs"
+                | "vendor"
+                | "node_modules"
+                | "src"
+                | "lib"
+                | "changelog.d"
+        )
+}
+
 /// Prove that candidate preserves the validated tree, apart from explicitly
 /// allowed metadata. New manifests/locks, symlinks and fragment edits fail closed.
-fn equivalent(validated: &str, candidate: &str) -> Result<(), String> {
+fn equivalent(validated: &str, candidate: &str, rust_root: &Path) -> Result<(), String> {
     let base = tree(validated)?;
     let next = tree(candidate)?;
+    let scoped = independent_root(rust_root, &base, &next)?;
     for path in base.keys().chain(next.keys()) {
         let before = base.get(path);
         let after = next.get(path);
         if before == after {
+            continue;
+        }
+        if scoped && unrelated_sibling(path, rust_root) {
+            continue;
+        }
+        // Changesets consumes root-level fragments on sibling JS releases.
+        // Only deletion of existing regular fragments is release metadata.
+        if Path::new(path).parent() == Some(Path::new(".changeset"))
+            && path.ends_with(".md")
+            && !path.ends_with("/README.md")
+            && before.is_some_and(|(mode, _)| mode == "100644")
+            && after.is_none()
+        {
             continue;
         }
         if before
@@ -258,8 +348,12 @@ fn equivalent(validated: &str, candidate: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub fn verify(validated: &str, candidate: &str) -> Result<(), String> {
+pub fn verify(validated: &str, candidate: &str, rust_root: &str) -> Result<(), String> {
+    let repository = std::fs::canonicalize(exec("git", &["rev-parse", "--show-toplevel"])?)
+        .map_err(|e| e.to_string())?;
+    let root = std::fs::canonicalize(rust_root).map_err(|e| e.to_string())?;
+    let root = root.strip_prefix(repository).map_err(|e| e.to_string())?;
     exec("git", &["merge-base", "--is-ancestor", validated, candidate])
-        .and_then(|_| equivalent(validated, candidate))
+        .and_then(|_| equivalent(validated, candidate, root))
         .map_err(|e| format!("Release cannot preserve validated source {validated} at {candidate}: {e}. Let the newer commit's own CI run release it."))
 }

@@ -206,7 +206,7 @@ fn release_workflow_scopes_every_gha_buildx_cache() {
 
     for line in workflow.lines().filter(|line| {
         line.trim_start().starts_with("cache-from: type=gha")
-            || line.trim_start().starts_with("cache-to: type=gha")
+            || line.trim_start().starts_with("cache-to:") && line.contains("type=gha")
     }) {
         assert!(
             line.contains("scope="),
@@ -218,14 +218,14 @@ fn release_workflow_scopes_every_gha_buildx_cache() {
     let docker_build = job_block(&workflow, "docker-build");
     assert!(
         docker_build.contains("cache-from: type=gha,scope=docker-image")
-            && docker_build.contains("cache-to: type=gha,mode=max,scope=docker-image"),
+            && docker_build.contains("type=gha,mode=max,scope=docker-image"),
         "the pull-request image build should use a dedicated scope"
     );
 
     let docker_publish = job_block(&workflow, "docker-publish");
     assert!(
         docker_publish.contains("cache-from: type=gha,scope=${{ matrix.platform }}")
-            && docker_publish.contains("cache-to: type=gha,mode=max,scope=${{ matrix.platform }}"),
+            && docker_publish.contains("format('type=gha,mode=max,scope={0}', matrix.platform)"),
         "each docker-publish matrix leg should scope its cache by platform so \
          the legs do not overwrite each other"
     );

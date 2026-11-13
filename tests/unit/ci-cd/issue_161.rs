@@ -254,10 +254,15 @@ fn check_file_size_measures_markdown_against_a_docs_budget() {
     ))
     .expect("check-file-size.rs should exist");
 
-    assert!(
-        source.contains(r#"const FILE_EXTENSIONS: &[&str] = &[".rs", ".md"];"#),
-        ".md files must be size-checked; before issue #161 they had no limit at all"
-    );
+    for extension in [".rs", ".md", ".mjs", ".js"] {
+        assert!(
+            source.lines().any(|line| {
+                line.starts_with("const FILE_EXTENSIONS:")
+                    && line.contains(&format!("\"{extension}\""))
+            }),
+            "{extension} files must be size-checked"
+        );
+    }
     assert!(
         source.contains("const MAX_DOC_LINES: usize = 2500;"),
         "documentation gets its own 2500-line budget, the number principle 12 names"
