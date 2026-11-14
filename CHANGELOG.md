@@ -72,6 +72,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.22.3] - 2026-11-14
+
+### Fixed
+- Update the JavaScript-first example's Rust base image to 1.100.0 with its registry digest.
+- Enable weekly Dependabot updates with seven-day cooldowns for Docker, GitHub Actions, Cargo and npm tooling; enforce populated dependency coverage in CI.
 ## [0.22.2] - 2026-11-13
 
 ### Fixed
