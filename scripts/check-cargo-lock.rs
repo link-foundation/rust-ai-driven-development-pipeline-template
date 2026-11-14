@@ -14,6 +14,7 @@
 //!
 //! ```cargo
 //! [dependencies]
+//! regex = "1.13.1"
 //! serde_json = "1.0.154"
 //! ```
 

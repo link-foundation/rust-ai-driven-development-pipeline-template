@@ -20,6 +20,7 @@
 //!
 //! ```cargo
 //! [dependencies]
+//! regex = "1.13.1"
 //! ```
 
 use std::fs;

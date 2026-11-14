@@ -186,10 +186,6 @@
         "version": "1.0.19"
       },
       {
-        "file": "scripts/check-cargo-lock.rs (resolved)",
-        "version": "1.0.19"
-      },
-      {
         "file": "scripts/registry.rs (resolved)",
         "version": "1.0.19"
       },
@@ -237,10 +233,6 @@
     "memchr": [
       {
         "file": "Cargo.lock",
-        "version": "2.8.3"
-      },
-      {
-        "file": "scripts/check-cargo-lock.rs (resolved)",
         "version": "2.8.3"
       },
       {
@@ -304,10 +296,6 @@
         "version": "1.0.107"
       },
       {
-        "file": "scripts/check-cargo-lock.rs (resolved)",
-        "version": "1.0.107"
-      },
-      {
         "file": "scripts/registry.rs (resolved)",
         "version": "1.0.107"
       },
@@ -335,10 +323,6 @@
     "quote": [
       {
         "file": "Cargo.lock",
-        "version": "1.0.47"
-      },
-      {
-        "file": "scripts/check-cargo-lock.rs (resolved)",
         "version": "1.0.47"
       },
       {
@@ -376,7 +360,15 @@
         "version": "1.13.1"
       },
       {
+        "file": "scripts/check-cargo-lock.rs",
+        "version": "1.13.1"
+      },
+      {
         "file": "scripts/check-changelog-fragment.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/check-crate-size.rs",
         "version": "1.13.1"
       },
       {
@@ -596,10 +588,6 @@
         "version": "1.0.229"
       },
       {
-        "file": "scripts/check-cargo-lock.rs (resolved)",
-        "version": "1.0.229"
-      },
-      {
         "file": "scripts/registry.rs (resolved)",
         "version": "1.0.229"
       },
@@ -615,10 +603,6 @@
     "serde_core": [
       {
         "file": "Cargo.lock",
-        "version": "1.0.229"
-      },
-      {
-        "file": "scripts/check-cargo-lock.rs (resolved)",
         "version": "1.0.229"
       },
       {
@@ -641,10 +625,6 @@
     "serde_derive": [
       {
         "file": "Cargo.lock",
-        "version": "1.0.229"
-      },
-      {
-        "file": "scripts/check-cargo-lock.rs (resolved)",
         "version": "1.0.229"
       },
       {
@@ -694,10 +674,6 @@
         "version": "1.0.154"
       },
       {
-        "file": "scripts/check-cargo-lock.rs (resolved)",
-        "version": "1.0.154"
-      },
-      {
         "file": "scripts/registry.rs (resolved)",
         "version": "1.0.154"
       },
@@ -733,10 +709,6 @@
     "syn": [
       {
         "file": "Cargo.lock",
-        "version": "3.0.10"
-      },
-      {
-        "file": "scripts/check-cargo-lock.rs (resolved)",
         "version": "3.0.10"
       },
       {
@@ -862,10 +834,6 @@
         "version": "1.0.27"
       },
       {
-        "file": "scripts/check-cargo-lock.rs (resolved)",
-        "version": "1.0.27"
-      },
-      {
         "file": "scripts/registry.rs (resolved)",
         "version": "1.0.27"
       },
@@ -985,10 +953,6 @@
     "zmij": [
       {
         "file": "Cargo.lock",
-        "version": "1.0.23"
-      },
-      {
-        "file": "scripts/check-cargo-lock.rs (resolved)",
         "version": "1.0.23"
       },
       {
@@ -2851,7 +2815,7 @@
       },
       {
         "file": ".github/workflows/release.yml",
-        "version": "949fe22c6718a83fc3c9dbb49fa925174c9c4846"
+        "version": "949feb2413d6458794dcd2491c4babbbce0c15c1"
       }
     ],
     "actions/cache": [
@@ -3232,6 +3196,12 @@
       {
         "file": "requirements-dev.txt",
         "version": "1.2.0"
+      }
+    ],
+    "typing-extensions": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "4.16.0"
       }
     ],
     "urllib3": [

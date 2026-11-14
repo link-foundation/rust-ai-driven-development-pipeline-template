@@ -109,6 +109,8 @@ and requires Node >=26.13.1 with npm >=12.2.2. The crate supports Rust >=1.85 (R
    same script, including offline Git regressions and mocked registry/link tests,
    and `build` -- and therefore every release -- is gated on it.
    The Buildx adapter regression uses the locked YAML parser installed in step 3.
+   The dependency regressions also check the normal compilation of the lock and
+   crate-size guards, whose path helpers are excluded from their test harnesses.
 
    Rust's built-in `cargo test` runner does not provide a portable global per-test timeout, so wrap long-running network, IO, or async tests with explicit test-level deadlines. If a repository adopts `cargo nextest`, configure runner deadlines with options such as `--slow-timeout` and `--leak-timeout`.
 

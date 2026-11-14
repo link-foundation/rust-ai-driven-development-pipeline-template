@@ -11,6 +11,7 @@ and [PR 248](https://github.com/link-foundation/rust-ai-driven-development-pipel
 - [Verification](verification.md): reproduction commands, complete validation and remaining CI/authorization boundaries.
 - `issue*.json`, `pr-*.json`, `sub-issues.json`: complete issue/comments/reviews; no required sub-issues were present.
 - `main-*.json`, `branch-*.json`, `branch-failures.txt`: run timestamps, exact SHAs and original failure locations.
+- `batch-1-runs.json`: every same-revision CI outcome collected before the next batch; fixes and log locations are in verification.md.
 - `registry-latest.json`, `dependencies-{before,after}.json`, `cargo-parent-requirements.json`: machine-readable live registry and resolver evidence.
 - `upstream-reports/`: searched existing reports, minimal reproductions, submitted bodies and permanent posted-comment URLs.
 - `evidence/*.log.gz`: original CI and local reproduction/validation logs, gzip-compressed with deterministic timestamps. Read with `gzip -dc`; decompression is bounded by the repository secret scanner.

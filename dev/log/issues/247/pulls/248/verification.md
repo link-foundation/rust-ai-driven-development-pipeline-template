@@ -70,3 +70,31 @@ repairs main's failures, but a new green main run after merging requires a merge
 Merging, releasing and deployment were expressly excluded from push authorization.
 The PR remains unmerged; actual post-merge main verification cannot be represented
 as completed by this run.
+
+## First pushed batch: complete CI investigation
+
+All six workflows finished for 58492517e8c067b1abdf59750005f3938174d948
+before preparing the next push; see batch-1-runs.json for timestamps and SHAs.
+Security (including both CodeQL languages), Workflows, Desktop Release on all
+platforms, and the independent JavaScript-first example passed.
+
+- CI/CD Pipeline run 43562957241: log lines 3493–3521 show unresolved regex
+  imports in rust-paths.rs. The lock and crate-size guards include this helper
+  only under cfg(not(test)); their inline test harnesses therefore missed the
+  dependency. Restored the current regex floor in both standalone manifests.
+  The new production compilation regression fails for both scripts before the
+  fix and passes afterward, without executing either guard's release operations.
+- Broken Link Checker run 43562957275: log lines 633–715 show HTTP 403 for all
+  83 npm website links added by the comparison report. The generator now links
+  to the authoritative registry's latest-version JSON endpoints used to resolve
+  these versions. No link validation or status code is excluded.
+- The paginated CodeQL release snapshot is normalized from one array per API
+  page to one JSON array, preserving every release record. Every collected JSON
+  file now parses as a single document.
+- Refreshed the final inventory after the last manifest edits, including the
+  Python lock's conditional typing-extensions entry (current 4.16.0, verified
+  with PyPI). The report generator now rejects missing registry metadata.
+
+The two full failing workflow logs and the failing/passing production regression
+are preserved as evidence/{pipeline-43562957241,links-43562957275,
+standalone-before,standalone-after}.log.gz. Working raw logs remain in ci-logs/.

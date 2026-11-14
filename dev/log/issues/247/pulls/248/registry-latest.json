@@ -2239,6 +2239,19 @@
         "Releases": "https://github.com/astral-sh/uv/releases",
         "Repository": "https://github.com/astral-sh/uv"
       }
+    },
+    "typing-extensions": {
+      "version": "4.16.0",
+      "requires_python": ">=3.9",
+      "requires_dist": null,
+      "project_urls": {
+        "Bug Tracker": "https://github.com/python/typing_extensions/issues",
+        "Changes": "https://github.com/python/typing_extensions/blob/main/CHANGELOG.md",
+        "Documentation": "https://typing-extensions.readthedocs.io/",
+        "Home": "https://github.com/python/typing_extensions",
+        "Q & A": "https://github.com/python/typing/discussions",
+        "Repository": "https://github.com/python/typing_extensions"
+      }
     }
   },
   "node": [

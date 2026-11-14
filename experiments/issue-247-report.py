@@ -111,6 +111,8 @@ def main():
             new = versions(after.get(eco, {}).get(name, []))
             release = latest.get(eco, {}).get(name, {})
             current = release.get('version', release.get('tag_name', 'lookup missing'))
+            if eco != 'actions' and (current == 'lookup missing' or release.get('error')):
+                raise ValueError(f'Missing registry evidence for {eco}/{name}: {release}')
             reason = 'Current.'
             if eco == 'actions':
                 current = action_versions.get(name, 'HEAD 683b588c487a69d01f6c6ddf40f036ff682cc2c8')
@@ -133,7 +135,7 @@ def main():
             if eco == 'cargo':
                 label = f'[{name}](https://crates.io/crates/{name})'
             elif eco == 'npm':
-                label = f'[{name}](https://www.npmjs.com/package/{name})'
+                label = f'[{name}](https://registry.npmjs.org/{name}/latest)'
             elif eco == 'pypi':
                 label = f'[{name}](https://pypi.org/project/{name}/)'
             elif eco == 'actions':
@@ -141,7 +143,7 @@ def main():
             vals = [label, ', '.join(old) or 'absent', current, ', '.join(new) or 'removed', reason]
             lines.append('| ' + ' | '.join(v.replace('|', '\\|') for v in vals) + ' |')
         lines.append('')
-    (OUT / 'dependency-versions.md').write_text('\n'.join(lines) + '\n')
+    (OUT / 'dependency-versions.md').write_text('\n'.join(lines).rstrip() + '\n')
 
 
 if __name__ == '__main__':
