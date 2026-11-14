@@ -1,0 +1,130 @@
+Name:      docker.io/library/rust:1.100.0-slim
+MediaType: application/vnd.oci.image.index.v1+json
+Digest:    sha256:e9d95b74296f7126a83ae3d041aeaba1ff4c478f13abc5cc034fcf7c131c3d4a
+
+Manifests:
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:4b68057dc8c103af4fa66b5cd29f21b18afec79fadfcd8fb91e295e939f0690c
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/amd64
+  Annotations:
+    com.docker.official-images.bashbrew.arch: amd64
+    org.opencontainers.image.base.digest:     sha256:7378260c0a098d27ac206225db5e7d92b8c7c84ea7afccc86eeb513756bbd392
+    org.opencontainers.image.base.name:       debian:trixie-slim
+    org.opencontainers.image.created:         2026-11-12T20:24:51Z
+    org.opencontainers.image.revision:        3f4c9cd699d3671ee657c75b5e592f6eb0b93824
+    org.opencontainers.image.source:          https://github.com/rust-lang/docker-rust.git#3f4c9cd699d3671ee657c75b5e592f6eb0b93824:stable/trixie/slim
+    org.opencontainers.image.url:             https://hub.docker.com/_/rust
+    org.opencontainers.image.version:         1-slim-trixie
+
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:10b7065b06971a3340c81f277f6bd219c22ca5f939dac05cb83c5989ea488ecd
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    vnd.docker.reference.digest:              sha256:4b68057dc8c103af4fa66b5cd29f21b18afec79fadfcd8fb91e295e939f0690c
+    vnd.docker.reference.type:                attestation-manifest
+    com.docker.official-images.bashbrew.arch: amd64
+
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:9384ec9cc6d9526c720d296872d6f2bc48d73fe1e7fb0b3405da9290084295ab
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/arm/v7
+  Annotations:
+    org.opencontainers.image.base.digest:     sha256:ced25bc1bff26885d07c82647bc5ad766731d578e8cbc0d02b2e45b2095eaa67
+    org.opencontainers.image.base.name:       debian:trixie-slim
+    org.opencontainers.image.created:         2026-11-12T20:25:24Z
+    org.opencontainers.image.revision:        3f4c9cd699d3671ee657c75b5e592f6eb0b93824
+    org.opencontainers.image.source:          https://github.com/rust-lang/docker-rust.git#3f4c9cd699d3671ee657c75b5e592f6eb0b93824:stable/trixie/slim
+    org.opencontainers.image.url:             https://hub.docker.com/_/rust
+    org.opencontainers.image.version:         1-slim-trixie
+    com.docker.official-images.bashbrew.arch: arm32v7
+
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:46732e959f5e2d30dd3400cbe2ce2c8b2c85e301338f7c892a191f6a56ca7de6
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    com.docker.official-images.bashbrew.arch: arm32v7
+    vnd.docker.reference.digest:              sha256:9384ec9cc6d9526c720d296872d6f2bc48d73fe1e7fb0b3405da9290084295ab
+    vnd.docker.reference.type:                attestation-manifest
+
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:11acfd0f07018a7c60d33b5e95618275feb39e465c4fbc9a73b438b1ee1e43ce
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/arm64/v8
+  Annotations:
+    org.opencontainers.image.created:         2026-11-12T20:24:04Z
+    org.opencontainers.image.revision:        3f4c9cd699d3671ee657c75b5e592f6eb0b93824
+    org.opencontainers.image.source:          https://github.com/rust-lang/docker-rust.git#3f4c9cd699d3671ee657c75b5e592f6eb0b93824:stable/trixie/slim
+    org.opencontainers.image.url:             https://hub.docker.com/_/rust
+    org.opencontainers.image.version:         1-slim-trixie
+    com.docker.official-images.bashbrew.arch: arm64v8
+    org.opencontainers.image.base.digest:     sha256:24a01011d10eba3a023bc8585b9650b8b29021240d4217c05b905e09ef4a5232
+    org.opencontainers.image.base.name:       debian:trixie-slim
+
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:3129dc57d76e9589ee5bfc322e2e77e68cc0d03f3059cb4981e7aece79b32683
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    com.docker.official-images.bashbrew.arch: arm64v8
+    vnd.docker.reference.digest:              sha256:11acfd0f07018a7c60d33b5e95618275feb39e465c4fbc9a73b438b1ee1e43ce
+    vnd.docker.reference.type:                attestation-manifest
+
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:07839279e31ab83f03feaf7ef3e8c67b7d7916979d83cbed446777264641d233
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/386
+  Annotations:
+    org.opencontainers.image.created:         2026-11-12T20:25:10Z
+    org.opencontainers.image.revision:        3f4c9cd699d3671ee657c75b5e592f6eb0b93824
+    org.opencontainers.image.source:          https://github.com/rust-lang/docker-rust.git#3f4c9cd699d3671ee657c75b5e592f6eb0b93824:stable/trixie/slim
+    org.opencontainers.image.url:             https://hub.docker.com/_/rust
+    org.opencontainers.image.version:         1-slim-trixie
+    com.docker.official-images.bashbrew.arch: i386
+    org.opencontainers.image.base.digest:     sha256:2f17e429fd4047b0ca5ed190bf3fb5b199c30652a8912cd59649e0b04527bdae
+    org.opencontainers.image.base.name:       debian:trixie-slim
+
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:037f6d261cb03520258481ade9f9041f59933c65ab2ae1013ce74bfcdf19013f
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    com.docker.official-images.bashbrew.arch: i386
+    vnd.docker.reference.digest:              sha256:07839279e31ab83f03feaf7ef3e8c67b7d7916979d83cbed446777264641d233
+    vnd.docker.reference.type:                attestation-manifest
+
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:140f83d9408d1c945b0bf02810efae6bc40cce6824a102c7f4ff4bef4ceba7c3
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/ppc64le
+  Annotations:
+    org.opencontainers.image.base.digest:     sha256:89ff4dab6f0566b916409a75d9e68fc66058aa327f69a80139eca5288b662f89
+    org.opencontainers.image.base.name:       debian:trixie-slim
+    org.opencontainers.image.created:         2026-11-12T20:27:17Z
+    org.opencontainers.image.revision:        3f4c9cd699d3671ee657c75b5e592f6eb0b93824
+    org.opencontainers.image.source:          https://github.com/rust-lang/docker-rust.git#3f4c9cd699d3671ee657c75b5e592f6eb0b93824:stable/trixie/slim
+    org.opencontainers.image.url:             https://hub.docker.com/_/rust
+    org.opencontainers.image.version:         1-slim-trixie
+    com.docker.official-images.bashbrew.arch: ppc64le
+
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:361c3fe9cc7697bce1f1a8fa68446dce0556a41951f26becf1f28971a52e1560
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    com.docker.official-images.bashbrew.arch: ppc64le
+    vnd.docker.reference.digest:              sha256:140f83d9408d1c945b0bf02810efae6bc40cce6824a102c7f4ff4bef4ceba7c3
+    vnd.docker.reference.type:                attestation-manifest
+
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:3c558325bf9bb4c85d39a4e4dfeaeb91b4cca8e50c94b01283a49383043d5c64
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/s390x
+  Annotations:
+    org.opencontainers.image.source:          https://github.com/rust-lang/docker-rust.git#3f4c9cd699d3671ee657c75b5e592f6eb0b93824:stable/trixie/slim
+    org.opencontainers.image.url:             https://hub.docker.com/_/rust
+    org.opencontainers.image.version:         1-slim-trixie
+    com.docker.official-images.bashbrew.arch: s390x
+    org.opencontainers.image.base.digest:     sha256:31622eb35d6cf34271fbdafc934459f4bca3e4d188762e45826af2dbd4a20063
+    org.opencontainers.image.base.name:       debian:trixie-slim
+    org.opencontainers.image.created:         2026-11-12T20:22:59Z
+    org.opencontainers.image.revision:        3f4c9cd699d3671ee657c75b5e592f6eb0b93824
+
+  Name:        docker.io/library/rust:1.100.0-slim@sha256:e239fc6a838c199583a0c6cf3bfea2156663ba6631bfeea8fb96c9892a4b231b
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    com.docker.official-images.bashbrew.arch: s390x
+    vnd.docker.reference.digest:              sha256:3c558325bf9bb4c85d39a4e4dfeaeb91b4cca8e50c94b01283a49383043d5c64
+    vnd.docker.reference.type:                attestation-manifest

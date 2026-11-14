@@ -1,0 +1,5 @@
+Verified v4.4.1 includes #609: `Docker.pull(image)` now runs before creating the builder, with bounded transient retries in actions-toolkit. We removed our duplicate pre-pull/backoff implementation in https://github.com/link-foundation/rust-ai-driven-development-pipeline-template/pull/248 .
+
+One remaining feature gap is independent registry fallback. Reproduction: canonical Docker Hub is unreachable while `mirror.gcr.io/moby/buildkit:v0.35.0` is available. Retagging a mirror image locally no longer avoids the action's unconditional canonical pre-pull. Our small adapter tries the official action against the canonical image, then invokes it against the mirror image only on failure; failure of both sources stays fatal. Offline mocked-action tests cover both recovery and disabled/exhausted fallback.
+
+Suggested optional feature: accept ordered bootstrap-image mirror references and apply the existing upstream retry classifier to each, before creating a builder. This is a mirror feature, separate from the generic workflow retries discussed above.

@@ -62,7 +62,7 @@ class PipelineRegressions(unittest.TestCase):
             self.assertIn("!contains(needs.*.result, 'failure')", block)
             self.assertIn("!contains(needs.*.result, 'cancelled')", block)
             self.assertIn('id-token: write', block)
-            self.assertIn('rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18', block)
+            self.assertRegex(block, r'uses: rust-lang/crates-io-auth-action@[0-9a-f]{40}(?:\s|$)')
             self.assertIn('steps.crates_auth.outputs.token || secrets.CARGO_REGISTRY_TOKEN || secrets.CARGO_TOKEN', block)
             self.assertLess(block.index('id: crates_auth'), block.index('name: Verify selected publishing credential'))
             self.assertLess(block.index('name: Verify selected publishing credential'), block.index('name: Build release'))

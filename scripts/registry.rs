@@ -2,8 +2,8 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! ureq = "2"
-//! serde_json = "1"
+//! ureq = "3.5.2"
+//! serde_json = "1.0.154"
 //! ```
 #![allow(dead_code)] // Each standalone script uses a different subset of this module.
 
@@ -49,38 +49,39 @@ fn get_body_with_policy(
     attempts: u32,
     delay: Duration,
 ) -> Result<Option<String>, String> {
-    let agent = ureq::AgentBuilder::new()
-        .timeout_connect(Duration::from_secs(10))
-        .timeout_read(Duration::from_secs(20))
-        .timeout_write(Duration::from_secs(20))
-        .timeout(Duration::from_secs(30))
-        .build();
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .timeout_connect(Some(Duration::from_secs(10)))
+        .timeout_per_read(Some(Duration::from_secs(20)))
+        .timeout_per_write(Some(Duration::from_secs(20)))
+        .timeout_global(Some(Duration::from_secs(30)))
+        .http_status_as_error(false)
+        .build()
+        .into();
     with_retries(attempts, delay, || {
         let mut request = agent
             .get(url)
-            .set("User-Agent", "rust-template-release-check/1.0");
+            .header("User-Agent", "rust-template-release-check/1.0");
         for (key, value) in headers {
-            request = request.set(key, value);
+            request = request.header(*key, *value);
         }
         match request.call() {
-            Ok(response) if response.status() == 200 => response
-                .into_string()
-                .map(Some)
-                .map_err(|e| Failure::Transient(format!("Unreadable response from {url}: {e}"))),
-            Err(ureq::Error::Status(404, _)) => Ok(None),
-            Err(ureq::Error::Status(status, _)) if status == 429 || status >= 500 => {
-                Err(Failure::Transient(format!("{url}: HTTP {status}")))
-            }
-            Err(ureq::Error::Transport(error)) => {
-                Err(Failure::Transient(format!("{url}: {error}")))
-            }
-            Err(ureq::Error::Status(status, _)) => {
-                Err(Failure::Permanent(format!("{url}: HTTP {status}")))
-            }
-            Ok(response) => Err(Failure::Permanent(format!(
-                "{url}: unexpected HTTP {}",
-                response.status()
-            ))),
+            Ok(mut response) => match response.status().as_u16() {
+                200 => response
+                    .body_mut()
+                    .read_to_string()
+                    .map(Some)
+                    .map_err(|error| {
+                        Failure::Transient(format!("Unreadable response from {url}: {error}"))
+                    }),
+                404 => Ok(None),
+                status if status == 429 || status >= 500 => {
+                    Err(Failure::Transient(format!("{url}: HTTP {status}")))
+                }
+                status => Err(Failure::Permanent(format!(
+                    "{url}: unexpected HTTP {status}"
+                ))),
+            },
+            Err(error) => Err(Failure::Transient(format!("{url}: {error}"))),
         }
     })
 }
@@ -219,11 +220,13 @@ mod tests {
         .unwrap_err();
         assert!(error.contains("after 4 attempts"));
         calls = 0;
-        assert!(with_retries::<()>(4, Duration::ZERO, || {
-            calls += 1;
-            Err(Failure::Permanent("HTTP 403".into()))
-        })
-        .is_err());
+        assert!(
+            with_retries::<()>(4, Duration::ZERO, || {
+                calls += 1;
+                Err(Failure::Permanent("HTTP 403".into()))
+            })
+            .is_err()
+        );
         assert_eq!(calls, 1);
     }
 

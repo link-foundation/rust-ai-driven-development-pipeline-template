@@ -1,0 +1,300 @@
+**Description of the issue**
+
+Similarly to https://github.com/github/codeql/issues/19966 I'm also hitting quite a few macro expansion failed warnings:
+```
+WARN /home/sg/dev/cosmwasm/contracts/ibc-reflect/src/msg.rs:14:21: macro expansion failed: the macro 'vec' expands to ERROR but a Expr was expected
+```
+
+As I don't know whether the bugs share a common root cause, I'm opening this issue.
+
+**Reproduction steps**
+```
+git clone https://github.com/CosmWasm/cosmwasm.git
+git checkout cf413c5ad6a58a87e0be894584f01506f3b2e0af^
+codeql database create --language=rust "cosmwasm-db-cf413c5ad6a58a87e0be894584f01506f3b2e0af^" --overwrite
+```
+
+**Files**
+
+[database-create-20250701.203330.097.log](https://github.com/user-attachments/files/21076863/database-create-20250701.203330.097.log)
+[database-index-files-20250701.203333.834.log](https://github.com/user-attachments/files/21076864/database-index-files-20250701.203333.834.log)
+[cosmwasm-db-cf413c5ad6a58a87e0be894584f01506f3b2e0af^.zip](https://github.com/intrigus-lgtm/file-dump/releases/tag/cosmwasm-db-cf413c5ad6a58a87e0be894584f01506f3b2e0af.zip)
+
+Hi @intrigus-lgtm
+
+Thanks for the report. I'll let the engineering team know about the issue.
+
+Hi @intrigus-lgtm, thanks for reaching out about this! As far as I could test, seems like this is an upstream issue with rust-analyzer, as can be highlighted by opening the `contracts/ibc-reflect` directory in VSCode with the rust-analyzer plugin:
+
+<img width="862" height="553" alt="Image" src="https://github.com/user-attachments/assets/936139b2-0daf-4b26-9d22-b0d8ddf96839" />
+
+(opening the `cosmwasm` directory doesn't index that crate because it is explicitly excluded from the root workspace).
+
+I'll file an issue about this.
+
+> Hi [@intrigus-lgtm](https://github.com/intrigus-lgtm), thanks for reaching out about this! As far as I could test, seems like this is an upstream issue with rust-analyzer, as can be highlighted by opening the `contracts/ibc-reflect` directory in VSCode with the rust-analyzer plugin:
+
+Ah, yes I could have checked that, but I would not have expected rust-analyzer to fail.
+> I'll file an issue about this.
+
+Did you already do? If so, do you already have a reducer? If not, I may try to create a reproducer :)
+
+EDIT: https://github.com/rust-lang/rust-analyzer/issues/20191 and https://github.com/rust-lang/rust-analyzer/issues/20191#issuecomment-3046541217 🙂
+
+The fix has been merged to rust-analyzer 🎉
+https://github.com/rust-lang/rust-analyzer/pull/20164
+
+This is an old issue and it looks like it's been fixed.  Closing.
+
+Is it though? I'm still observing issues: https://github.com/PaulDance/cargo-liner/actions/runs/30536647664/job/90851437120#step:5:84
+
+It might have been fixed on the rust-analyzer side, but maybe it hasn't been updated here?
+
+I suspect what may have happened is that the issue had multiple causes and one of them was fixed.  In any case, I'll re-open this based on the evidence above (I'm trying to narrow down our open issues but there's clearly still something to be done here).
+
+Still reproducing on CodeQL 2.26.2. It appears to be a clean function of the **Rust std version**, not of the project.
+
+Minimal repro — a single `cargo init --lib` crate:
+
+```rust
+pub fn f(n: usize) -> Vec<f64> {
+    let v = vec![0.0f64; n];
+    assert!(v.len() == n);
+    let s = format!("{}", v.len());
+    println!("{}", s);
+    v
+}
+```
+
+`codeql database create db --language=rust --build-mode=none`, varying only the toolchain via `rust-toolchain.toml`:
+
+| std | failures in the 5 lines above | failures inside std itself |
+|---|---|---|
+| 1.85 / 1.92 / 1.94 | 0 | 0 |
+| 1.96.0 | 4 (`vec`, `assert`, `format`, `$crate::format_args_nl`) | 0 |
+| 1.97.0 | 4 | 94 (`cfg_select` ×38, `pattern_type` ×29) |
+
+So 1.94 is the newest std 2.26.2 handles. The bundle vendors `ra_ap_* 0.0.301`, so #21714 likely covers the fix.
+
+@PaulDance's cargo-liner run matches the 1.96 row exactly — same std macros, zero `cfg_select`/`pattern_type` — which fits, as it has no toolchain pin and picks up the runner's ambient stable. Our repo pins 1.97.0 and gets the 1.97 row: 233 of 243 files "extracted with errors".
+
+Worth noting these are not `#[cfg]`-disabled branches: they are `Warning` severity on live code paths, and `rust-src` is irrelevant (installing it changed the count by exactly zero).
+
+Workaround that restores extraction without changing the project's toolchain pin — point the extractor at a ≤1.94 sysroot:
+
+```yaml
+env:
+  CODEQL_EXTRACTOR_RUST_OPTION_SYSROOT: <rustup>/toolchains/1.94-x86_64-unknown-linux-gnu
+  CODEQL_EXTRACTOR_RUST_OPTION_SYSROOT_SRC: <rustup>/toolchains/1.94-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library
+```
+
+Both are required. Setting only `_SYSROOT_SRC` takes the `Sysroot::discover_with_src_override` path, keeps the discovered 1.97 binary sysroot, and leaves the four user-code failures. With both set, our tree goes from 250 errored / 13 clean to 17 / 246, and the remaining 17 are `target/` build artifacts absent from a CI checkout. This needs advanced setup — default setup can't inject env vars.
+
+
+Another data point at repository scale, on **CodeQL CLI 2.26.3** (one patch
+newer than the 2.26.2 measured above), from the default GitHub-hosted
+`ubuntu-latest` image with **no `rust-toolchain.toml`** — so the extractor sees
+whatever the runner ships, which for us was `rustc 1.97.1`.
+
+One run of `github/codeql-action` with `build-mode: none` over a ~1,500-file
+workspace produced:
+
+```
+20,725  macro expansion failed
+ 1,023  distinct source files affected
+```
+
+Broken down by tree:
+
+| Tree | Diagnostics | Files |
+| --- | ---: | ---: |
+| `tests/` | 16,923 | 624 |
+| `src/` | 3,016 | 285 |
+| `examples/` | 499 | 103 |
+| `scripts/` (rust-script) | 282 | 10 |
+| `build.rs` | 5 | 1 |
+
+The distribution by macro is the part I think is diagnostic. Every failing
+macro is defined in `std`/`core` or in a dependency — **not one is defined in
+the project being analysed**:
+
+| Macro | Failures |
+| --- | ---: |
+| `assert` | 7,727 |
+| `assert_eq` | 4,953 |
+| `format` | 3,311 |
+| `vec` | 953 |
+| `$crate::format_args_nl` | 581 |
+| `writeln` | 564 |
+| `$crate::panic::panic_2021` | 549 |
+| `matches` | 372 |
+| `json` / `serde_json::json` | 494 |
+| `env` | 316 |
+| `include_str` | 256 |
+| `write` | 203 |
+| `assert_ne` | 156 |
+| `$crate::__export::format_args` | 82 |
+| `concat` | 78 |
+| `include_bytes` | 18 |
+| `cfg` | 16 |
+| `unreachable` | 12 |
+| others (`include`, `debug_assert`, `format_args`, `thread_local_inner`, …) | ≤ 11 each |
+
+This matches @mario4tier's conclusion that the failure is a function of the
+`std` version rather than of the project: we have no project-defined macro in
+the list at all.
+
+Two differences from the measurements already in this thread, in case they help
+narrow it:
+
+1. **The extractor had no sysroot at all, not a mismatched one.** The
+   configuration dump at the start of extraction reads:
+
+   ```
+   INFO configuration: {
+       ...
+       sysroot: None,
+       sysroot_src: None,
+       rustc_src: None,
+       ...
+       proc_macro_server: None,
+   }
+   ```
+
+   `rust-src` is not part of the `ubuntu-latest` image's preinstalled
+   toolchain, so unlike the runs above there were no `std` sources on disk to
+   fall back to.
+
+2. **Zero failures inside `std` itself** — no `cfg_select`, no `pattern_type`,
+   which the 1.97 row in @mario4tier's table shows 38 and 29 of. That is
+   consistent with (1): `std` was never extracted, so it could not fail. The
+   user-code column is what we reproduce, at three orders of magnitude more
+   volume.
+
+## Why this is not cosmetic
+
+These are `WARN`-severity log lines and produce no GitHub annotation, so a run
+with 20,725 of them still reports success. But a file whose macro calls do not
+expand is recorded as *extracted with errors*, and the bodies behind those
+macros are not available to the queries. In a codebase where `assert!` and
+`format!` are the two most common macros, that is a large and completely
+invisible hole in coverage — which is why I think this deserves more weight
+than a warning-noise issue. `#22244` describes the same hole from the query
+side.
+
+## Minimal reproduction
+
+@mario4tier's `cargo init --lib` repro reproduces it for us verbatim, with no
+`rust-toolchain.toml` at all (so the runner's ambient stable is used):
+
+```rust
+pub fn f(n: usize) -> Vec<f64> {
+    let v = vec![0.0f64; n];
+    assert!(v.len() == n);
+    let s = format!("{}", v.len());
+    println!("{}", s);
+    v
+}
+```
+
+```yaml
+- uses: github/codeql-action/init@v4
+  with:
+    languages: rust      # build-mode: none is the default for Rust
+- uses: github/codeql-action/analyze@v4
+```
+
+## Workaround, confirmed on 2.26.3
+
+@mario4tier's sysroot pin works here too, and both variables are genuinely
+required — setting only `_SYSROOT_SRC` leaves the discovered binary sysroot in
+place and the failures remain:
+
+```yaml
+    env:
+      CODEQL_RUST_SYSROOT_TOOLCHAIN: '1.94.0'
+    steps:
+      - name: Pin the extractor sysroot to a std the CodeQL bundle can parse
+        run: |
+          rustup toolchain install "$CODEQL_RUST_SYSROOT_TOOLCHAIN" \
+            --profile minimal --component rust-src
+          sysroot="$(rustup run "$CODEQL_RUST_SYSROOT_TOOLCHAIN" rustc --print sysroot)"
+          echo "CODEQL_EXTRACTOR_RUST_OPTION_SYSROOT=${sysroot}" >> "$GITHUB_ENV"
+          echo "CODEQL_EXTRACTOR_RUST_OPTION_SYSROOT_SRC=${sysroot}/lib/rustlib/src/rust/library" >> "$GITHUB_ENV"
+```
+
+As already noted, this needs advanced setup; default setup cannot inject
+environment variables, so any repository on default setup has no workaround at
+all.
+
+## Suggestions
+
+1. **Make the extractor's `std` expectation explicit rather than implicit.**
+   The bundle knows which rust-analyzer it vendors; it could compare the
+   discovered `std` version against that and emit *one* diagnostic — "vendored
+   rust-analyzer supports std ≤ X, found Y; macro expansion will be degraded" —
+   instead of one warning per call site. That single line would have saved
+   every reader of this thread the reverse-engineering, and it turns 20,725
+   lines into one.
+
+2. **Surface degraded extraction in the run's status, not only in the log.**
+   A run where 1,023 of 1,496 indexed files were extracted with errors reports
+   success today. Emitting a summary diagnostic (the extractor already has a
+   `diagnostic_dir`) would make the coverage loss visible where people look.
+
+3. **Ship the fallback the workaround performs manually.** If no sysroot
+   override is set and the discovered `std` is newer than supported, the
+   extractor could look for a supported toolchain via `rustup` before falling
+   back to the unsupported one. That would fix default-setup repositories,
+   which cannot apply the workaround at all.
+
+## Reference
+
+Full evidence, counts and the reproduction of the derivation:
+`link-assistant/formal-ai` PR
+[#1018](https://github.com/link-assistant/formal-ai/pull/1018),
+`dev/log/issues/1017/pulls/1018/`.
+
+
+Follow-up with measured numbers, since my earlier comment quoted the workaround
+before I had run it myself.
+
+Same repository, same CodeQL CLI 2.26.3, `build-mode: none`, only difference
+being the two environment variables set from a pinned 1.94.0 toolchain with
+`rust-src`:
+
+| Diagnostic | Ambient toolchain (rustc 1.97.1) | Pinned sysroot (1.94.0) |
+| --- | ---: | ---: |
+| `macro expansion failed` | 20,725 | **0** |
+| `proc-macro not yet built` | 0 | 355 |
+| `` `OUT_DIR` not set `` | 0 | 3 |
+
+The configuration dump changes from `sysroot: None, sysroot_src: None` to
+`sysroot: Some(...), sysroot_src: Some(...)`, and every one of the 20,725
+`macro expansion failed` warnings across 1,023 files disappears. So the
+workaround is confirmed end to end at repository scale, not just in principle.
+
+Two things worth noting for anyone applying it:
+
+1. **Both variables really are required.** With only
+   `CODEQL_EXTRACTOR_RUST_OPTION_SYSROOT_SRC` set, rust-analyzer takes its
+   `discover_with_src_override` path, keeps the discovered (ambient) binary
+   sysroot, and the failures remain.
+
+2. **The fix uncovers a second, much smaller class that the first one was
+   masking.** With the sysroot resolved, extraction gets far enough to report
+   `proc-macro not yet built` (355 occurrences — `#[derive(...)]` on
+   `serde`-heavy types) because `proc_macro_server` is still `None`. That is
+   two orders of magnitude smaller than what it replaced, but it is the same
+   shape of silent coverage loss, and I could not find a documented way to
+   point the extractor at a proc-macro server from the action. If there is one,
+   it would be worth documenting alongside the sysroot options.
+
+Full logs for both runs, and the counting commands, are in
+`dev/log/issues/1017/pulls/1018/` of
+[link-assistant/formal-ai#1018](https://github.com/link-assistant/formal-ai/pull/1018).
+
+
+@konard @mario4tier Could you try the latest nightly from https://github.com/dsp-testing/codeql-cli-nightlies/releases to see if that fixes the problems you're observing?
+
+This now seems to be fixed: https://github.com/PaulDance/cargo-liner/actions/runs/35990264240/job/107602419900. I guess it is due to the latest release: https://github.blog/changelog/2026-09-25-codeql-2-27-1-adds-c-and-c-query-and-kotlin-2-4-20-support/.

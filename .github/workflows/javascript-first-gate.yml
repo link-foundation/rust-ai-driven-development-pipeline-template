@@ -65,7 +65,11 @@ jobs:
             "$RUNNER_TEMP/javascript-first-tools/"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26.13.1'
+
+      # npm is the package-manager bootstrap; its release bundles its dependencies.
+      - name: Use current npm
+        run: npm install --global npm@12.2.2 --ignore-scripts --no-audit --no-fund # zizmor: ignore[adhoc-packages]
       - name: Validate candidate provenance before checkout
         id: provenance
         env:

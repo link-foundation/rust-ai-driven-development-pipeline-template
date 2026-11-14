@@ -8,9 +8,9 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! regex = "1"
-//! serde = { version = "1", features = ["derive"] }
-//! serde_json = "1"
+//! serde = { version = "1.0.229", features = ["derive"] }
+//! regex = "1.13.1"
+//! serde_json = "1.0.154"
 //! ```
 
 #[cfg(not(test))]
@@ -22,7 +22,7 @@ use std::fs;
 #[cfg(not(test))]
 use std::io::Write;
 #[cfg(not(test))]
-use std::process::{exit, Command, Stdio};
+use std::process::{Command, Stdio, exit};
 
 // Declared unconditionally: `rust-script --test` builds this file as its own
 // crate root, where a `super::` re-import would resolve to nothing. See #150.

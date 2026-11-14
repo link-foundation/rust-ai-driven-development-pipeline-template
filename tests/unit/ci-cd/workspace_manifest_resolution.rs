@@ -285,6 +285,21 @@ fn rust_root_prefers_explicit_parameter() {
 
 #[test]
 fn rust_root_cli_parser_returns_none_without_configuration() {
-    std::env::remove_var("RUST_ROOT");
-    assert_eq!(parse_rust_root_from_args(), None);
+    const CHILD: &str = "ISSUE_247_ENV_CHILD";
+    if std::env::var_os(CHILD).is_some() {
+        assert_eq!(parse_rust_root_from_args(), None);
+        return;
+    }
+    // Process-local environment avoids racing other tests, as required by Rust 2024.
+    let result = std::process::Command::new(std::env::current_exe().unwrap())
+        .arg("rust_root_cli_parser_returns_none_without_configuration")
+        .env_remove("RUST_ROOT")
+        .env(CHILD, "1")
+        .output()
+        .unwrap();
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stdout)
+    );
 }

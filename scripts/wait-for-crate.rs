@@ -26,8 +26,8 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! regex = "1"
-//! ureq = "2"
+//! regex = "1.13.1"
+//! ureq = "3.5.2"
 //! ```
 
 // `rust-script --test` builds this file as a test harness, where `main` is not
@@ -197,7 +197,12 @@ fn failure_message(
              all {} attempts failed to get an answer, the last one with: {}. \
              This does NOT mean the publish failed. Check the sparse index before \
              treating the release as broken: curl -s -A 'ci (+https://example.com)' {} | grep '\"vers\":\"{}\"'",
-            crate_name, version, max_attempts, reason, index_url(crate_name), version
+            crate_name,
+            version,
+            max_attempts,
+            reason,
+            index_url(crate_name),
+            version
         ),
         None => format!(
             "Error: {}@{} was not visible on crates.io after {} attempts",
@@ -209,15 +214,21 @@ fn failure_message(
 #[cfg(not(test))]
 fn check_index(crate_name: &str, version: &str) -> Visibility {
     match ureq::get(&index_url(crate_name))
-        .set("User-Agent", USER_AGENT)
+        .header("User-Agent", USER_AGENT)
+        .config()
+        .timeout_global(Some(Duration::from_secs(30)))
+        .timeout_connect(Some(Duration::from_secs(10)))
+        .build()
         .call()
     {
-        Ok(response) => {
-            let status = response.status();
-            let body = response.into_string().unwrap_or_default();
-            classify_index_response(status, &body, version)
+        Ok(mut response) => {
+            let status = response.status().as_u16();
+            match response.body_mut().read_to_string() {
+                Ok(body) => classify_index_response(status, &body, version),
+                Err(error) => Visibility::Unknown(format!("index.crates.io body failed: {error}")),
+            }
         }
-        Err(ureq::Error::Status(status, _)) => classify_index_response(status, "", version),
+        Err(ureq::Error::StatusCode(status)) => classify_index_response(status, "", version),
         Err(e) => Visibility::Unknown(format!("index.crates.io request failed: {}", e)),
     }
 }
@@ -225,11 +236,15 @@ fn check_index(crate_name: &str, version: &str) -> Visibility {
 #[cfg(not(test))]
 fn check_api(crate_name: &str, version: &str) -> Visibility {
     match ureq::get(&api_url(crate_name, version))
-        .set("User-Agent", USER_AGENT)
+        .header("User-Agent", USER_AGENT)
+        .config()
+        .timeout_global(Some(Duration::from_secs(30)))
+        .timeout_connect(Some(Duration::from_secs(10)))
+        .build()
         .call()
     {
-        Ok(response) => classify_api_status(response.status()),
-        Err(ureq::Error::Status(status, _)) => classify_api_status(status),
+        Ok(response) => classify_api_status(response.status().as_u16()),
+        Err(ureq::Error::StatusCode(status)) => classify_api_status(status),
         Err(e) => Visibility::Unknown(format!("crates.io API request failed: {}", e)),
     }
 }
@@ -344,9 +359,8 @@ fn main() -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::{
-        api_url, classify_api_status, classify_index_response, combine, failure_message,
-        index_body_has_version, index_path, index_url, should_skip_crate_wait, Visibility,
-        USER_AGENT,
+        USER_AGENT, Visibility, api_url, classify_api_status, classify_index_response, combine,
+        failure_message, index_body_has_version, index_path, index_url, should_skip_crate_wait,
     };
 
     #[test]

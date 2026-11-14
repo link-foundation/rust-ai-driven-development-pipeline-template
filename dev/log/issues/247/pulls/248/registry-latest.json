@@ -1,0 +1,2346 @@
+{
+  "cargo": {
+    "once_cell": {
+      "version": "1.21.4",
+      "repository": "https://github.com/matklad/once_cell",
+      "rust_version": "1.65",
+      "created_at": "2026-03-12T10:59:52.512992Z"
+    },
+    "rustls": {
+      "version": "0.23.46",
+      "repository": "https://github.com/rustls/rustls",
+      "rust_version": "1.71",
+      "created_at": "2026-10-14T09:54:15.075873Z"
+    },
+    "indexmap": {
+      "version": "2.14.2",
+      "repository": "https://github.com/indexmap-rs/indexmap",
+      "rust_version": "1.85",
+      "created_at": "2026-09-05T01:53:48.019655Z"
+    },
+    "syn": {
+      "version": "3.0.10",
+      "repository": "https://github.com/dtolnay/syn",
+      "rust_version": "1.71",
+      "created_at": "2026-11-09T05:53:12.392384Z"
+    },
+    "equivalent": {
+      "version": "1.0.3",
+      "repository": "https://github.com/indexmap-rs/equivalent",
+      "rust_version": "1.6",
+      "created_at": "2026-10-13T23:06:49.442503Z"
+    },
+    "link-section": {
+      "version": "0.19.4",
+      "repository": "https://github.com/mmastrac/linktime",
+      "rust_version": "1.85",
+      "created_at": "2026-11-14T00:18:38.681388Z"
+    },
+    "windows-core": {
+      "version": "0.100.0",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.95",
+      "created_at": "2026-09-03T16:42:56.290894Z"
+    },
+    "serde_derive": {
+      "version": "1.0.229",
+      "repository": "https://github.com/serde-rs/serde",
+      "rust_version": "1.71",
+      "created_at": "2026-07-18T23:05:07.504375Z"
+    },
+    "slab": {
+      "version": "0.4.12",
+      "repository": "https://github.com/tokio-rs/slab",
+      "rust_version": "1.51",
+      "created_at": "2026-01-31T12:59:22.609198Z"
+    },
+    "toml_datetime": {
+      "version": "1.1.3+spec-1.1.0",
+      "repository": "https://github.com/toml-rs/toml",
+      "rust_version": "1.85",
+      "created_at": "2026-11-06T13:52:00.591421Z"
+    },
+    "clap": {
+      "version": "4.6.7",
+      "repository": "https://github.com/clap-rs/clap",
+      "rust_version": "1.85",
+      "created_at": "2026-09-14T18:40:28.474794Z"
+    },
+    "same-file": {
+      "version": "1.0.6",
+      "repository": "https://github.com/BurntSushi/same-file",
+      "rust_version": null,
+      "created_at": "2020-01-11T17:02:30.960838Z"
+    },
+    "js-sys": {
+      "version": "0.3.107",
+      "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/js-sys",
+      "rust_version": "1.81",
+      "created_at": "2026-10-30T06:15:06.268363Z"
+    },
+    "android_system_properties": {
+      "version": "0.1.6",
+      "repository": "https://github.com/nical/android_system_properties",
+      "rust_version": null,
+      "created_at": "2026-08-05T13:44:27.717073Z"
+    },
+    "zeroize": {
+      "version": "1.9.1",
+      "repository": "https://github.com/RustCrypto/utils",
+      "rust_version": "1.85",
+      "created_at": "2026-10-06T17:49:21.148259Z"
+    },
+    "cargo-llvm-cov": {
+      "version": "0.9.1",
+      "repository": "https://github.com/taiki-e/cargo-llvm-cov",
+      "rust_version": "1.87",
+      "created_at": "2026-09-06T16:20:49.621751Z"
+    },
+    "anstyle": {
+      "version": "1.0.14",
+      "repository": "https://github.com/rust-cli/anstyle.git",
+      "rust_version": "1.66.0",
+      "created_at": "2026-03-13T18:59:28.450723Z"
+    },
+    "wasi": {
+      "version": "0.14.7+wasi-0.2.4",
+      "repository": "https://github.com/bytecodealliance/wasi-rs",
+      "rust_version": "1.82.0",
+      "created_at": "2025-09-15T22:01:38.940804Z"
+    },
+    "find-msvc-tools": {
+      "version": "0.1.15",
+      "repository": "https://github.com/rust-lang/cc-rs",
+      "rust_version": "1.65.0",
+      "created_at": "2026-10-19T07:39:37.580908Z"
+    },
+    "windows-strings": {
+      "version": "0.100.0",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.95",
+      "created_at": "2026-09-03T16:41:44.762627Z"
+    },
+    "cfg-if": {
+      "version": "1.0.5",
+      "repository": "https://github.com/rust-lang/cfg-if",
+      "rust_version": "1.32",
+      "created_at": "2026-09-16T17:36:11.278420Z"
+    },
+    "walkdir": {
+      "version": "2.5.0",
+      "repository": "https://github.com/BurntSushi/walkdir",
+      "rust_version": null,
+      "created_at": "2024-03-01T17:55:09.221032Z"
+    },
+    "thiserror-impl": {
+      "version": "2.0.21",
+      "repository": "https://github.com/dtolnay/thiserror",
+      "rust_version": "1.77",
+      "created_at": "2026-09-23T20:24:05.038819Z"
+    },
+    "log": {
+      "version": "0.4.35",
+      "repository": "https://github.com/rust-lang/log",
+      "rust_version": "1.71.0",
+      "created_at": "2026-10-30T21:36:19.748360Z"
+    },
+    "winnow": {
+      "version": "1.0.5",
+      "repository": "https://github.com/winnow-rs/winnow",
+      "rust_version": "1.65.0",
+      "created_at": "2026-11-05T01:18:41.061954Z"
+    },
+    "webpki-roots": {
+      "version": "1.0.12",
+      "repository": "https://github.com/rustls/webpki-roots",
+      "rust_version": "1.71",
+      "created_at": "2026-11-10T21:08:56.515281Z"
+    },
+    "httparse": {
+      "version": "1.10.1",
+      "repository": "https://github.com/seanmonstar/httparse",
+      "rust_version": null,
+      "created_at": "2025-03-03T14:44:09.975762Z"
+    },
+    "anstyle-wincon": {
+      "version": "3.0.11",
+      "repository": "https://github.com/rust-cli/anstyle.git",
+      "rust_version": "1.66.0",
+      "created_at": "2025-11-13T17:30:26.488661Z"
+    },
+    "utf8parse": {
+      "version": "0.2.2",
+      "repository": "https://github.com/alacritty/vte",
+      "rust_version": null,
+      "created_at": "2024-06-08T07:07:41.813419Z"
+    },
+    "base64": {
+      "version": "0.23.1",
+      "repository": "https://github.com/marshallpierce/rust-base64",
+      "rust_version": "1.71.0",
+      "created_at": "2026-08-04T12:34:31.976297Z"
+    },
+    "unicode-ident": {
+      "version": "1.0.27",
+      "repository": "https://github.com/dtolnay/unicode-ident",
+      "rust_version": "1.71",
+      "created_at": "2026-10-12T04:20:27.796258Z"
+    },
+    "proc-macro2": {
+      "version": "1.0.107",
+      "repository": "https://github.com/dtolnay/proc-macro2",
+      "rust_version": "1.71",
+      "created_at": "2026-07-19T00:18:25.189787Z"
+    },
+    "windows_x86_64_gnu": {
+      "version": "0.53.1",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.60",
+      "created_at": "2025-10-06T17:33:55.996108Z"
+    },
+    "windows-implement": {
+      "version": "0.100.0",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.95",
+      "created_at": "2026-09-03T16:38:25.707732Z"
+    },
+    "linktime-proc-macro": {
+      "version": "0.2.3",
+      "repository": "https://github.com/mmastrac/linktime",
+      "rust_version": null,
+      "created_at": "2026-08-09T22:01:10.303711Z"
+    },
+    "windows_aarch64_gnullvm": {
+      "version": "0.53.1",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.60",
+      "created_at": "2025-10-06T17:33:29.033577Z"
+    },
+    "crc32fast": {
+      "version": "1.5.5",
+      "repository": "https://github.com/srijs/rust-crc32fast",
+      "rust_version": "1.63",
+      "created_at": "2026-11-10T03:41:10.884830Z"
+    },
+    "zmij": {
+      "version": "1.0.23",
+      "repository": "https://github.com/dtolnay/zmij",
+      "rust_version": "1.71",
+      "created_at": "2026-07-13T12:58:53.705886Z"
+    },
+    "clap_builder": {
+      "version": "4.6.7",
+      "repository": "https://github.com/clap-rs/clap",
+      "rust_version": "1.85",
+      "created_at": "2026-09-14T18:40:26.377504Z"
+    },
+    "ring": {
+      "version": "0.17.14",
+      "repository": "https://github.com/briansmith/ring",
+      "rust_version": "1.66.0",
+      "created_at": "2025-03-11T19:42:03.889273Z"
+    },
+    "hashbrown": {
+      "version": "0.17.1",
+      "repository": "https://github.com/rust-lang/hashbrown",
+      "rust_version": "1.85.0",
+      "created_at": "2026-05-09T04:35:04.251Z"
+    },
+    "serde_spanned": {
+      "version": "1.1.3",
+      "repository": "https://github.com/toml-rs/toml",
+      "rust_version": "1.85",
+      "created_at": "2026-11-06T13:51:59.982009Z"
+    },
+    "simd-adler32": {
+      "version": "0.3.10",
+      "repository": "https://github.com/mcountryman/simd-adler32",
+      "rust_version": null,
+      "created_at": "2026-07-14T17:42:45.047242Z"
+    },
+    "percent-encoding": {
+      "version": "2.3.2",
+      "repository": "https://github.com/servo/rust-url/",
+      "rust_version": "1.51",
+      "created_at": "2025-08-21T08:46:50.131801Z"
+    },
+    "shlex": {
+      "version": "2.0.1",
+      "repository": "https://github.com/comex/rust-shlex",
+      "rust_version": "1.46.0",
+      "created_at": "2026-05-17T18:56:12.775983Z"
+    },
+    "miniz_oxide": {
+      "version": "0.9.1",
+      "repository": "https://github.com/Frommi/miniz_oxide/tree/master/miniz_oxide",
+      "rust_version": null,
+      "created_at": "2026-03-13T00:19:26.378812Z"
+    },
+    "futures-core": {
+      "version": "0.3.34",
+      "repository": "https://github.com/rust-lang/futures-rs",
+      "rust_version": "1.36",
+      "created_at": "2026-08-11T12:13:01.547638Z"
+    },
+    "futures-task": {
+      "version": "0.3.34",
+      "repository": "https://github.com/rust-lang/futures-rs",
+      "rust_version": "1.71",
+      "created_at": "2026-08-11T12:13:07.886026Z"
+    },
+    "thiserror": {
+      "version": "2.0.21",
+      "repository": "https://github.com/dtolnay/thiserror",
+      "rust_version": "1.77",
+      "created_at": "2026-09-23T20:24:07.771104Z"
+    },
+    "dotenvy": {
+      "version": "0.15.7",
+      "repository": "https://github.com/allan2/dotenvy",
+      "rust_version": "1.56.1",
+      "created_at": "2023-03-22T16:04:41.028594Z"
+    },
+    "toml": {
+      "version": "1.2.1+spec-1.1.0",
+      "repository": "https://github.com/toml-rs/toml",
+      "rust_version": "1.85",
+      "created_at": "2026-11-06T13:52:01.467558Z"
+    },
+    "windows_aarch64_msvc": {
+      "version": "0.53.1",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.60",
+      "created_at": "2025-10-06T17:33:33.380608Z"
+    },
+    "windows_i686_msvc": {
+      "version": "0.53.1",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.60",
+      "created_at": "2025-10-06T17:33:49.033999Z"
+    },
+    "autocfg": {
+      "version": "1.5.1",
+      "repository": "https://github.com/cuviper/autocfg",
+      "rust_version": "1.0",
+      "created_at": "2026-05-22T11:03:04.576867Z"
+    },
+    "flate2": {
+      "version": "1.1.11",
+      "repository": "https://github.com/rust-lang/flate2-rs",
+      "rust_version": "1.67.0",
+      "created_at": "2026-11-06T09:20:41.620132Z"
+    },
+    "clap_derive": {
+      "version": "4.6.7",
+      "repository": "https://github.com/clap-rs/clap",
+      "rust_version": "1.85",
+      "created_at": "2026-09-14T18:40:23.971462Z"
+    },
+    "bumpalo": {
+      "version": "3.20.4",
+      "repository": "https://github.com/fitzgen/bumpalo",
+      "rust_version": "1.71.1",
+      "created_at": "2026-11-13T19:44:09.757031Z"
+    },
+    "serde_core": {
+      "version": "1.0.229",
+      "repository": "https://github.com/serde-rs/serde",
+      "rust_version": "1.56",
+      "created_at": "2026-07-18T23:05:10.896830Z"
+    },
+    "rustls-webpki": {
+      "version": "0.103.17",
+      "repository": "https://github.com/rustls/webpki",
+      "rust_version": "1.71",
+      "created_at": "2026-11-12T17:39:47.642757Z"
+    },
+    "utf8-zero": {
+      "version": "0.8.1",
+      "repository": "https://github.com/algesten/utf8-zero",
+      "rust_version": null,
+      "created_at": "2026-02-28T13:41:16.493477Z"
+    },
+    "lino-env": {
+      "version": "0.1.0",
+      "repository": "https://github.com/link-foundation/lino-env",
+      "rust_version": "1.70",
+      "created_at": "2026-01-06T23:51:16.124513Z"
+    },
+    "winapi-util": {
+      "version": "0.1.11",
+      "repository": "https://github.com/BurntSushi/winapi-util",
+      "rust_version": null,
+      "created_at": "2025-09-07T12:24:31.232695Z"
+    },
+    "windows_x86_64_gnullvm": {
+      "version": "0.53.1",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.60",
+      "created_at": "2025-10-06T17:34:01.241547Z"
+    },
+    "memchr": {
+      "version": "2.8.3",
+      "repository": "https://github.com/BurntSushi/memchr",
+      "rust_version": "1.61",
+      "created_at": "2026-07-08T00:49:54.408285Z"
+    },
+    "windows-sys": {
+      "version": "0.61.2",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.71",
+      "created_at": "2025-10-06T19:18:30.163595Z"
+    },
+    "regex": {
+      "version": "1.13.1",
+      "repository": "https://github.com/rust-lang/regex",
+      "rust_version": "1.65",
+      "created_at": "2026-07-15T20:19:35.162139Z"
+    },
+    "aho-corasick": {
+      "version": "1.1.5",
+      "repository": "https://github.com/BurntSushi/aho-corasick",
+      "rust_version": "1.60.0",
+      "created_at": "2026-08-03T11:44:11.111398Z"
+    },
+    "ctor": {
+      "version": "1.0.14",
+      "repository": "https://github.com/mmastrac/linktime",
+      "rust_version": "1.60",
+      "created_at": "2026-11-14T00:18:40.928054Z"
+    },
+    "cc": {
+      "version": "1.11.2",
+      "repository": "https://github.com/rust-lang/cc-rs",
+      "rust_version": "1.65.0",
+      "created_at": "2026-11-13T12:47:55.408264Z"
+    },
+    "anstyle-query": {
+      "version": "1.1.5",
+      "repository": "https://github.com/rust-cli/anstyle.git",
+      "rust_version": "1.66.0",
+      "created_at": "2025-11-13T17:30:22.615151Z"
+    },
+    "windows-result": {
+      "version": "0.100.0",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.95",
+      "created_at": "2026-09-03T16:41:24.764970Z"
+    },
+    "http": {
+      "version": "1.5.0",
+      "repository": "https://github.com/hyperium/http",
+      "rust_version": "1.57.0",
+      "created_at": "2026-07-29T14:57:21.755258Z"
+    },
+    "subtle": {
+      "version": "2.6.1",
+      "repository": "https://github.com/dalek-cryptography/subtle",
+      "rust_version": null,
+      "created_at": "2024-06-24T17:25:24.458503Z"
+    },
+    "windows-link": {
+      "version": "0.100.0",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.85",
+      "created_at": "2026-09-03T16:39:03.349369Z"
+    },
+    "ureq": {
+      "version": "3.5.2",
+      "repository": "https://github.com/algesten/ureq",
+      "rust_version": "1.85",
+      "created_at": "2026-11-12T11:20:05.748623Z"
+    },
+    "iana-time-zone": {
+      "version": "0.1.65",
+      "repository": "https://github.com/strawlab/iana-time-zone",
+      "rust_version": "1.62.0",
+      "created_at": "2026-01-28T08:40:52.528531Z"
+    },
+    "cargo-audit": {
+      "version": "0.23.0",
+      "repository": "https://github.com/rustsec/rustsec",
+      "rust_version": "1.88",
+      "created_at": "2026-11-10T13:43:53.390706Z"
+    },
+    "wasm-bindgen-shared": {
+      "version": "0.2.130",
+      "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/shared",
+      "rust_version": "1.81",
+      "created_at": "2026-10-30T06:14:57.203710Z"
+    },
+    "getrandom": {
+      "version": "0.4.3",
+      "repository": "https://github.com/rust-random/getrandom",
+      "rust_version": "1.85",
+      "created_at": "2026-06-17T18:01:59.979552Z"
+    },
+    "toml_parser": {
+      "version": "1.1.5+spec-1.1.0",
+      "repository": "https://github.com/toml-rs/toml",
+      "rust_version": "1.85",
+      "created_at": "2026-10-09T02:46:29.844417Z"
+    },
+    "cargo-edit": {
+      "version": "0.13.14",
+      "repository": "https://github.com/killercup/cargo-edit",
+      "rust_version": "1.97",
+      "created_at": "2026-10-21T21:59:11.443304Z"
+    },
+    "is_terminal_polyfill": {
+      "version": "1.70.2",
+      "repository": "https://github.com/polyfill-rs/is_terminal_polyfill",
+      "rust_version": "1.70.0",
+      "created_at": "2025-10-21T17:00:14.577881Z"
+    },
+    "wasm-bindgen-macro-support": {
+      "version": "0.2.130",
+      "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/main/crates/macro-support",
+      "rust_version": "1.81",
+      "created_at": "2026-10-30T06:15:00.831743Z"
+    },
+    "windows_i686_gnu": {
+      "version": "0.53.1",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.60",
+      "created_at": "2025-10-06T17:33:40.576678Z"
+    },
+    "regex-syntax": {
+      "version": "0.8.11",
+      "repository": "https://github.com/rust-lang/regex",
+      "rust_version": "1.65",
+      "created_at": "2026-06-09T15:00:25.566550Z"
+    },
+    "serde_json": {
+      "version": "1.0.154",
+      "repository": "https://github.com/serde-rs/json",
+      "rust_version": "1.71",
+      "created_at": "2026-10-11T15:31:46.076577Z"
+    },
+    "rustversion": {
+      "version": "1.0.23",
+      "repository": "https://github.com/dtolnay/rustversion",
+      "rust_version": "1.31",
+      "created_at": "2026-07-07T02:10:26.015429Z"
+    },
+    "adler2": {
+      "version": "2.0.1",
+      "repository": "https://github.com/oyvindln/adler2",
+      "rust_version": null,
+      "created_at": "2025-06-09T22:31:53.608434Z"
+    },
+    "anstream": {
+      "version": "1.0.0",
+      "repository": "https://github.com/rust-cli/anstyle.git",
+      "rust_version": "1.66.0",
+      "created_at": "2026-02-11T13:23:11.167553Z"
+    },
+    "chrono": {
+      "version": "0.4.45",
+      "repository": "https://github.com/chronotope/chrono",
+      "rust_version": "1.62.0",
+      "created_at": "2026-06-04T12:16:42.063037Z"
+    },
+    "toml_writer": {
+      "version": "1.2.0+spec-1.1.0",
+      "repository": "https://github.com/toml-rs/toml",
+      "rust_version": "1.85",
+      "created_at": "2026-11-04T01:31:04.345652Z"
+    },
+    "windows_x86_64_msvc": {
+      "version": "0.53.1",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.60",
+      "created_at": "2025-10-06T17:34:07.266605Z"
+    },
+    "windows-interface": {
+      "version": "0.100.0",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.95",
+      "created_at": "2026-09-03T16:38:48.257023Z"
+    },
+    "clap_lex": {
+      "version": "1.1.1",
+      "repository": "https://github.com/clap-rs/clap",
+      "rust_version": "1.85",
+      "created_at": "2026-09-14T18:40:24.781280Z"
+    },
+    "futures-util": {
+      "version": "0.3.34",
+      "repository": "https://github.com/rust-lang/futures-rs",
+      "rust_version": "1.71",
+      "created_at": "2026-08-11T12:13:19.272525Z"
+    },
+    "strsim": {
+      "version": "0.11.1",
+      "repository": "https://github.com/rapidfuzz/strsim-rs",
+      "rust_version": "1.56",
+      "created_at": "2024-04-02T22:18:09.406790Z"
+    },
+    "regex-automata": {
+      "version": "0.4.18",
+      "repository": "https://github.com/rust-lang/regex",
+      "rust_version": "1.65",
+      "created_at": "2026-08-04T13:10:37.385020Z"
+    },
+    "libc": {
+      "version": "0.2.191",
+      "repository": "https://github.com/rust-lang/libc",
+      "rust_version": "1.65",
+      "created_at": "2026-10-16T22:56:46.041660Z"
+    },
+    "wasm-bindgen": {
+      "version": "0.2.130",
+      "repository": "https://github.com/wasm-bindgen/wasm-bindgen",
+      "rust_version": "1.81",
+      "created_at": "2026-10-30T06:15:04.504224Z"
+    },
+    "untrusted": {
+      "version": "0.9.0",
+      "repository": "https://github.com/briansmith/untrusted",
+      "rust_version": null,
+      "created_at": "2021-07-13T22:13:26.650010Z"
+    },
+    "iana-time-zone-haiku": {
+      "version": "0.1.2",
+      "repository": "https://github.com/strawlab/iana-time-zone",
+      "rust_version": null,
+      "created_at": "2023-05-12T08:43:45.406909Z"
+    },
+    "heck": {
+      "version": "0.5.0",
+      "repository": "https://github.com/withoutboats/heck",
+      "rust_version": "1.56",
+      "created_at": "2024-03-12T22:42:23.303234Z"
+    },
+    "r-efi": {
+      "version": "7.2.0",
+      "repository": "https://github.com/r-efi/r-efi",
+      "rust_version": "1.68",
+      "created_at": "2026-11-13T12:15:09.733879Z"
+    },
+    "rustls-pki-types": {
+      "version": "1.16.0",
+      "repository": "https://github.com/rustls/pki-types",
+      "rust_version": "1.60",
+      "created_at": "2026-11-10T17:38:32.491976Z"
+    },
+    "anstyle-parse": {
+      "version": "1.0.0",
+      "repository": "https://github.com/rust-cli/anstyle.git",
+      "rust_version": "1.66.0",
+      "created_at": "2026-02-11T13:23:08.814303Z"
+    },
+    "ureq-proto": {
+      "version": "0.7.1",
+      "repository": "https://github.com/algesten/ureq-proto",
+      "rust_version": "1.85",
+      "created_at": "2026-11-02T17:48:40.385271Z"
+    },
+    "colorchoice": {
+      "version": "1.0.5",
+      "repository": "https://github.com/rust-cli/anstyle.git",
+      "rust_version": "1.66.0",
+      "created_at": "2026-03-13T18:59:29.020348Z"
+    },
+    "serde": {
+      "version": "1.0.229",
+      "repository": "https://github.com/serde-rs/serde",
+      "rust_version": "1.56",
+      "created_at": "2026-07-18T23:05:13.266456Z"
+    },
+    "bytes": {
+      "version": "1.12.1",
+      "repository": "https://github.com/tokio-rs/bytes",
+      "rust_version": "1.57",
+      "created_at": "2026-07-08T10:01:28.616466Z"
+    },
+    "windows_i686_gnullvm": {
+      "version": "0.53.1",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.60",
+      "created_at": "2025-10-06T17:33:44.926477Z"
+    },
+    "quote": {
+      "version": "1.0.47",
+      "repository": "https://github.com/dtolnay/quote",
+      "rust_version": "1.71",
+      "created_at": "2026-07-19T00:16:57.083778Z"
+    },
+    "rust-script": {
+      "version": "0.36.0",
+      "repository": "https://github.com/fornwall/rust-script",
+      "rust_version": "1.74",
+      "created_at": "2025-08-16T09:37:28.037127Z"
+    },
+    "once_cell_polyfill": {
+      "version": "1.70.2",
+      "repository": "https://github.com/polyfill-rs/once_cell_polyfill",
+      "rust_version": "1.70.0",
+      "created_at": "2025-10-21T16:41:12.320992Z"
+    },
+    "wasm-bindgen-macro": {
+      "version": "0.2.130",
+      "repository": "https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/macro",
+      "rust_version": "1.81",
+      "created_at": "2026-10-30T06:15:02.683402Z"
+    },
+    "num-traits": {
+      "version": "0.2.19",
+      "repository": "https://github.com/rust-num/num-traits",
+      "rust_version": "1.60",
+      "created_at": "2024-05-03T21:27:39.856244Z"
+    },
+    "zlib-rs": {
+      "version": "0.6.8",
+      "repository": "https://github.com/trifectatechfoundation/zlib-rs",
+      "rust_version": "1.75",
+      "created_at": "2026-09-15T13:10:00.283903Z"
+    },
+    "itoa": {
+      "version": "1.0.19",
+      "repository": "https://github.com/dtolnay/itoa",
+      "rust_version": "1.68",
+      "created_at": "2026-11-09T01:42:29.996457Z"
+    },
+    "core-foundation-sys": {
+      "version": "0.8.7",
+      "repository": "https://github.com/servo/core-foundation-rs",
+      "rust_version": null,
+      "created_at": "2024-08-11T00:48:27.870880Z"
+    },
+    "lino-arguments": {
+      "version": "0.5.0",
+      "repository": "https://github.com/link-foundation/lino-arguments",
+      "rust_version": null,
+      "created_at": "2026-10-08T22:41:44.596811Z"
+    },
+    "windows-targets": {
+      "version": "0.53.5",
+      "repository": "https://github.com/microsoft/windows-rs",
+      "rust_version": "1.60",
+      "created_at": "2025-10-06T19:18:45.726277Z"
+    },
+    "pin-project-lite": {
+      "version": "0.2.17",
+      "repository": "https://github.com/taiki-e/pin-project-lite",
+      "rust_version": "1.37",
+      "created_at": "2026-02-27T15:19:08.132543Z"
+    }
+  },
+  "npm": {
+    "picocolors": {
+      "version": "1.1.1",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/alexeyraspopov/picocolors.git",
+        "type": "git"
+      }
+    },
+    "ansi-regex": {
+      "version": "6.6.0",
+      "engines": {
+        "node": ">=12"
+      },
+      "repository": {
+        "url": "git+https://github.com/chalk/ansi-regex.git",
+        "type": "git"
+      }
+    },
+    "smol-toml": {
+      "version": "1.9.1",
+      "engines": {
+        "node": ">= 18"
+      },
+      "repository": {
+        "url": "github:squirrelchat/smol-toml",
+        "type": "git"
+      }
+    },
+    "@secretlint/formatter": {
+      "version": "13.1.0",
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "@babel/helper-validator-identifier": {
+      "version": "8.0.6",
+      "engines": {
+        "node": "^22.18.0 || >=24.11.0"
+      },
+      "repository": {
+        "url": "https://github.com/babel/babel.git",
+        "type": "git",
+        "directory": "packages/babel-helper-validator-identifier"
+      }
+    },
+    "@secretlint/walker": {
+      "version": "13.1.0",
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "@textlint/resolver": {
+      "version": "15.8.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/textlint/textlint.git",
+        "type": "git"
+      }
+    },
+    "supports-hyperlinks": {
+      "version": "5.0.0",
+      "engines": {
+        "node": ">=22"
+      },
+      "repository": {
+        "url": "git+https://github.com/chalk/supports-hyperlinks.git",
+        "type": "git"
+      }
+    },
+    "tagged-tag": {
+      "version": "1.0.0",
+      "engines": {
+        "node": ">=20"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/tagged-tag.git",
+        "type": "git"
+      }
+    },
+    "require-from-string": {
+      "version": "2.0.2",
+      "engines": {
+        "node": ">=0.10.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/floatdrop/require-from-string.git",
+        "type": "git"
+      }
+    },
+    "ms": {
+      "version": "2.1.3",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/vercel/ms.git",
+        "type": "git"
+      }
+    },
+    "secretlint": {
+      "version": "13.1.0",
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "read-pkg": {
+      "version": "10.1.0",
+      "engines": {
+        "node": ">=20"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/read-pkg.git",
+        "type": "git"
+      }
+    },
+    "@babel/code-frame": {
+      "version": "8.0.6",
+      "engines": {
+        "node": "^22.18.0 || >=24.11.0"
+      },
+      "repository": {
+        "url": "https://github.com/babel/babel.git",
+        "type": "git",
+        "directory": "packages/babel-code-frame"
+      }
+    },
+    "@textlint/ast-node-types": {
+      "version": "15.8.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/textlint/textlint.git",
+        "type": "git"
+      }
+    },
+    "index-to-position": {
+      "version": "1.2.0",
+      "engines": {
+        "node": ">=18"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/index-to-position.git",
+        "type": "git"
+      }
+    },
+    "js-tokens": {
+      "version": "10.0.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/lydell/js-tokens.git",
+        "type": "git"
+      }
+    },
+    "color-convert": {
+      "version": "3.1.3",
+      "engines": {
+        "node": ">=14.6"
+      },
+      "repository": {
+        "url": "git+https://github.com/Qix-/color-convert.git",
+        "type": "git"
+      }
+    },
+    "parse-json": {
+      "version": "8.3.0",
+      "engines": {
+        "node": ">=18"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/parse-json.git",
+        "type": "git"
+      }
+    },
+    "version-range": {
+      "version": "4.15.0",
+      "engines": {
+        "node": ">=4"
+      },
+      "repository": {
+        "url": "git+https://github.com/bevry/version-range.git",
+        "type": "git"
+      }
+    },
+    "@textlint/module-interop": {
+      "version": "15.8.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/textlint/textlint.git",
+        "type": "git"
+      }
+    },
+    "boundary": {
+      "version": "2.0.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/textlint/boundary.git",
+        "type": "git"
+      }
+    },
+    "@textlint/types": {
+      "version": "15.8.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/textlint/textlint.git",
+        "type": "git"
+      }
+    },
+    "chalk": {
+      "version": "6.0.1",
+      "engines": {
+        "node": ">=22"
+      },
+      "repository": {
+        "url": "git+https://github.com/chalk/chalk.git",
+        "type": "git"
+      }
+    },
+    "picomatch": {
+      "version": "4.0.7",
+      "engines": {
+        "node": ">=12"
+      },
+      "repository": {
+        "url": "git+https://github.com/micromatch/picomatch.git",
+        "type": "git"
+      }
+    },
+    "spdx-exceptions": {
+      "version": "2.5.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/kemitchell/spdx-exceptions.json.git",
+        "type": "git"
+      }
+    },
+    "pluralize": {
+      "version": "8.0.0",
+      "engines": {
+        "node": ">=4"
+      },
+      "repository": {
+        "url": "git+https://github.com/blakeembrey/pluralize.git",
+        "type": "git"
+      }
+    },
+    "is-fullwidth-code-point": {
+      "version": "5.1.0",
+      "engines": {
+        "node": ">=18"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/is-fullwidth-code-point.git",
+        "type": "git"
+      }
+    },
+    "has-flag": {
+      "version": "5.0.1",
+      "engines": {
+        "node": ">=12"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/has-flag.git",
+        "type": "git"
+      }
+    },
+    "table": {
+      "version": "6.10.1",
+      "engines": {
+        "node": ">=10.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/gajus/table.git",
+        "type": "git"
+      }
+    },
+    "ansi-escapes": {
+      "version": "7.3.0",
+      "engines": {
+        "node": ">=18"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/ansi-escapes.git",
+        "type": "git"
+      }
+    },
+    "@types/normalize-package-data": {
+      "version": "2.4.4",
+      "engines": null,
+      "repository": {
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "type": "git",
+        "directory": "types/normalize-package-data"
+      }
+    },
+    "argparse": {
+      "version": "3.0.4",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/nodeca/argparse.git",
+        "type": "git"
+      }
+    },
+    "@secretlint/profiler": {
+      "version": "13.1.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "lru-cache": {
+      "version": "11.5.3",
+      "engines": {
+        "node": "20 || >=22"
+      },
+      "repository": {
+        "url": "git+ssh://git@github.com/isaacs/node-lru-cache.git",
+        "type": "git"
+      }
+    },
+    "terminal-link": {
+      "version": "5.0.0",
+      "engines": {
+        "node": ">=20"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/terminal-link.git",
+        "type": "git"
+      }
+    },
+    "astral-regex": {
+      "version": "2.0.0",
+      "engines": {
+        "node": ">=8"
+      },
+      "repository": {
+        "url": "git+https://github.com/kevva/astral-regex.git",
+        "type": "git"
+      }
+    },
+    "@secretlint/config-loader": {
+      "version": "13.1.0",
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "structured-source": {
+      "version": "4.0.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/textlint/structured-source.git",
+        "type": "git"
+      }
+    },
+    "lodash": {
+      "version": "4.18.1",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/lodash/lodash.git",
+        "type": "git"
+      }
+    },
+    "@secretlint/source-creator": {
+      "version": "13.1.0",
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "spdx-expression-parse": {
+      "version": "5.0.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/jslicense/spdx-expression-parse.js.git",
+        "type": "git"
+      }
+    },
+    "strip-ansi": {
+      "version": "7.2.0",
+      "engines": {
+        "node": ">=12"
+      },
+      "repository": {
+        "url": "git+https://github.com/chalk/strip-ansi.git",
+        "type": "git"
+      }
+    },
+    "fast-uri": {
+      "version": "4.2.3",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/fastify/fast-uri.git",
+        "type": "git"
+      }
+    },
+    "debug": {
+      "version": "4.4.3",
+      "engines": {
+        "node": ">=6.0"
+      },
+      "repository": {
+        "url": "git://github.com/debug-js/debug.git",
+        "type": "git"
+      }
+    },
+    "validate-npm-package-license": {
+      "version": "3.0.4",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/kemitchell/validate-npm-package-license.js.git",
+        "type": "git"
+      }
+    },
+    "p-map": {
+      "version": "7.1.1",
+      "engines": {
+        "node": ">=18"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/p-map.git",
+        "type": "git"
+      }
+    },
+    "normalize-package-data": {
+      "version": "9.0.0",
+      "engines": {
+        "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/npm/normalize-package-data.git",
+        "type": "git"
+      }
+    },
+    "js-yaml": {
+      "version": "5.5.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/nodeca/js-yaml.git",
+        "type": "git"
+      }
+    },
+    "semver": {
+      "version": "7.8.6",
+      "engines": {
+        "node": ">=10"
+      },
+      "repository": {
+        "url": "git+https://github.com/npm/node-semver.git",
+        "type": "git"
+      }
+    },
+    "textextensions": {
+      "version": "6.11.0",
+      "engines": {
+        "node": ">=4"
+      },
+      "repository": {
+        "url": "git+https://github.com/bevry/textextensions.git",
+        "type": "git"
+      }
+    },
+    "text-table": {
+      "version": "0.2.0",
+      "engines": null,
+      "repository": {
+        "url": "git://github.com/substack/text-table.git",
+        "type": "git"
+      }
+    },
+    "@azu/format-text": {
+      "version": "1.0.2",
+      "engines": null,
+      "repository": {
+        "url": "git+ssh://git@github.com/azu/format-text.git",
+        "type": "git"
+      }
+    },
+    "spdx-license-ids": {
+      "version": "3.0.24",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/jslicense/spdx-license-ids.git",
+        "type": "git"
+      }
+    },
+    "@secretlint/config-creator": {
+      "version": "13.1.0",
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "@secretlint/node": {
+      "version": "13.1.0",
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "emoji-regex": {
+      "version": "11.0.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/mathiasbynens/emoji-regex.git",
+        "type": "git"
+      }
+    },
+    "json-schema-traverse": {
+      "version": "1.0.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/epoberezkin/json-schema-traverse.git",
+        "type": "git"
+      }
+    },
+    "@secretlint/secretlint-rule-preset-recommend": {
+      "version": "13.1.0",
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "istextorbinary": {
+      "version": "9.5.0",
+      "engines": {
+        "node": ">=4"
+      },
+      "repository": {
+        "url": "git+https://github.com/bevry/istextorbinary.git",
+        "type": "git"
+      }
+    },
+    "yaml": {
+      "version": "2.9.1",
+      "engines": {
+        "node": ">= 14.6"
+      },
+      "repository": {
+        "url": "git+https://github.com/eemeli/yaml.git",
+        "type": "git"
+      }
+    },
+    "environment": {
+      "version": "1.1.0",
+      "engines": {
+        "node": ">=18"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/environment.git",
+        "type": "git"
+      }
+    },
+    "type-fest": {
+      "version": "5.10.0",
+      "engines": {
+        "node": ">=20"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/type-fest.git",
+        "type": "git"
+      }
+    },
+    "unicorn-magic": {
+      "version": "0.4.1",
+      "engines": {
+        "node": ">=20"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/unicorn-magic.git",
+        "type": "git"
+      }
+    },
+    "@secretlint/core": {
+      "version": "13.1.0",
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "string-width": {
+      "version": "9.0.0",
+      "engines": {
+        "node": ">=22"
+      },
+      "repository": {
+        "url": "git+https://github.com/sindresorhus/string-width.git",
+        "type": "git"
+      }
+    },
+    "supports-color": {
+      "version": "11.0.0",
+      "engines": {
+        "node": ">=22"
+      },
+      "repository": {
+        "url": "git+https://github.com/chalk/supports-color.git",
+        "type": "git"
+      }
+    },
+    "@secretlint/resolver": {
+      "version": "13.1.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "fast-deep-equal": {
+      "version": "3.1.3",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/epoberezkin/fast-deep-equal.git",
+        "type": "git"
+      }
+    },
+    "ignore": {
+      "version": "7.0.14",
+      "engines": {
+        "node": ">= 4"
+      },
+      "repository": {
+        "url": "git+https://github.com/kaelzhang/node-ignore.git",
+        "type": "git"
+      }
+    },
+    "ajv": {
+      "version": "8.20.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/ajv-validator/ajv.git",
+        "type": "git"
+      }
+    },
+    "spdx-correct": {
+      "version": "3.2.0",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/jslicense/spdx-correct.js.git",
+        "type": "git"
+      }
+    },
+    "ansi-styles": {
+      "version": "7.0.0",
+      "engines": {
+        "node": ">=22"
+      },
+      "repository": {
+        "url": "git+https://github.com/chalk/ansi-styles.git",
+        "type": "git"
+      }
+    },
+    "binaryextensions": {
+      "version": "6.11.0",
+      "engines": {
+        "node": ">=4"
+      },
+      "repository": {
+        "url": "git+https://github.com/bevry/binaryextensions.git",
+        "type": "git"
+      }
+    },
+    "hosted-git-info": {
+      "version": "10.1.1",
+      "engines": {
+        "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/npm/hosted-git-info.git",
+        "type": "git"
+      }
+    },
+    "editions": {
+      "version": "6.22.0",
+      "engines": {
+        "node": ">=4",
+        "ecmascript": ">= es5"
+      },
+      "repository": {
+        "url": "git+https://github.com/bevry/editions.git",
+        "type": "git"
+      }
+    },
+    "json5": {
+      "version": "2.2.3",
+      "engines": {
+        "node": ">=6"
+      },
+      "repository": {
+        "url": "git+https://github.com/json5/json5.git",
+        "type": "git"
+      }
+    },
+    "slice-ansi": {
+      "version": "10.0.1",
+      "engines": {
+        "node": ">=22"
+      },
+      "repository": {
+        "url": "git+https://github.com/chalk/slice-ansi.git",
+        "type": "git"
+      }
+    },
+    "rc-config-loader": {
+      "version": "4.1.4",
+      "engines": null,
+      "repository": {
+        "url": "git+https://github.com/azu/rc-config-loader.git",
+        "type": "git"
+      }
+    },
+    "color-name": {
+      "version": "2.1.1",
+      "engines": {
+        "node": ">=12.20"
+      },
+      "repository": {
+        "url": "git+https://github.com/colorjs/color-name.git",
+        "type": "git"
+      }
+    },
+    "@azu/style-format": {
+      "version": "1.0.1",
+      "engines": null,
+      "repository": {
+        "url": "git+ssh://git@github.com/azu/style-format.git",
+        "type": "git"
+      }
+    },
+    "@secretlint/types": {
+      "version": "13.1.0",
+      "engines": {
+        "node": ">=22.0.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/secretlint/secretlint.git",
+        "type": "git"
+      }
+    },
+    "@textlint/linter-formatter": {
+      "version": "15.8.0",
+      "engines": {
+        "node": ">=20.18.0"
+      },
+      "repository": {
+        "url": "git+https://github.com/textlint/textlint.git",
+        "type": "git"
+      }
+    }
+  },
+  "actions": {
+    "actions/cache": {
+      "tag_name": "v6.1.0",
+      "published_at": "2026-06-26T19:17:06Z",
+      "html_url": "https://github.com/actions/cache/releases/tag/v6.1.0",
+      "body": "## What's Changed\r\n* Bump @actions/cache to v6.1.0 - handle read-only cache access by @jasongin in https://github.com/actions/cache/pull/1768\r\n\r\n\r\n**Full Changelog**: https://github.com/actions/cache/compare/v6...v6.1.0"
+    },
+    "actions/deploy-pages": {
+      "tag_name": "v5.0.1",
+      "published_at": "2026-09-01T21:31:19Z",
+      "html_url": "https://github.com/actions/deploy-pages/releases/tag/v5.0.1",
+      "body": "# Changelog\r\n\r\n- Add backoff and jitter to deployment polling @yoannchaudet (#444)\r\n- Improve deployment request test coverage @adwitiyagoyal (#440)\r\n\r\n---\r\n\r\nSee details of [all code changes](https://github.com/actions/deploy-pages/compare/v5.0.0...v5.0.1) since previous release.\r\n\r\n:warning: For use with products other than GitHub.com, such as GitHub Enterprise Server, please consult the [compatibility table](https://github.com/actions/deploy-pages/#compatibility).\r\n"
+    },
+    "actions/upload-pages-artifact": {
+      "tag_name": "v5.0.0",
+      "published_at": "2026-04-10T18:22:59Z",
+      "html_url": "https://github.com/actions/upload-pages-artifact/releases/tag/v5.0.0",
+      "body": "# Changelog\r\n\r\n- Update upload-artifact action to version 7 @Tom-van-Woudenberg (#139)\r\n- feat: add `include-hidden-files` input @jonchurch (#137)\r\n\r\nSee details of [all code changes](https://github.com/actions/upload-pages-artifact/compare/v4.0.0...v4.0.1) since previous release.\r\n"
+    },
+    "docker/setup-buildx-action": {
+      "tag_name": "v4.4.1",
+      "published_at": "2026-09-16T07:50:21Z",
+      "html_url": "https://github.com/docker/setup-buildx-action/releases/tag/v4.4.1",
+      "body": "* Skip BuildKit image pre-pulls for explicit endpoints by @crazy-max in https://github.com/docker/setup-buildx-action/pull/624\r\n\r\n**Full Changelog**: https://github.com/docker/setup-buildx-action/compare/v4.4.0...v4.4.1"
+    },
+    "lycheeverse/lychee-action": {
+      "tag_name": "v2.9.0",
+      "published_at": "2026-07-09T15:31:00Z",
+      "html_url": "https://github.com/lycheeverse/lychee-action/releases/tag/v2.9.0",
+      "body": "## Summary\n\nThis release updates the default lychee version from `v0.23.0` to `v0.24.2`.\n\nThe main reason for this release is compatibility with the new lychee `0.24.x` release artifacts. Starting with lychee `v0.24.0`, the archive layout changed, and the `lychee` binary may now be packaged inside a subdirectory. `lychee-action` now detects that layout automatically, so users can upgrade without changing their workflows.\n\nIf you use:\n\n```yaml\nuses: lycheeverse/lychee-action@v2\n```\n\nyou will get the new version once the floating `v2` tag has been updated. If you pin exact versions, update to:\n\n```yaml\nuses: lycheeverse/lychee-action@v2.9.0\n```\n\n## What\u2019s new from lychee `v0.24.x`\n\n### Better diagnostics\n\nlychee now reports line and column numbers for detected links. This makes broken link reports easier to act on, especially in larger documentation sites or generated reports.\n\n### Text fragment checking\n\nlychee can now check URL text fragments, such as links containing `#:~:text=...`. This helps catch links that point to a valid page but no longer points to the intended highlighted text.\n\n### Sitemap support\n\nlychee can now read `sitemap.xml` inputs. This is useful for checking published websites or generated documentation sites where the sitemap is the easiest source of URLs to validate.\n\n### JUnit output\n\nlychee now supports JUnit output. This makes it easier to integrate link checking results with CI systems and test reporting tools that understand JUnit XML.\n\n### Redirect and remap visibility\n\nlychee can now show redirects and remaps more clearly. This helps explain why a URL was checked as a different final URL and makes debugging link-checking behavior easier.\n\n### Multiple config files\n\nlychee now supports multiple configuration files and expanded config handling. This is useful for repositories that split documentation, website, or package-specific link-checking settings.\n\n### Timeout handling\n\nlychee can now accept timeouts explicitly. This gives users more control over how strict their link checks should be for flaky or slow endpoints.\n\n## Fixes and reliability improvements\n\n### Fixed lychee `0.24.x` archive compatibility\n\n`lychee-action` now handles the new lychee release archive layout by detecting whether the `lychee` binary is inside a subdirectory.\n\nThis fixes compatibility with lychee `0.24.x`.\n\n### More stable installation path\n\nThe action now installs lychee into `$RUNNER_TEMP/lychee/bin` instead of `$HOME`.\n\nThis avoids failures on runners where `$HOME` differs between composite action steps. In those environments, the action could add one directory to `PATH` but install the binary somewhere else, causing `lychee: command not found`.\n\n### Safer automatic lychee version updates\n\nThe workflow that checks for new lychee releases now guards against `null` release versions before creating update PRs. This prevents invalid automated PRs such as \u201cUpdate lycheeVersion to null\u201d.\n\n### Dependency updates\n\n- Updated `actions/checkout` from `v6` to `v7`\n- Updated `actions/cache` from `v5` to `v6`\n\n## Upstream lychee changelog\n\nFor the full lychee changelog, see:\n\n- https://github.com/lycheeverse/lychee/releases/tag/lychee-v0.24.0\n- https://github.com/lycheeverse/lychee/releases/tag/lychee-v0.24.1\n- https://github.com/lycheeverse/lychee/releases/tag/lychee-v0.24.2\n\n## What\u2019s Changed\n\n* bump default to 0.24.1 and auto-detect lychee bin in subfolder by @kaitlyndotmoe in https://github.com/lycheeverse/lychee-action/pull/330\n* fixes #322 check for null by @bgermann in https://github.com/lycheeverse/lychee-action/pull/336\n* Install into `$RUNNER_TEMP` instead of `$HOME` by @mre in https://github.com/lycheeverse/lychee-action/pull/338\n* Bump actions/checkout from 6 to 7 by @dependabot in https://github.com/lycheeverse/lychee-action/pull/339\n* Bump actions/cache from 5 to 6 by @dependabot in https://github.com/lycheeverse/lychee-action/pull/340\n\n**Full Changelog**: https://github.com/lycheeverse/lychee-action/compare/v2.8.0...v2.9.0\n"
+    },
+    "actions/attest": {
+      "tag_name": "v4.2.2",
+      "published_at": "2026-08-04T20:36:29Z",
+      "html_url": "https://github.com/actions/attest/releases/tag/v4.2.2",
+      "body": "## What's Changed\n* Bump @sigstore/oci from 0.7.1 to 0.7.2 by @bdehamer in https://github.com/actions/attest/pull/469\n* Bump brace-expansion by @dependabot[bot] in https://github.com/actions/attest/pull/468\n* Bump ip-address from 10.2.0 to 10.4.0 by @dependabot[bot] in https://github.com/actions/attest/pull/467\n\n**Full Changelog**: https://github.com/actions/attest/compare/v4.2.1...v4.2.2"
+    },
+    "actions/upload-artifact": {
+      "tag_name": "v7.0.2",
+      "published_at": "2026-10-07T10:08:14Z",
+      "html_url": "https://github.com/actions/upload-artifact/releases/tag/v7.0.2",
+      "body": "## What's Changed\r\n- Improves artifact download retries when the service returns HTTP 429 (rate limiting), including honoring valid Retry-After headers.\r\n- Updates @actions/artifact to v6.3.1.\r\n\r\n\r\n## New Contributors\r\n* @tunc-d made their first contribution in https://github.com/actions/upload-artifact/pull/821\r\n\r\n**Full Changelog**: https://github.com/actions/upload-artifact/compare/v7.0.1...v7.0.2"
+    },
+    "actions/download-artifact": {
+      "tag_name": "v8.0.2",
+      "published_at": "2026-10-07T10:09:51Z",
+      "html_url": "https://github.com/actions/download-artifact/releases/tag/v8.0.2",
+      "body": "## What's Changed\r\n* Update the readme by @danwkennedy in https://github.com/actions/download-artifact/pull/473\r\n* Improves artifact download retries when the service returns HTTP 429 (rate limiting), including honoring valid Retry-After headers.\r\n* Update @actions/artifact to 6.3.1 by @tunc-d in https://github.com/actions/download-artifact/pull/492\r\n* Prepare download-artifact v8.0.2 by @tunc-d in https://github.com/actions/download-artifact/pull/493\r\n\r\n## New Contributors\r\n* @tunc-d made their first contribution in https://github.com/actions/download-artifact/pull/492\r\n\r\n**Full Changelog**: https://github.com/actions/download-artifact/compare/v8.0.1...v8.0.2"
+    },
+    "github/codeql-action": {
+      "tag_name": "codeql-bundle-v2.27.4",
+      "published_at": "2026-11-02T16:13:49Z",
+      "html_url": "https://github.com/github/codeql-action/releases/tag/codeql-bundle-v2.27.4",
+      "body": "Bundles CodeQL CLI v2.27.4\r\n- ([changelog](https://github.com/github/codeql-cli-binaries/blob/HEAD/CHANGELOG.md), [release](https://github.com/github/codeql-cli-binaries/releases/tag/v2.27.4))\r\n\r\nThe combined `codeql-bundle.tar.gz` covers Linux x64, Windows x64 and macOS (including Apple Silicon). Linux arm64 is available as the per-platform `codeql-bundle-linux-arm64.tar.gz` only.\r\n\r\nIncludes the following CodeQL language packs from [`github/codeql@codeql-cli/v2.27.4`](https://github.com/github/codeql/tree/codeql-cli/v2.27.4):\r\n- `codeql/actions-queries` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/actions/ql/src/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/actions/ql/src))\r\n- `codeql/actions-all` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/actions/ql/lib/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/actions/ql/lib))\r\n- `codeql/cpp-queries` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/cpp/ql/src/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/cpp/ql/src))\r\n- `codeql/cpp-all` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/cpp/ql/lib/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/cpp/ql/lib))\r\n- `codeql/csharp-queries` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/csharp/ql/src/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/csharp/ql/src))\r\n- `codeql/csharp-all` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/csharp/ql/lib/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/csharp/ql/lib))\r\n- `codeql/go-queries` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/go/ql/src/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/go/ql/src))\r\n- `codeql/go-all` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/go/ql/lib/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/go/ql/lib))\r\n- `codeql/java-queries` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/java/ql/src/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/java/ql/src))\r\n- `codeql/java-all` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/java/ql/lib/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/java/ql/lib))\r\n- `codeql/javascript-queries` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/javascript/ql/src/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/javascript/ql/src))\r\n- `codeql/javascript-all` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/javascript/ql/lib/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/javascript/ql/lib))\r\n- `codeql/python-queries` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/python/ql/src/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/python/ql/src))\r\n- `codeql/python-all` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/python/ql/lib/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/python/ql/lib))\r\n- `codeql/ruby-queries` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/ruby/ql/src/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/ruby/ql/src))\r\n- `codeql/ruby-all` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/ruby/ql/lib/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/ruby/ql/lib))\r\n- `codeql/rust-queries` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/rust/ql/src/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/rust/ql/src))\r\n- `codeql/rust-all` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/rust/ql/lib/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/rust/ql/lib))\r\n- `codeql/swift-queries` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/swift/ql/src/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/swift/ql/src))\r\n- `codeql/swift-all` ([changelog](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/swift/ql/lib/CHANGELOG.md), [source](https://github.com/github/codeql/tree/codeql-cli/v2.27.4/swift/ql/lib))\r\n"
+    },
+    "actions/configure-pages": {
+      "tag_name": "v6.0.0",
+      "published_at": "2026-03-25T17:00:49Z",
+      "html_url": "https://github.com/actions/configure-pages/releases/tag/v6.0.0",
+      "body": "# Changelog\r\n\r\n- upgrade to node 24 @salmanmkc (#186)\r\n- Upgrade IA Publish @Jcambass (#165)\r\n- Add workflow file for publishing releases to immutable action package @Jcambass (#163)\r\n- pin draft release version @YiMysty (#162)\r\n- Bump espree from 9.6.1 to 10.1.0 @dependabot (#160)\r\n- Bump eslint-config-prettier from 8.8.0 to 9.1.0 @dependabot (#143)\r\n- Be more friendly to Dependabot @yoannchaudet (#158)\r\n- Bump eslint-plugin-github from 4.10.2 to 5.0.1 @dependabot (#154)\r\n- Bump braces from 3.0.2 to 3.0.3 in the npm_and_yarn group @dependabot (#156)\r\n- Bump undici from 5.28.3 to 5.28.4 @dependabot (#145)\r\n\r\nSee details of [all code changes](https://github.com/actions/configure-pages/compare/v5.0.0...v5.0.1) since previous release.\r\n"
+    },
+    "docker/build-push-action": {
+      "tag_name": "v7.4.0",
+      "published_at": "2026-09-15T08:22:01Z",
+      "html_url": "https://github.com/docker/build-push-action/releases/tag/v7.4.0",
+      "body": "* Use the shared error helper for Buildx commands by @crazy-max in https://github.com/docker/build-push-action/pull/1620\r\n* Prevent workflow command injection in metadata logs by @crazy-max in https://github.com/docker/build-push-action/pull/1617\r\n* Bump @docker/actions-toolkit from 0.92.0 to 0.100.0 in https://github.com/docker/build-push-action/pull/1614 https://github.com/docker/build-push-action/pull/1618 https://github.com/docker/build-push-action/pull/1621\r\n* Bump @humanfs/node from 0.16.7 to 0.16.8 in https://github.com/docker/build-push-action/pull/1609\r\n* Bump brace-expansion from 1.1.13 to 1.1.18 in https://github.com/docker/build-push-action/pull/1592\r\n* Bump csv-parse from 7.0.0 to 7.0.2 in https://github.com/docker/build-push-action/pull/1613\r\n* Bump js-yaml from 4.3.0 to 4.3.2 in https://github.com/docker/build-push-action/pull/1605 https://github.com/docker/build-push-action/pull/1615\r\n* Bump nanoid from 3.3.16 to 3.3.18 in https://github.com/docker/build-push-action/pull/1611\r\n* Bump postcss from 8.5.10 to 8.5.25 in https://github.com/docker/build-push-action/pull/1590\r\n* Bump postcss-selector-parser from 7.1.1 to 7.1.5 in https://github.com/docker/build-push-action/pull/1606\r\n* Bump sigstore from 4.1.0 to 4.1.1 in https://github.com/docker/build-push-action/pull/1577\r\n* Bump undici from 6.27.0 to 6.28.0 in https://github.com/docker/build-push-action/pull/1594\r\n\r\n**Full Changelog**: https://github.com/docker/build-push-action/compare/v7.3.0...v7.4.0"
+    },
+    "docker/login-action": {
+      "tag_name": "v4.8.0",
+      "published_at": "2026-11-05T12:56:58Z",
+      "html_url": "https://github.com/docker/login-action/releases/tag/v4.8.0",
+      "body": "* Set Docker Hub OIDC token lifetime default to 1 hour by @crazy-max in https://github.com/docker/login-action/pull/1070\r\n* Bump @aws-sdk/client-ecr and @aws-sdk/client-ecr-public to 3.1161.0 in https://github.com/docker/login-action/pull/1103\r\n* Bump @docker/actions-toolkit from 0.107.0 to 0.109.0 in https://github.com/docker/login-action/pull/1105\r\n* Bump vite from 7.3.6 to 7.3.7 in https://github.com/docker/login-action/pull/1101\r\n\r\n**Full Changelog**: https://github.com/docker/login-action/compare/v4.7.0...v4.8.0"
+    },
+    "actions/setup-node": {
+      "tag_name": "v7.1.0",
+      "published_at": "2026-10-08T02:52:34Z",
+      "html_url": "https://github.com/actions/setup-node/releases/tag/v7.1.0",
+      "body": "## What's Changed\r\n\r\n### Enhancements:\r\n* Add support for mise.toml file by @gperdomor in https://github.com/actions/setup-node/pull/1421\r\n* Support absolute paths in node-version-file by @v-mahabaleshwars in https://github.com/actions/setup-node/pull/1633\r\n\r\n### Bug fixes:\r\n*  Add Node version validation and manifest fetch retry by @v-jitenderpalsingh in https://github.com/actions/setup-node/pull/1580\r\n\r\n### Documentation updates:\r\n* README.md: bump actions/checkout to latest version 7 by @deining in https://github.com/actions/setup-node/pull/1578\r\n* docs: add V7 ESM migration and NODE_AUTH_TOKEN behavior change by @v-gowridurgad in https://github.com/actions/setup-node/pull/1593\r\n* Fixed cache recommendation syntax by @SubJunk in https://github.com/actions/setup-node/pull/1603\r\n\r\n### Dependency updates:\r\n*  Update workflow pins and migrate Node matrices to modern versions by @v-HarithaVattikuti in https://github.com/actions/setup-node/pull/1583\r\n* Upgrade  @actions/cache to 6.2.0 by @philip-gai in https://github.com/actions/setup-node/pull/1584\r\n* Pin @types/node to v24 by @v-priyagupta108 in https://github.com/actions/setup-node/pull/1585\r\n* Override brace-expansion to 5.0.8 by @v-priyagupta108 with @Copilot in https://github.com/actions/setup-node/pull/1599\r\n* Upgrade  actions/checkout from 7.0.0 to 7.0.1 by @dependabot in https://github.com/actions/setup-node/pull/1598\r\n* Upgrade  prettier from 3.8.4 to 3.9.6 by @dependabot in https://github.com/actions/setup-node/pull/1590\r\n* Upgrade  @vercel/ncc from 0.44.0 to 0.45.0 by @dependabot in https://github.com/actions/setup-node/pull/1610\r\n* Upgrade  pnpm/action-setup from 6.0.9 to 6.0.10 by @dependabot in https://github.com/actions/setup-node/pull/1602\r\n* Upgrade  baseline-browser-mapping from 2.10.38 to 2.11.22 by @dependabot in https://github.com/actions/setup-node/pull/1629\r\n* Upgrade @types/semver from 7.7.1 to 7.8.0 by @dependabot in https://github.com/actions/setup-node/pull/1616\r\n* Upgrade @typescript-eslint/parser from 8.62.0 to 8.70.0 by @dependabot in https://github.com/actions/setup-node/pull/1615\r\n* Upgrade pnpm/action-setup from 6.0.10 to 6.1.0 by @dependabot in https://github.com/actions/setup-node/pull/1631\r\n* Upgrade jest-each from 30.4.1 to 30.5.2 by @dependabot in https://github.com/actions/setup-node/pull/1636\r\n* Upgrade eslint-plugin-n from 18.1.0 to 18.3.0 by @dependabot in https://github.com/actions/setup-node/pull/1638\r\n* Update dependencies and add license files by @v-HarithaVattikuti in https://github.com/actions/setup-node/pull/1642\r\n* Upgrade eslint from 10.5.0 to 10.11.0 and package.json from 7.0.0 to 7.1.0 by @dependabot in https://github.com/actions/setup-node/pull/1635\r\n\r\n\r\n\r\n## New Contributors\r\n* @v-jitenderpalsingh made their first contribution in https://github.com/actions/setup-node/pull/1580\r\n* @philip-gai made their first contribution in https://github.com/actions/setup-node/pull/1584\r\n* @gperdomor made their first contribution in https://github.com/actions/setup-node/pull/1421\r\n* @SubJunk made their first contribution in https://github.com/actions/setup-node/pull/1603\r\n\r\n**Full Changelog**: https://github.com/actions/setup-node/compare/v7.0.0...v7.1.0"
+    },
+    "zizmorcore/zizmor-action": {
+      "tag_name": "v0.8.1",
+      "published_at": "2026-11-03T00:03:32Z",
+      "html_url": "https://github.com/zizmorcore/zizmor-action/releases/tag/v0.8.1",
+      "body": "\n[Sponsorship is appreciated!](https://github.com/sponsors/woodruffw/)\n\nzizmor 1.32 is now the default version used by this action.\n\nFull release notes: https://docs.zizmor.sh/release-notes/#1320\n\n**Full Changelog**: https://github.com/zizmorcore/zizmor-action/compare/v0.8.0...v0.8.1\n"
+    },
+    "taiki-e/install-action": {
+      "tag_name": "v2.90.3",
+      "published_at": "2026-11-08T10:54:37Z",
+      "html_url": "https://github.com/taiki-e/install-action/releases/tag/v2.90.3",
+      "body": "- Update `yq@latest` to 4.54.2.\r\n\r\n- Update `vacuum@latest` to 0.39.3.\r\n\r\n- Update `syft@latest` to 1.57.0.\r\n\r\n- Update `rclone@latest` to 1.76.0.\r\n\r\n- Update `protoc-gen-connect-openapi@latest` to 0.30.0.\r\n\r\n- Update `mise@latest` to 2026.11.3.\r\n\r\n- Update `kingfisher@latest` to 2.17.0.\r\n\r\n- Update `biome@latest` to 2.6.6."
+    },
+    "peter-evans/create-pull-request": {
+      "tag_name": "v8.1.3",
+      "published_at": "2026-11-10T13:06:27Z",
+      "html_url": "https://github.com/peter-evans/create-pull-request/releases/tag/v8.1.3",
+      "body": "## What's Changed\r\n* fix: check git ref directly when pushing signed commits by @peter-evans in https://github.com/peter-evans/create-pull-request/pull/4521\r\n* Update distribution by @actions-bot in https://github.com/peter-evans/create-pull-request/pull/4526\r\n\r\n\r\n**Full Changelog**: https://github.com/peter-evans/create-pull-request/compare/v8.1.2...v8.1.3"
+    },
+    "actions/dependency-review-action": {
+      "tag_name": "v5.0.0",
+      "published_at": "2026-05-08T20:23:50Z",
+      "html_url": "https://github.com/actions/dependency-review-action/releases/tag/v5.0.0",
+      "body": "This is a new major version of the Dependency Review Action which updates the runtime to node24. This requires a minimum Actions Runner version [v2.327.1](https://github.com/actions/runner/releases/tag/v2.327.1) to run.\r\n\r\n## What's Changed\r\n* Add .github/copilot-instructions.md for Copilot coding agent by @ahpook in https://github.com/actions/dependency-review-action/pull/1067\r\n* Update Node.js runtime from 20 to 24 by @scottschreckengaust in https://github.com/actions/dependency-review-action/pull/1084\r\n* Bump spdx-license-ids from 3.0.20 to 3.0.23 by @mongolyy in https://github.com/actions/dependency-review-action/pull/1091\r\n* docs: bump actions/checkout from v4 to v6 in workflow examples by @Marukome0743 in https://github.com/actions/dependency-review-action/pull/1077\r\n* fix: patched version display for advisories with non-strict semver ranges (e.g. Maven beta versions) by @tspascoal in https://github.com/actions/dependency-review-action/pull/1076\r\n* Resolve security findings by @AshelyTC in https://github.com/actions/dependency-review-action/pull/1094\r\n* v5.0.0 release branch by @ahpook in https://github.com/actions/dependency-review-action/pull/1098\r\n\r\n## New Contributors\r\n* @scottschreckengaust made their first contribution in https://github.com/actions/dependency-review-action/pull/1084\r\n* @mongolyy made their first contribution in https://github.com/actions/dependency-review-action/pull/1091\r\n* @Marukome0743 made their first contribution in https://github.com/actions/dependency-review-action/pull/1077\r\n\r\n**Full Changelog**: https://github.com/actions/dependency-review-action/compare/v4.9.0...v5.0.0"
+    },
+    "codecov/codecov-action": {
+      "tag_name": "v7.1.1",
+      "published_at": "2026-09-17T00:48:02Z",
+      "html_url": "https://github.com/codecov/codecov-action/releases/tag/v7.1.1",
+      "body": "## What's Changed\r\n* chore(release): 7.1.1 by @thomasrockhu-codecov in https://github.com/codecov/codecov-action/pull/1973\r\n\r\n\r\n**Full Changelog**: https://github.com/codecov/codecov-action/compare/v7.1.0...v7.1.1"
+    },
+    "rust-lang/crates-io-auth-action": {
+      "tag_name": "v1.0.6",
+      "published_at": "2026-10-21T16:28:32Z",
+      "html_url": "https://github.com/rust-lang/crates-io-auth-action/releases/tag/v1.0.6",
+      "body": "## What's Changed\r\n\r\nupdate dependencies\r\n\r\n**Full Changelog**: https://github.com/rust-lang/crates-io-auth-action/compare/v1.0.5...v1.0.6"
+    },
+    "dtolnay/rust-toolchain": {
+      "tag_name": "v1",
+      "published_at": "2022-07-15T18:16:27Z",
+      "html_url": "https://github.com/dtolnay/rust-toolchain/releases/tag/v1",
+      "body": ""
+    },
+    "actions/checkout": {
+      "tag_name": "v7.0.1",
+      "published_at": "2026-07-20T15:10:05Z",
+      "html_url": "https://github.com/actions/checkout/releases/tag/v7.0.1",
+      "body": "## What's Changed\r\n* skip running unsafe pr check if input is default by @aiqiaoy in https://github.com/actions/checkout/pull/2518\r\n* trim only ascii whitespace for branch by @aiqiaoy in https://github.com/actions/checkout/pull/2521\r\n* escape values passed to --unset by @aiqiaoy in https://github.com/actions/checkout/pull/2530\r\n* Various dependency updates \r\n\r\n**Full Changelog**: https://github.com/actions/checkout/compare/v7...v7.0.1"
+    }
+  },
+  "pypi": {
+    "markdown-it-py": {
+      "version": "4.3.0",
+      "requires_python": ">=3.10",
+      "requires_dist": [
+        "mdurl~=0.1",
+        "psutil; extra == \"benchmarking\"",
+        "pytest; extra == \"benchmarking\"",
+        "pytest-benchmark; extra == \"benchmarking\"",
+        "markdown~=3.4; extra == \"compare\"",
+        "mistletoe~=1.0; extra == \"compare\"",
+        "mistune~=3.0; extra == \"compare\"",
+        "panflute~=2.3; extra == \"compare\"",
+        "markdown-it-pyrs; extra == \"compare\"",
+        "coverage; extra == \"coverage\"",
+        "pytest-cov; extra == \"coverage\"",
+        "linkify-it-py<3,>=1; extra == \"linkify\"",
+        "mdit-py-plugins>=0.5.0; extra == \"plugins\"",
+        "gprof2dot; extra == \"profiling\"",
+        "mdit-py-plugins>=0.5.0; extra == \"rtd\"",
+        "myst-parser; extra == \"rtd\"",
+        "pyyaml; extra == \"rtd\"",
+        "sphinx; extra == \"rtd\"",
+        "sphinx-copybutton; extra == \"rtd\"",
+        "sphinx-design; extra == \"rtd\"",
+        "sphinx-book-theme~=1.0; extra == \"rtd\"",
+        "jupyter_sphinx; extra == \"rtd\"",
+        "ipykernel; extra == \"rtd\"",
+        "flit_core<5,>=3.4; extra == \"testing\"",
+        "pytest; extra == \"testing\"",
+        "pytest-regressions; extra == \"testing\"",
+        "pytest-timeout; extra == \"testing\"",
+        "requests; extra == \"testing\""
+      ],
+      "project_urls": {
+        "Documentation": "https://markdown-it-py.readthedocs.io",
+        "Homepage": "https://github.com/executablebooks/markdown-it-py"
+      }
+    },
+    "pre-commit-hooks": {
+      "version": "6.0.0",
+      "requires_python": ">=3.9",
+      "requires_dist": [
+        "ruamel.yaml>=0.15",
+        "tomli>=1.1.0; python_version < \"3.11\""
+      ],
+      "project_urls": {
+        "Homepage": "https://github.com/pre-commit/pre-commit-hooks"
+      }
+    },
+    "packageurl-python": {
+      "version": "0.17.6",
+      "requires_python": ">=3.8",
+      "requires_dist": [
+        "isort; extra == \"lint\"",
+        "black; extra == \"lint\"",
+        "mypy; extra == \"lint\"",
+        "pytest; extra == \"test\"",
+        "setuptools; extra == \"build\"",
+        "wheel; extra == \"build\"",
+        "sqlalchemy>=2.0.0; extra == \"sqlalchemy\""
+      ],
+      "project_urls": {
+        "Homepage": "https://github.com/package-url/packageurl-python"
+      }
+    },
+    "shellcheck-py": {
+      "version": "0.11.0.1",
+      "requires_python": ">=3.9",
+      "requires_dist": null,
+      "project_urls": {
+        "Homepage": "https://github.com/ryanrhee/shellcheck-py"
+      }
+    },
+    "python-discovery": {
+      "version": "1.9.5",
+      "requires_python": ">=3.9",
+      "requires_dist": [
+        "filelock>=3.16.1"
+      ],
+      "project_urls": {
+        "Changelog": "https://github.com/tox-dev/python-discovery/blob/main/docs/changelog.rst",
+        "Documentation": "https://python-discovery.readthedocs.io",
+        "Homepage": "https://github.com/tox-dev/python-discovery",
+        "Source": "https://github.com/tox-dev/python-discovery",
+        "Tracker": "https://github.com/tox-dev/python-discovery/issues"
+      }
+    },
+    "pre-commit": {
+      "version": "4.7.0",
+      "requires_python": ">=3.11",
+      "requires_dist": [
+        "cfgv>=2.0.0",
+        "identify>=1.0.0",
+        "nodeenv>=0.11.1",
+        "pyyaml>=5.1",
+        "virtualenv>=20.10.0"
+      ],
+      "project_urls": {
+        "Homepage": "https://github.com/pre-commit/pre-commit"
+      }
+    },
+    "platformdirs": {
+      "version": "4.14.5",
+      "requires_python": ">=3.11",
+      "requires_dist": null,
+      "project_urls": {
+        "Changelog": "https://platformdirs.readthedocs.io/en/latest/changelog.html",
+        "Documentation": "https://platformdirs.readthedocs.io",
+        "Homepage": "https://github.com/tox-dev/platformdirs",
+        "Source": "https://github.com/tox-dev/platformdirs",
+        "Tracker": "https://github.com/tox-dev/platformdirs/issues"
+      }
+    },
+    "cfgv": {
+      "version": "3.5.0",
+      "requires_python": ">=3.10",
+      "requires_dist": null,
+      "project_urls": {
+        "Homepage": "https://github.com/asottile/cfgv"
+      }
+    },
+    "idna": {
+      "version": "3.20",
+      "requires_python": ">=3.9",
+      "requires_dist": [
+        "ruff>=0.16.0; extra == \"all\"",
+        "mypy>=1.11.2; extra == \"all\"",
+        "ty>=0.0.37; extra == \"all\"",
+        "pytest>=8.3.2; extra == \"all\"",
+        "hypothesis>=6.141.1; extra == \"all\"",
+        "coverage>=7.10.0; extra == \"all\""
+      ],
+      "project_urls": {
+        "Changelog": "https://github.com/kjd/idna/blob/master/HISTORY.md",
+        "Issue tracker": "https://github.com/kjd/idna/issues",
+        "Source": "https://github.com/kjd/idna"
+      }
+    },
+    "py-serializable": {
+      "version": "2.2.0",
+      "requires_python": "<4.0,>=3.8",
+      "requires_dist": [
+        "defusedxml<0.8.0,>=0.7.1"
+      ],
+      "project_urls": {
+        "Bug Tracker": "https://github.com/madpah/serializable/issues",
+        "Changelog": "https://github.com/madpah/serializable/releases",
+        "Documentation": "https://py-serializable.readthedocs.io/",
+        "Homepage": "https://github.com/madpah/serializable#readme",
+        "Repository": "https://github.com/madpah/serializable"
+      }
+    },
+    "msgpack": {
+      "version": "1.2.4",
+      "requires_python": ">=3.10",
+      "requires_dist": null,
+      "project_urls": {
+        "Changelog": "https://github.com/msgpack/msgpack-python/blob/main/CHANGELOG.md",
+        "Documentation": "https://msgpack-python.readthedocs.io/",
+        "Homepage": "https://msgpack.org/",
+        "Repository": "https://github.com/msgpack/msgpack-python/",
+        "Tracker": "https://github.com/msgpack/msgpack-python/issues"
+      }
+    },
+    "mdurl": {
+      "version": "0.1.2",
+      "requires_python": ">=3.7",
+      "requires_dist": null,
+      "project_urls": {
+        "Homepage": "https://github.com/executablebooks/mdurl"
+      }
+    },
+    "pyyaml": {
+      "version": "6.0.3",
+      "requires_python": ">=3.8",
+      "requires_dist": null,
+      "project_urls": {
+        "Bug Tracker": "https://github.com/yaml/pyyaml/issues",
+        "CI": "https://github.com/yaml/pyyaml/actions",
+        "Documentation": "https://pyyaml.org/wiki/PyYAMLDocumentation",
+        "Download": "https://pypi.org/project/PyYAML/",
+        "Homepage": "https://pyyaml.org/",
+        "Mailing lists": "http://lists.sourceforge.net/lists/listinfo/yaml-core",
+        "Source Code": "https://github.com/yaml/pyyaml"
+      }
+    },
+    "sortedcontainers": {
+      "version": "2.4.0",
+      "requires_python": "",
+      "requires_dist": null,
+      "project_urls": {
+        "Homepage": "http://www.grantjenks.com/docs/sortedcontainers/"
+      }
+    },
+    "cachecontrol": {
+      "version": "0.14.4",
+      "requires_python": ">=3.10",
+      "requires_dist": [
+        "requests>=2.16.0",
+        "msgpack<2.0.0,>=0.5.2",
+        "cachecontrol[filecache,redis]; extra == \"dev\"",
+        "cherrypy; extra == \"dev\"",
+        "cheroot>=11.1.2; extra == \"dev\"",
+        "codespell; extra == \"dev\"",
+        "furo; extra == \"dev\"",
+        "mypy; extra == \"dev\"",
+        "pytest; extra == \"dev\"",
+        "pytest-cov; extra == \"dev\"",
+        "ruff; extra == \"dev\"",
+        "sphinx; extra == \"dev\"",
+        "sphinx-copybutton; extra == \"dev\"",
+        "types-redis; extra == \"dev\"",
+        "types-requests; extra == \"dev\"",
+        "filelock>=3.8.0; extra == \"filecache\"",
+        "redis>=2.10.5; extra == \"redis\""
+      ],
+      "project_urls": {
+        "Homepage": "https://pypi.org/project/CacheControl/",
+        "Issues": "https://github.com/psf/cachecontrol/issues",
+        "Source": "https://github.com/psf/cachecontrol"
+      }
+    },
+    "pygments": {
+      "version": "2.21.0",
+      "requires_python": ">=3.9",
+      "requires_dist": [
+        "colorama>=0.4.6; extra == \"windows-terminal\""
+      ],
+      "project_urls": {
+        "Bug Tracker": "https://github.com/pygments/pygments/issues",
+        "Changelog": "https://github.com/pygments/pygments/blob/master/CHANGES",
+        "Documentation": "https://pygments.org/docs",
+        "Homepage": "https://pygments.org",
+        "Source": "https://github.com/pygments/pygments"
+      }
+    },
+    "nodeenv": {
+      "version": "1.12.0",
+      "requires_python": ">=3.10",
+      "requires_dist": [
+        "certifi; extra == \"certifi\"",
+        "shtab>=1.11; extra == \"completion\""
+      ],
+      "project_urls": {
+        "Homepage": "https://github.com/ekalinin/nodeenv"
+      }
+    },
+    "distlib": {
+      "version": "0.4.4",
+      "requires_python": null,
+      "requires_dist": null,
+      "project_urls": {
+        "Documentation": "https://distlib.readthedocs.io/",
+        "Homepage": "https://github.com/pypa/distlib",
+        "Source": "https://github.com/pypa/distlib",
+        "Tracker": "https://github.com/pypa/distlib/issues"
+      }
+    },
+    "requests": {
+      "version": "2.34.2",
+      "requires_python": ">=3.10",
+      "requires_dist": [
+        "charset_normalizer<4,>=2",
+        "idna<4,>=2.5",
+        "urllib3<3,>=1.26",
+        "certifi>=2023.5.7",
+        "PySocks!=1.5.7,>=1.5.6; extra == \"socks\"",
+        "chardet<8,>=3.0.2; extra == \"use-chardet-on-py3\""
+      ],
+      "project_urls": {
+        "Documentation": "https://requests.readthedocs.io",
+        "Source": "https://github.com/psf/requests"
+      }
+    },
+    "ruamel-yaml": {
+      "version": "0.19.1",
+      "requires_python": ">=3.9",
+      "requires_dist": [
+        "ruamel.yaml.clib; platform_python_implementation == \"CPython\" and extra == \"oldlibyaml\"",
+        "ruamel.yaml.clibz>=0.3.7; platform_python_implementation == \"CPython\" and extra == \"libyaml\"",
+        "ruamel.yaml.jinja2>=0.2; extra == \"jinja2\"",
+        "ryd; extra == \"docs\"",
+        "mercurial>5.7; extra == \"docs\""
+      ],
+      "project_urls": {
+        "Documentation": "https://yaml.dev/doc/ruamel.yaml",
+        "Home": "https://sourceforge.net/p/ruamel-yaml/",
+        "Source": "https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/",
+        "Tracker": "https://sourceforge.net/p/ruamel-yaml/tickets/"
+      }
+    },
+    "pyparsing": {
+      "version": "3.3.3",
+      "requires_python": ">=3.9",
+      "requires_dist": [
+        "railroad-diagrams; extra == \"diagrams\"",
+        "jinja2; extra == \"diagrams\""
+      ],
+      "project_urls": {
+        "Documentation": "https://pyparsing-docs.readthedocs.io/en/latest/",
+        "Homepage": "https://github.com/pyparsing/pyparsing/",
+        "Source": "https://github.com/pyparsing/pyparsing.git"
+      }
+    },
+    "packaging": {
+      "version": "26.3",
+      "requires_python": ">=3.9",
+      "requires_dist": null,
+      "project_urls": {
+        "Documentation": "https://packaging.pypa.io/",
+        "Source": "https://github.com/pypa/packaging"
+      }
+    },
+    "tomli-w": {
+      "version": "1.2.0",
+      "requires_python": ">=3.9",
+      "requires_dist": null,
+      "project_urls": {
+        "Changelog": "https://github.com/hukkin/tomli-w/blob/master/CHANGELOG.md",
+        "Homepage": "https://github.com/hukkin/tomli-w"
+      }
+    },
+    "tomli": {
+      "version": "2.5.0",
+      "requires_python": ">=3.8",
+      "requires_dist": null,
+      "project_urls": {
+        "Changelog": "https://github.com/hukkin/tomli/blob/master/CHANGELOG.md",
+        "Homepage": "https://github.com/hukkin/tomli"
+      }
+    },
+    "license-expression": {
+      "version": "30.4.4",
+      "requires_python": ">=3.9",
+      "requires_dist": [
+        "boolean.py>=4.0",
+        "pytest>=7.0.1; extra == \"dev\"",
+        "pytest-xdist>=2; extra == \"dev\"",
+        "twine; extra == \"dev\"",
+        "ruff; extra == \"dev\"",
+        "Sphinx>=5.0.2; extra == \"dev\"",
+        "sphinx-rtd-theme>=1.0.0; extra == \"dev\"",
+        "sphinxcontrib-apidoc>=0.4.0; extra == \"dev\"",
+        "sphinx-reredirects>=0.1.2; extra == \"dev\"",
+        "doc8>=0.11.2; extra == \"dev\"",
+        "sphinx-autobuild; extra == \"dev\"",
+        "sphinx-rtd-dark-mode>=1.3.0; extra == \"dev\"",
+        "sphinx-copybutton; extra == \"dev\""
+      ],
+      "project_urls": {
+        "Homepage": "https://github.com/aboutcode-org/license-expression"
+      }
+    },
+    "filelock": {
+      "version": "4.2.10",
+      "requires_python": ">=3.11",
+      "requires_dist": null,
+      "project_urls": {
+        "Changelog": "https://py-filelock.readthedocs.io/en/latest/changelog.html",
+        "Documentation": "https://py-filelock.readthedocs.io",
+        "Homepage": "https://github.com/tox-dev/filelock",
+        "Source": "https://github.com/tox-dev/filelock",
+        "Tracker": "https://github.com/tox-dev/filelock/issues"
+      }
+    },
+    "certifi": {
+      "version": "2026.10.23",
+      "requires_python": ">=3.7",
+      "requires_dist": null,
+      "project_urls": {
+        "Homepage": "https://github.com/certifi/python-certifi",
+        "Source": "https://github.com/certifi/python-certifi"
+      }
+    },
+    "zizmor": {
+      "version": "1.32.0",
+      "requires_python": ">=3.11",
+      "requires_dist": null,
+      "project_urls": {
+        "Documentation": "https://docs.zizmor.sh",
+        "Homepage": "https://docs.zizmor.sh",
+        "Source Code": "https://github.com/zizmorcore/zizmor"
+      }
+    },
+    "charset-normalizer": {
+      "version": "3.5.2",
+      "requires_python": ">=3.7",
+      "requires_dist": null,
+      "project_urls": {
+        "Changelog": "https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md",
+        "Code": "https://github.com/jawah/charset_normalizer",
+        "Documentation": "https://charset-normalizer.readthedocs.io/",
+        "Issue tracker": "https://github.com/jawah/charset_normalizer/issues"
+      }
+    },
+    "pip-api": {
+      "version": "0.0.35",
+      "requires_python": ">=3.9",
+      "requires_dist": [
+        "pip"
+      ],
+      "project_urls": {
+        "Homepage": "https://pypi.org/project/pip-api/",
+        "Issues": "https://github.com/di/pip-api/issues",
+        "Source": "https://github.com/di/pip-api"
+      }
+    },
+    "identify": {
+      "version": "2.6.20",
+      "requires_python": ">=3.10",
+      "requires_dist": [
+        "ukkonen; extra == \"license\""
+      ],
+      "project_urls": {
+        "Homepage": "https://github.com/pre-commit/identify"
+      }
+    },
+    "pip-requirements-parser": {
+      "version": "32.0.1",
+      "requires_python": ">=3.6.0",
+      "requires_dist": [
+        "packaging",
+        "pyparsing",
+        "Sphinx (>=3.3.1) ; extra == 'docs'",
+        "sphinx-rtd-theme (>=0.5.0) ; extra == 'docs'",
+        "doc8 (>=0.8.1) ; extra == 'docs'",
+        "pytest (!=7.0.0,>=6) ; extra == 'testing'",
+        "pytest-xdist (>=2) ; extra == 'testing'",
+        "aboutcode-toolkit (>=6.0.0) ; extra == 'testing'",
+        "black ; extra == 'testing'"
+      ],
+      "project_urls": {
+        "Homepage": "https://github.com/nexB/pip-requirements-parser"
+      }
+    },
+    "pyflakes": {
+      "version": "4.1.0",
+      "requires_python": ">=3.11",
+      "requires_dist": null,
+      "project_urls": {
+        "Homepage": "https://github.com/PyCQA/pyflakes"
+      }
+    },
+    "cyclonedx-python-lib": {
+      "version": "11.12.0",
+      "requires_python": "<4.0,>=3.9",
+      "requires_dist": [
+        "jsonschema[format-nongpl]<5.0,>=4.25; extra == \"validation\" or extra == \"json-validation\"",
+        "license-expression<31,>=30",
+        "lxml<7,>=4; extra == \"validation\" or extra == \"xml-validation\"",
+        "packageurl-python<2,>=0.11",
+        "py-serializable<3.0.0,>=2.1.0",
+        "referencing>=0.28.4; extra == \"validation\" or extra == \"json-validation\"",
+        "sortedcontainers<3.0.0,>=2.4.0",
+        "typing_extensions<5.0,>=4.6; python_version < \"3.13\""
+      ],
+      "project_urls": {
+        "Bug Tracker": "https://github.com/CycloneDX/cyclonedx-python-lib/issues",
+        "Changelog": "https://github.com/CycloneDX/cyclonedx-python-lib/releases",
+        "Documentation": "https://cyclonedx-python-library.readthedocs.io/",
+        "Funding": "https://owasp.org/donate/?reponame=www-project-cyclonedx&title=OWASP+CycloneDX",
+        "Homepage": "https://github.com/CycloneDX/cyclonedx-python-lib/#readme",
+        "Repository": "https://github.com/CycloneDX/cyclonedx-python-lib"
+      }
+    },
+    "urllib3": {
+      "version": "2.8.0",
+      "requires_python": ">=3.10",
+      "requires_dist": [
+        "brotli>=1.2.0; platform_python_implementation == \"CPython\" and extra == \"brotli\"",
+        "brotlicffi>=1.2.0.0; platform_python_implementation != \"CPython\" and extra == \"brotli\"",
+        "h2<5,>=4; extra == \"h2\"",
+        "pysocks!=1.5.7,<2.0,>=1.5.6; extra == \"socks\"",
+        "backports-zstd>=1.0.0; python_version < \"3.14\" and extra == \"zstd\""
+      ],
+      "project_urls": {
+        "Changelog": "https://github.com/urllib3/urllib3/blob/main/CHANGES.rst",
+        "Code": "https://github.com/urllib3/urllib3",
+        "Documentation": "https://urllib3.readthedocs.io",
+        "Issue tracker": "https://github.com/urllib3/urllib3/issues",
+        "Security policy": "https://urllib3.readthedocs.io/en/latest/security.html"
+      }
+    },
+    "pip": {
+      "version": "26.3",
+      "requires_python": ">=3.10",
+      "requires_dist": null,
+      "project_urls": {
+        "Changelog": "https://pip.pypa.io/en/stable/news/",
+        "Documentation": "https://pip.pypa.io",
+        "Homepage": "https://pip.pypa.io/",
+        "Source": "https://github.com/pypa/pip"
+      }
+    },
+    "rich": {
+      "version": "15.0.0",
+      "requires_python": ">=3.9.0",
+      "requires_dist": [
+        "ipywidgets<9,>=7.5.1; extra == \"jupyter\"",
+        "markdown-it-py>=2.2.0",
+        "pygments<3.0.0,>=2.13.0"
+      ],
+      "project_urls": {
+        "Documentation": "https://rich.readthedocs.io/en/latest/",
+        "Homepage": "https://github.com/Textualize/rich"
+      }
+    },
+    "virtualenv": {
+      "version": "21.15.6",
+      "requires_python": ">=3.9",
+      "requires_dist": [
+        "distlib<1,>=0.4.3",
+        "filelock<5,>=3.24.2; python_version >= \"3.10\"",
+        "filelock<=3.19.1,>=3.19.1; python_version < \"3.10\"",
+        "packaging>=26.3",
+        "platformdirs<5,>=4.4",
+        "python-discovery>=1.6.1",
+        "typing-extensions>=4.16; python_version < \"3.11\""
+      ],
+      "project_urls": {
+        "Changelog": "https://virtualenv.pypa.io/en/latest/changelog.html",
+        "Documentation": "https://virtualenv.pypa.io",
+        "Funding": "https://github.com/sponsors/gaborbernat",
+        "Homepage": "https://github.com/pypa/virtualenv",
+        "Source": "https://github.com/pypa/virtualenv",
+        "Tidelift": "https://tidelift.com/funding/github/pypi/virtualenv",
+        "Tracker": "https://github.com/pypa/virtualenv/issues",
+        "thanks.dev": "https://thanks.dev/u/gh/gaborbernat"
+      }
+    },
+    "pip-audit": {
+      "version": "2.10.1",
+      "requires_python": ">=3.10",
+      "requires_dist": [
+        "CacheControl[filecache]>=0.13.0",
+        "cyclonedx-python-lib<12,>=5",
+        "packaging>=23.0.0",
+        "pip-api>=0.0.28",
+        "pip-requirements-parser>=32.0.0",
+        "requests>=2.31.0",
+        "rich>=12.4",
+        "tomli>=2.2.1",
+        "tomli-w>=1.2.0",
+        "platformdirs>=4.2.0",
+        "coverage[toml]!=7.3.3,~=7.0; extra == \"cov\"",
+        "build; extra == \"dev\"",
+        "pip-audit[doc,lint,test]; extra == \"dev\"",
+        "pdoc; extra == \"doc\"",
+        "ruff>=0.14; extra == \"lint\"",
+        "interrogate~=1.6; extra == \"lint\"",
+        "mypy; extra == \"lint\"",
+        "types-requests; extra == \"lint\"",
+        "types-toml; extra == \"lint\"",
+        "typos; extra == \"lint\"",
+        "pretend; extra == \"test\"",
+        "pytest; extra == \"test\"",
+        "pip-audit[cov]; extra == \"test\""
+      ],
+      "project_urls": {
+        "Homepage": "https://pypi.org/project/pip-audit/",
+        "Issues": "https://github.com/pypa/pip-audit/issues",
+        "Source": "https://github.com/pypa/pip-audit"
+      }
+    },
+    "boolean-py": {
+      "version": "5.0",
+      "requires_python": null,
+      "requires_dist": [
+        "pytest!=7.0.0,>=6; extra == \"testing\"",
+        "pytest-xdist>=2; extra == \"testing\"",
+        "twine; extra == \"dev\"",
+        "build; extra == \"dev\"",
+        "black; extra == \"linting\"",
+        "isort; extra == \"linting\"",
+        "pycodestyle; extra == \"linting\"",
+        "Sphinx>=3.3.1; extra == \"docs\"",
+        "sphinx-rtd-theme>=0.5.0; extra == \"docs\"",
+        "doc8>=0.8.1; extra == \"docs\"",
+        "sphinxcontrib-apidoc>=0.3.0; extra == \"docs\""
+      ],
+      "project_urls": {
+        "Homepage": "https://github.com/bastikr/boolean.py"
+      }
+    },
+    "defusedxml": {
+      "version": "0.7.1",
+      "requires_python": ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
+      "requires_dist": null,
+      "project_urls": {
+        "Download": "https://pypi.python.org/pypi/defusedxml",
+        "Homepage": "https://github.com/tiran/defusedxml"
+      }
+    },
+    "uv": {
+      "version": "0.13.8",
+      "requires_python": ">=3.8",
+      "requires_dist": null,
+      "project_urls": {
+        "Changelog": "https://github.com/astral-sh/uv/blob/main/CHANGELOG.md",
+        "Discord": "https://discord.gg/astral-sh",
+        "Documentation": "https://docs.astral.sh/uv",
+        "Homepage": "https://pypi.org/project/uv/",
+        "Releases": "https://github.com/astral-sh/uv/releases",
+        "Repository": "https://github.com/astral-sh/uv"
+      }
+    },
+    "typing-extensions": {
+      "version": "4.16.0",
+      "requires_python": ">=3.9",
+      "requires_dist": null,
+      "project_urls": {
+        "Bug Tracker": "https://github.com/python/typing_extensions/issues",
+        "Changes": "https://github.com/python/typing_extensions/blob/main/CHANGELOG.md",
+        "Documentation": "https://typing-extensions.readthedocs.io/",
+        "Home": "https://github.com/python/typing_extensions",
+        "Q & A": "https://github.com/python/typing/discussions",
+        "Repository": "https://github.com/python/typing_extensions"
+      }
+    }
+  },
+  "node": [
+    {
+      "version": "v27.0.0-alpha.0.1.0",
+      "date": "2026-11-12",
+      "files": [
+        "aix-ppc64",
+        "headers",
+        "linux-arm64",
+        "linux-ppc64le",
+        "linux-s390x",
+        "linux-x64",
+        "linux-x64-musl",
+        "osx-arm64-tar",
+        "osx-x64-pkg",
+        "src",
+        "win-arm64-7z",
+        "win-arm64-zip",
+        "win-x64-7z",
+        "win-x64-exe",
+        "win-x64-msi",
+        "win-x64-zip"
+      ],
+      "npm": "12.2.2",
+      "zlib": "1.3.2.1-motley",
+      "openssl": "4.1.0",
+      "modules": "153",
+      "lts": false,
+      "security": false
+    },
+    {
+      "version": "v27.0.0-alpha.0.0.0",
+      "date": "2026-10-29",
+      "files": [
+        "aix-ppc64",
+        "headers",
+        "linux-arm64",
+        "linux-ppc64le",
+        "linux-s390x",
+        "linux-x64",
+        "linux-x64-musl",
+        "osx-arm64-tar",
+        "osx-x64-pkg",
+        "src",
+        "win-arm64-7z",
+        "win-arm64-zip",
+        "win-x64-7z",
+        "win-x64-exe",
+        "win-x64-msi",
+        "win-x64-zip"
+      ],
+      "npm": "12.1.0",
+      "v8": "15.6.75.25",
+      "uv": "1.52.1",
+      "zlib": "1.3.2.1-motley",
+      "openssl": "4.1.0",
+      "modules": "153",
+      "lts": false,
+      "security": false
+    },
+    {
+      "version": "v26.13.1",
+      "date": "2026-11-10",
+      "files": [
+        "aix-ppc64",
+        "headers",
+        "linux-arm64",
+        "linux-ppc64le",
+        "linux-s390x",
+        "linux-x64",
+        "linux-x64-musl",
+        "osx-arm64-tar",
+        "osx-x64-pkg",
+        "osx-x64-tar",
+        "src",
+        "win-arm64-7z",
+        "win-arm64-zip",
+        "win-x64-7z",
+        "win-x64-exe",
+        "win-x64-msi",
+        "win-x64-zip"
+      ],
+      "npm": "11.20.0",
+      "zlib": "1.3.2.1-motley",
+      "openssl": "3.5.9",
+      "modules": "147",
+      "lts": "Lithium",
+      "security": true
+    }
+  ]
+}

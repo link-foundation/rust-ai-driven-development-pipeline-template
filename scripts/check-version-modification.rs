@@ -6,8 +6,8 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! regex = "1"
-//! toml = "0.8"
+//! regex = "1.13.1"
+//! toml = "1.2.1"
 //! ```
 
 use std::env;

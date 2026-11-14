@@ -24,14 +24,14 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! regex = "1"
+//! regex = "1.13.1"
 //! ```
 
 use regex::Regex;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::{exit, Command, Output};
+use std::process::{Command, Output, exit};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -554,8 +554,10 @@ path = "src/second.rs"
     fn library_consumer_uses_exact_published_package_version() {
         let manifest = library_consumer_manifest("import_name", "published-name", "2.0.1");
 
-        assert!(manifest
-            .contains(r#""import_name" = { package = "published-name", version = "=2.0.1" }"#));
+        assert!(
+            manifest
+                .contains(r#""import_name" = { package = "published-name", version = "=2.0.1" }"#)
+        );
     }
 
     #[test]

@@ -3,9 +3,9 @@ name: Workflows
 on:
   push:
     branches: [main]
-    paths: ['.github/**', 'scripts/check-workflow-tools.rs', 'scripts/extract-artifacts.py', 'experiments/issue-223-artifact-tests.py', '**.sh', '.pre-commit-config.yaml']
+    paths: ['.github/**', 'scripts/check-workflow-tools.rs', 'scripts/extract-artifacts.py', 'experiments/issue-223-artifact-tests.py', '**.sh', '**.py', 'requirements-dev.*', '.python-version', '.pre-commit-config.yaml']
   pull_request:
-    paths: ['.github/**', 'scripts/check-workflow-tools.rs', 'scripts/extract-artifacts.py', 'experiments/issue-223-artifact-tests.py', '**.sh', '.pre-commit-config.yaml']
+    paths: ['.github/**', 'scripts/check-workflow-tools.rs', 'scripts/extract-artifacts.py', 'experiments/issue-223-artifact-tests.py', '**.sh', '**.py', 'requirements-dev.*', '.python-version', '.pre-commit-config.yaml']
 
 # Keep the workflow read-only unless a job explicitly needs an additional scope.
 permissions:
@@ -37,6 +37,8 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - uses: ./.github/actions/setup-python # zizmor: ignore[self-repository]
+
       - name: Test extraction adapter
         run: python3 experiments/issue-223-artifact-tests.py -v
       - name: Create bounded binary fixtures
@@ -129,12 +131,11 @@ jobs:
       # have code scanning enabled, and the job should fail loudly either way.
       #
       # `version` is named rather than left at the default, because the
-      # action's `latest` entry is its own frozen table (v0.6.4 -> zizmor
-      # 1.30.1), not the latest zizmor. Naming it keeps the next bump a
+      # action's `latest` entry is its own frozen table (independent of the published tool release), not the latest zizmor. Naming it keeps the next bump a
       # visible line in the diff rather than a side effect of bumping the
       # action, and documents exactly which analyser reproduces a finding
       # (issue #166):
-      #   pipx run zizmor==1.30.1 --config .github/zizmor.yml \
+      #   pipx run zizmor==1.32.0 --config .github/zizmor.yml \
       #     --min-confidence low --persona regular .
       # Scan the repository, including Dependabot and actions outside .github.
       # Future Dependabot configs need cooldown: {default-days: 7} per ecosystem.
@@ -145,7 +146,7 @@ jobs:
           annotations: true
           config: .github/zizmor.yml
           min-confidence: low
-          version: 1.30.1
+          version: 1.32.0
 
       # The run above uses `--persona regular`, which is the right default:
       # pedantic surfaces dozens of stylistic findings. But the audits that
@@ -162,7 +163,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          pipx run zizmor==1.30.1 --config .github/zizmor.yml \
+          pipx run zizmor==1.32.0 --config .github/zizmor.yml \
             --persona pedantic --min-severity high --min-confidence high \
             .
 
@@ -178,11 +179,16 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - uses: ./.github/actions/setup-python # zizmor: ignore[self-repository]
+
       - name: Shellcheck every tracked shell script
         run: |
           python3 -m venv "$RUNNER_TEMP/shellcheck-venv"
-          "$RUNNER_TEMP/shellcheck-venv/bin/pip" install --quiet --disable-pip-version-check shellcheck-py==0.11.0.1
+          # requirements-dev.txt includes shellcheck-py==0.11.0.1 and all transitive hashes.
+          "$RUNNER_TEMP/shellcheck-venv/bin/pip" install --quiet --disable-pip-version-check --require-hashes -r requirements-dev.txt
           git ls-files -z '*.sh' | xargs -0 "$RUNNER_TEMP/shellcheck-venv/bin/shellcheck"
+          git ls-files -z '*.py' | xargs -0 "$RUNNER_TEMP/shellcheck-venv/bin/pyflakes"
+          "$RUNNER_TEMP/shellcheck-venv/bin/pip-audit" --strict --disable-pip --require-hashes -r requirements-dev.txt
 
   workflow-tools:
     if: needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha
@@ -202,7 +208,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
-          toolchain: stable
+          toolchain: 1.100.0
 
       - name: Check per-job tool installation
         run: |

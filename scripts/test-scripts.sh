@@ -35,6 +35,10 @@ if [ "$status" -ne 0 ]; then
   printf '  %s\n' "${failed[@]}" >&2
 fi
 
+if ! python3 experiments/issue-247-regressions.py -v; then
+  status=1
+fi
+
 # Exercise CLI guards in isolated Git repositories, and registry/link mocks.
 if ! python3 experiments/issue-188-regressions.py -v; then
   status=1
@@ -69,7 +73,7 @@ fi
 if ! python3 experiments/issue-223-artifact-tests.py -v; then
   status=1
 fi
-if ! node --test experiments/issue-224-native.mjs experiments/issue-196-*.mjs scripts/*.test.mjs; then
+if ! node --test experiments/issue-247-buildx.test.mjs experiments/issue-224-native.mjs experiments/issue-196-*.mjs scripts/*.test.mjs; then
   status=1
 fi
 exit "$status"

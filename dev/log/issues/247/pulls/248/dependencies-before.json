@@ -1,0 +1,1510 @@
+{
+  "cargo": {
+    "aho-corasick": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.4"
+      }
+    ],
+    "anstream": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.0"
+      }
+    ],
+    "anstyle": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.14"
+      }
+    ],
+    "anstyle-parse": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.0"
+      }
+    ],
+    "anstyle-query": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.5"
+      }
+    ],
+    "anstyle-wincon": [
+      {
+        "file": "Cargo.lock",
+        "version": "3.0.11"
+      }
+    ],
+    "clap": [
+      {
+        "file": "Cargo.lock",
+        "version": "4.6.7"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "4.4"
+      }
+    ],
+    "clap_builder": [
+      {
+        "file": "Cargo.lock",
+        "version": "4.6.7"
+      }
+    ],
+    "clap_derive": [
+      {
+        "file": "Cargo.lock",
+        "version": "4.6.7"
+      }
+    ],
+    "clap_lex": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.0"
+      }
+    ],
+    "colorchoice": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.5"
+      }
+    ],
+    "ctor": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.14"
+      }
+    ],
+    "dotenvy": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.15.7"
+      }
+    ],
+    "equivalent": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.3"
+      }
+    ],
+    "hashbrown": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.17.1"
+      }
+    ],
+    "heck": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.5.0"
+      }
+    ],
+    "indexmap": [
+      {
+        "file": "Cargo.lock",
+        "version": "2.14.2"
+      }
+    ],
+    "is_terminal_polyfill": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.70.2"
+      }
+    ],
+    "itoa": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.18"
+      }
+    ],
+    "link-section": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.19.4"
+      }
+    ],
+    "linktime-proc-macro": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.2.3"
+      }
+    ],
+    "lino-arguments": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.5.0"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "0.5"
+      }
+    ],
+    "lino-env": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.1.0"
+      }
+    ],
+    "memchr": [
+      {
+        "file": "Cargo.lock",
+        "version": "2.8.0"
+      }
+    ],
+    "once_cell_polyfill": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.70.2"
+      }
+    ],
+    "proc-macro2": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.107"
+      }
+    ],
+    "quote": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.47"
+      }
+    ],
+    "regex": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/bump-version.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/check-cargo-lock.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/check-changelog-fragment.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/check-crate-size.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/check-release-needed.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/check-version-modification.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/collect-changelog.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/create-github-release.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/detect-code-changes.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/get-bump-type.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/get-version.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/publish-crate.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/smoke-test-published-crate.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs",
+        "version": "1"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "1"
+      }
+    ],
+    "regex-automata": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.4.18"
+      }
+    ],
+    "regex-syntax": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.8.11"
+      }
+    ],
+    "same-file": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.6"
+      }
+    ],
+    "serde": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/check-release-needed.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/create-github-release.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs",
+        "version": "1"
+      }
+    ],
+    "serde_core": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.229"
+      }
+    ],
+    "serde_derive": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.229"
+      }
+    ],
+    "serde_json": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.154"
+      },
+      {
+        "file": "scripts/check-cargo-lock.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/check-release-needed.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/create-github-release.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/registry.rs",
+        "version": "1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs",
+        "version": "1"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "1"
+      }
+    ],
+    "serde_spanned": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.3"
+      }
+    ],
+    "strsim": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.11.1"
+      }
+    ],
+    "syn": [
+      {
+        "file": "Cargo.lock",
+        "version": "3.0.10"
+      },
+      {
+        "file": "Cargo.lock",
+        "version": "3.0.10"
+      }
+    ],
+    "thiserror": [
+      {
+        "file": "Cargo.lock",
+        "version": "2.0.21"
+      }
+    ],
+    "thiserror-impl": [
+      {
+        "file": "Cargo.lock",
+        "version": "2.0.21"
+      }
+    ],
+    "toml": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.2.1+spec-1.1.0"
+      },
+      {
+        "file": "scripts/check-version-modification.rs",
+        "version": "0.8"
+      },
+      {
+        "file": "scripts/version-and-commit.rs",
+        "version": "0.8"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "1.2"
+      }
+    ],
+    "toml_datetime": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.3+spec-1.1.0"
+      }
+    ],
+    "toml_parser": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.5+spec-1.1.0"
+      }
+    ],
+    "toml_writer": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.2.0+spec-1.1.0"
+      }
+    ],
+    "unicode-ident": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.22"
+      }
+    ],
+    "utf8parse": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.2.2"
+      }
+    ],
+    "walkdir": [
+      {
+        "file": "Cargo.lock",
+        "version": "2.5.0"
+      },
+      {
+        "file": "scripts/check-file-size.rs",
+        "version": "2"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "2"
+      }
+    ],
+    "winapi-util": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.1.11"
+      }
+    ],
+    "windows-link": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.2.1"
+      }
+    ],
+    "windows-sys": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.61.2"
+      }
+    ],
+    "winnow": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.5"
+      }
+    ],
+    "zmij": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.21"
+      }
+    ],
+    "ureq": [
+      {
+        "file": "scripts/check-release-needed.rs",
+        "version": "2"
+      },
+      {
+        "file": "scripts/registry.rs",
+        "version": "2"
+      },
+      {
+        "file": "scripts/version-and-commit.rs",
+        "version": "2"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs",
+        "version": "2"
+      }
+    ],
+    "chrono": [
+      {
+        "file": "scripts/collect-changelog.rs",
+        "version": "0.4"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs",
+        "version": "0.4"
+      },
+      {
+        "file": "scripts/version-and-commit.rs",
+        "version": "0.4"
+      }
+    ],
+    "getrandom": [
+      {
+        "file": "scripts/create-changelog-fragment.rs",
+        "version": "0.2"
+      }
+    ],
+    "cargo-audit": [],
+    "cargo-llvm-cov": [],
+    "rust-script": [],
+    "cargo-edit": []
+  },
+  "npm": {
+    "smol-toml": [
+      {
+        "file": ".github/dependency-policy/package-lock.json",
+        "version": "1.9.1"
+      }
+    ],
+    "yaml": [
+      {
+        "file": ".github/dependency-policy/package-lock.json",
+        "version": "2.9.1"
+      }
+    ],
+    "@azu/format-text": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.0.2"
+      }
+    ],
+    "@azu/style-format": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.0.1"
+      }
+    ],
+    "@babel/code-frame": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.29.7"
+      }
+    ],
+    "@babel/helper-validator-identifier": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.29.7"
+      }
+    ],
+    "@secretlint/config-creator": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "@secretlint/config-loader": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "@secretlint/core": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "@secretlint/formatter": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "@secretlint/node": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "@secretlint/profiler": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "@secretlint/resolver": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "@secretlint/secretlint-rule-preset-recommend": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "@secretlint/source-creator": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "@secretlint/types": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "@secretlint/walker": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "@textlint/ast-node-types": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "15.8.0"
+      }
+    ],
+    "@textlint/linter-formatter": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "15.8.0"
+      }
+    ],
+    "ansi-regex": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.0.1"
+      },
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.5.0"
+      },
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.0.1"
+      },
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.0.1"
+      }
+    ],
+    "pluralize": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.0"
+      },
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "8.0.0"
+      }
+    ],
+    "strip-ansi": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.0.1"
+      },
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.0.1"
+      },
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.2.0"
+      },
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.0.1"
+      }
+    ],
+    "@textlint/module-interop": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "15.8.0"
+      }
+    ],
+    "@textlint/resolver": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "15.8.0"
+      }
+    ],
+    "@textlint/types": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "15.8.0"
+      }
+    ],
+    "@types/normalize-package-data": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.4.4"
+      }
+    ],
+    "ajv": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "8.20.0"
+      }
+    ],
+    "ansi-escapes": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.3.0"
+      }
+    ],
+    "ansi-styles": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.3.0"
+      }
+    ],
+    "argparse": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.1"
+      }
+    ],
+    "astral-regex": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.0"
+      }
+    ],
+    "binaryextensions": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.11.0"
+      }
+    ],
+    "boundary": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.0"
+      }
+    ],
+    "chalk": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.6.2"
+      }
+    ],
+    "color-convert": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.1"
+      }
+    ],
+    "color-name": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.1.4"
+      }
+    ],
+    "debug": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.4.3"
+      }
+    ],
+    "editions": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.22.0"
+      }
+    ],
+    "emoji-regex": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "8.0.0"
+      }
+    ],
+    "environment": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.1.0"
+      }
+    ],
+    "fast-deep-equal": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.1.3"
+      }
+    ],
+    "fast-uri": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.1.9"
+      }
+    ],
+    "has-flag": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.0.1"
+      }
+    ],
+    "hosted-git-info": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "9.0.3"
+      }
+    ],
+    "ignore": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.0.14"
+      }
+    ],
+    "index-to-position": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.2.0"
+      }
+    ],
+    "is-fullwidth-code-point": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.0.0"
+      }
+    ],
+    "istextorbinary": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "9.5.0"
+      }
+    ],
+    "js-tokens": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.0.0"
+      }
+    ],
+    "js-yaml": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.3.2"
+      }
+    ],
+    "json-schema-traverse": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.0.0"
+      }
+    ],
+    "json5": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.2.3"
+      }
+    ],
+    "lodash": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.18.1"
+      }
+    ],
+    "lru-cache": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "11.5.3"
+      }
+    ],
+    "ms": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.1.3"
+      }
+    ],
+    "normalize-package-data": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "8.0.0"
+      }
+    ],
+    "p-map": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.1.1"
+      }
+    ],
+    "parse-json": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "8.3.0"
+      }
+    ],
+    "type-fest": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.41.0"
+      },
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.10.0"
+      }
+    ],
+    "picocolors": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.1.1"
+      }
+    ],
+    "picomatch": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.0.7"
+      }
+    ],
+    "rc-config-loader": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.1.4"
+      }
+    ],
+    "read-pkg": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "10.1.0"
+      }
+    ],
+    "require-from-string": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.2"
+      }
+    ],
+    "secretlint": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.0.7"
+      }
+    ],
+    "semver": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.8.6"
+      }
+    ],
+    "slice-ansi": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.0.0"
+      }
+    ],
+    "spdx-correct": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.2.0"
+      }
+    ],
+    "spdx-exceptions": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.5.0"
+      }
+    ],
+    "spdx-expression-parse": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.0.1"
+      }
+    ],
+    "spdx-license-ids": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.0.24"
+      }
+    ],
+    "string-width": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.2.3"
+      }
+    ],
+    "structured-source": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.0.0"
+      }
+    ],
+    "supports-color": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "10.2.2"
+      }
+    ],
+    "supports-hyperlinks": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.6.0"
+      }
+    ],
+    "table": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.10.1"
+      }
+    ],
+    "tagged-tag": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.0.0"
+      }
+    ],
+    "terminal-link": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.0.0"
+      }
+    ],
+    "text-table": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "0.2.0"
+      }
+    ],
+    "textextensions": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.11.0"
+      }
+    ],
+    "unicorn-magic": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "0.4.1"
+      }
+    ],
+    "validate-npm-package-license": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.0.4"
+      }
+    ],
+    "version-range": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.15.0"
+      }
+    ]
+  },
+  "actions": {
+    "actions/download-artifact": [
+      {
+        "file": ".github/actions/download-artifact/action.yml",
+        "version": "9000827ccba6bdab643e8b6fd33ac0654aef8333"
+      }
+    ],
+    "docker/setup-buildx-action": [
+      {
+        "file": ".github/actions/setup-buildx-resilient/action.yml",
+        "version": "v4"
+      },
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "v4"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v4"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v4"
+      }
+    ],
+    "actions/checkout": [
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/javascript-first-gate.yml",
+        "version": "3d3c42e5aac5ba805825da76410c181273ba90b1"
+      },
+      {
+        "file": ".github/workflows/javascript-first-gate.yml",
+        "version": "3d3c42e5aac5ba805825da76410c181273ba90b1"
+      },
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/rerun-infrastructure-failures.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/rerun-infrastructure-failures.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      }
+    ],
+    "dtolnay/rust-toolchain": [
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      }
+    ],
+    "actions/upload-artifact": [
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      }
+    ],
+    "actions/attest": [
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v4"
+      }
+    ],
+    "docker/build-push-action": [
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      }
+    ],
+    "actions/setup-node": [
+      {
+        "file": ".github/workflows/javascript-first-gate.yml",
+        "version": "949feb2413d6458794dcd2491c4babbbce0c15c1"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "949feb2413d6458794dcd2491c4babbbce0c15c1"
+      }
+    ],
+    "actions/cache": [
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      }
+    ],
+    "lycheeverse/lychee-action": [
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v2"
+      }
+    ],
+    "taiki-e/install-action": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "3a3daafd3b7f23b8f65d9f5ba2db203fb59b79e2"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "3a3daafd3b7f23b8f65d9f5ba2db203fb59b79e2"
+      }
+    ],
+    "codecov/codecov-action": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "303a32d7a59b442fa8d48b6a1cc6825c09c847a5"
+      }
+    ],
+    "rust-lang/crates-io-auth-action": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "3268eb413133e2960fa4ae0e963ca76380c54cd9"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "3268eb413133e2960fa4ae0e963ca76380c54cd9"
+      }
+    ],
+    "docker/login-action": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v4"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v4"
+      }
+    ],
+    "peter-evans/create-pull-request": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "15733dbdfeedb4f7fdb73d13c6f5ac83b710fab8"
+      }
+    ],
+    "actions/configure-pages": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      }
+    ],
+    "actions/upload-pages-artifact": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v5"
+      }
+    ],
+    "actions/deploy-pages": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v5"
+      }
+    ],
+    "github/codeql-action": [
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v4"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v4"
+      }
+    ],
+    "actions/dependency-review-action": [
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v5"
+      }
+    ],
+    "zizmorcore/zizmor-action": [
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v0.8.1"
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+.github/dependency-policy/check.test.mjs:29:    ...source, 'services/api/Dockerfile.release': 'FROM node:24 AS build\nFROM debian:stable\n',
+CONTRIBUTING.md:23:and requires Node >=26.13.1. The crate supports Rust >=1.85 (Rust 2024).
+.github/workflows/release.yml:263:      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+.github/workflows/release.yml:694:      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+.github/workflows/workflows.yml:43:        run: python3 experiments/issue-223-artifact-tests.py -v
+.github/workflows/javascript-first-gate.yml:66:      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0

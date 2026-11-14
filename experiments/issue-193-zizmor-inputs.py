@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Verify the documented zizmor invocations against a Dependabot fixture.
 
-Install zizmor==1.30.1 and run this file; ZIZMOR may name its executable.
+Install zizmor==1.32.0 and run this file; ZIZMOR may name its executable.
 The fixture stays outside the repository, so it never affects normal audits.
 """
 import os
@@ -32,9 +32,9 @@ def commands():
 class ZizmorInputs(unittest.TestCase):
     def test_dependabot_is_collected_by_both_commands(self):
         zizmor = os.environ.get("ZIZMOR") or shutil.which("zizmor")
-        self.assertIsNotNone(zizmor, "install zizmor==1.30.1")
+        self.assertIsNotNone(zizmor, "install zizmor==1.32.0")
         version = subprocess.check_output([zizmor, "--version"], text=True)
-        self.assertIn("1.30.1", version)
+        self.assertIn("1.32.0", version)
         invocations = commands()
         self.assertEqual(len(invocations), 2)
         with tempfile.TemporaryDirectory(prefix="issue-193-") as directory:
@@ -55,7 +55,7 @@ class ZizmorInputs(unittest.TestCase):
             )
             for invocation in invocations:
                 with self.subTest(command=invocation):
-                    self.assertEqual(invocation[2], "zizmor==1.30.1")
+                    self.assertEqual(invocation[2], "zizmor==1.32.0")
                     result = subprocess.run(
                         [zizmor, "--offline", "--format", "json", *invocation[3:]],
                         cwd=work, text=True, capture_output=True, timeout=30,

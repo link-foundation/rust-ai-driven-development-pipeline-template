@@ -1,0 +1,4 @@
+error: failed to parse lock file at: /tmp/gh-issue-solver-1794631214677/Cargo.lock
+
+Caused by:
+  package `syn` is specified twice in the lockfile

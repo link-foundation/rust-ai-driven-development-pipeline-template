@@ -7,5 +7,10 @@
     "javascript-first:native": "node --test native.test.mjs",
     "javascript-first:parity": "node check-parity.mjs",
     "javascript-first:translation": "node generate.mjs --check"
-  }
+  },
+  "engines": {
+    "node": ">=26.13.1",
+    "npm": ">=12.2.2"
+  },
+  "packageManager": "npm@12.2.2"
 }

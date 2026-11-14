@@ -1,0 +1,1433 @@
+[
+  {
+    "name": "anstyle-query",
+    "version": "1.1.5",
+    "dependencies": [
+      {
+        "id": 18677164,
+        "version_id": 1823869,
+        "crate_id": "windows-sys",
+        "req": ">=0.60.2, <0.62",
+        "optional": false,
+        "default_features": true,
+        "features": [
+          "Win32_System_Console",
+          "Win32_Foundation"
+        ],
+        "target": "cfg(windows)",
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "anstyle-wincon",
+    "version": "3.0.11",
+    "dependencies": [
+      {
+        "id": 18677165,
+        "version_id": 1823870,
+        "crate_id": "anstyle",
+        "req": "^1.0.0",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 18677166,
+        "version_id": 1823870,
+        "crate_id": "lexopt",
+        "req": "^0.3.1",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 18677167,
+        "version_id": 1823870,
+        "crate_id": "once_cell_polyfill",
+        "req": "^1.56.1",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(windows)",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 18677168,
+        "version_id": 1823870,
+        "crate_id": "windows-sys",
+        "req": ">=0.60.2, <0.62",
+        "optional": false,
+        "default_features": true,
+        "features": [
+          "Win32_System_Console",
+          "Win32_Foundation"
+        ],
+        "target": "cfg(windows)",
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "chrono",
+    "version": "0.4.45",
+    "dependencies": [
+      {
+        "id": 27744858,
+        "version_id": 2512347,
+        "crate_id": "bincode",
+        "req": "^1.3.0",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 27744854,
+        "version_id": 2512347,
+        "crate_id": "num-traits",
+        "req": "^0.2",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 27744859,
+        "version_id": 2512347,
+        "crate_id": "serde_derive",
+        "req": "^1",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 27744860,
+        "version_id": 2512347,
+        "crate_id": "serde_json",
+        "req": "^1",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 27744861,
+        "version_id": 2512347,
+        "crate_id": "similar-asserts",
+        "req": "^2.0.0",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 27744865,
+        "version_id": 2512347,
+        "crate_id": "wasm-bindgen-test",
+        "req": "^0.3",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_arch = \"wasm32\", not(any(target_os = \"emscripten\", target_os = \"wasi\"))))",
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 27744862,
+        "version_id": 2512347,
+        "crate_id": "windows-bindgen",
+        "req": "^0.66",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 27744852,
+        "version_id": 2512347,
+        "crate_id": "arbitrary",
+        "req": "^1.0.0",
+        "optional": true,
+        "default_features": true,
+        "features": [
+          "derive"
+        ],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 27744853,
+        "version_id": 2512347,
+        "crate_id": "defmt",
+        "req": "^1.0.1",
+        "optional": true,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 27744866,
+        "version_id": 2512347,
+        "crate_id": "iana-time-zone",
+        "req": "^0.1.45",
+        "optional": true,
+        "default_features": true,
+        "features": [
+          "fallback"
+        ],
+        "target": "cfg(unix)",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 27744863,
+        "version_id": 2512347,
+        "crate_id": "js-sys",
+        "req": "^0.3",
+        "optional": true,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_arch = \"wasm32\", not(any(target_os = \"emscripten\", target_os = \"wasi\"))))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 27744855,
+        "version_id": 2512347,
+        "crate_id": "pure-rust-locales",
+        "req": "^0.8.2",
+        "optional": true,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 27744856,
+        "version_id": 2512347,
+        "crate_id": "rkyv",
+        "req": "^0.7.43",
+        "optional": true,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 27744857,
+        "version_id": 2512347,
+        "crate_id": "serde",
+        "req": "^1.0.99",
+        "optional": true,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 27744864,
+        "version_id": 2512347,
+        "crate_id": "wasm-bindgen",
+        "req": "^0.2",
+        "optional": true,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_arch = \"wasm32\", not(any(target_os = \"emscripten\", target_os = \"wasi\"))))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 27744867,
+        "version_id": 2512347,
+        "crate_id": "windows-link",
+        "req": "^0.2",
+        "optional": true,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(windows)",
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "clap_derive",
+    "version": "4.6.7",
+    "dependencies": [
+      {
+        "id": 36395907,
+        "version_id": 3236093,
+        "crate_id": "heck",
+        "req": "^0.5.0",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 36395908,
+        "version_id": 3236093,
+        "crate_id": "proc-macro2",
+        "req": "^1.0.106",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 36395910,
+        "version_id": 3236093,
+        "crate_id": "quote",
+        "req": "^1.0.45",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 36395911,
+        "version_id": 3236093,
+        "crate_id": "syn",
+        "req": "^3.0.2",
+        "optional": false,
+        "default_features": true,
+        "features": [
+          "full"
+        ],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 36395906,
+        "version_id": 3236093,
+        "crate_id": "anstyle",
+        "req": "^1.0.14",
+        "optional": true,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 36395909,
+        "version_id": 3236093,
+        "crate_id": "pulldown-cmark",
+        "req": "^0.13.3",
+        "optional": true,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "getrandom",
+    "version": "0.2.17",
+    "dependencies": [
+      {
+        "id": 20169954,
+        "version_id": 1936234,
+        "crate_id": "cfg-if",
+        "req": "^1",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20169961,
+        "version_id": 1936234,
+        "crate_id": "libc",
+        "req": "^0.2.154",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(unix)",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20169960,
+        "version_id": 1936234,
+        "crate_id": "wasi",
+        "req": "^0.11",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(target_os = \"wasi\")",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20169959,
+        "version_id": 1936234,
+        "crate_id": "wasm-bindgen-test",
+        "req": "^0.3.18",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(any(target_arch = \"wasm32\", target_arch = \"wasm64\"), target_os = \"unknown\"))",
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 20169955,
+        "version_id": 1936234,
+        "crate_id": "compiler_builtins",
+        "req": "^0.1",
+        "optional": true,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20169957,
+        "version_id": 1936234,
+        "crate_id": "js-sys",
+        "req": "^0.3",
+        "optional": true,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(any(target_arch = \"wasm32\", target_arch = \"wasm64\"), target_os = \"unknown\"))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20169956,
+        "version_id": 1936234,
+        "crate_id": "rustc-std-workspace-core",
+        "req": "^1.0",
+        "optional": true,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20169958,
+        "version_id": 1936234,
+        "crate_id": "wasm-bindgen",
+        "req": "^0.2.62",
+        "optional": true,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(all(any(target_arch = \"wasm32\", target_arch = \"wasm64\"), target_os = \"unknown\"))",
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "getrandom",
+    "version": "0.4.3",
+    "dependencies": [
+      {
+        "id": 28775337,
+        "version_id": 2595199,
+        "crate_id": "cfg-if",
+        "req": "^1",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775339,
+        "version_id": 2595199,
+        "crate_id": "libc",
+        "req": "^0.2.154",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(all(any(target_os = \"linux\", target_os = \"android\"), not(any(all(target_os = \"linux\", target_env = \"\"), getrandom_backend = \"custom\", getrandom_backend = \"linux_raw\", getrandom_backend = \"rdrand\", getrandom_backend = \"rndr\"))))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775350,
+        "version_id": 2595199,
+        "crate_id": "libc",
+        "req": "^0.2.154",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(target_os = \"vxworks\")",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775345,
+        "version_id": 2595199,
+        "crate_id": "libc",
+        "req": "^0.2.154",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(any(target_os = \"haiku\", target_os = \"redox\", target_os = \"nto\", target_os = \"aix\"))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775346,
+        "version_id": 2595199,
+        "crate_id": "libc",
+        "req": "^0.2.154",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(any(target_os = \"ios\", target_os = \"visionos\", target_os = \"watchos\", target_os = \"tvos\"))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775347,
+        "version_id": 2595199,
+        "crate_id": "libc",
+        "req": "^0.2.154",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(any(target_os = \"macos\", target_os = \"openbsd\", target_os = \"vita\", target_os = \"emscripten\"))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775348,
+        "version_id": 2595199,
+        "crate_id": "libc",
+        "req": "^0.2.154",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(target_os = \"netbsd\")",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775349,
+        "version_id": 2595199,
+        "crate_id": "libc",
+        "req": "^0.2.154",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(target_os = \"solaris\")",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775344,
+        "version_id": 2595199,
+        "crate_id": "libc",
+        "req": "^0.2.154",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(any(target_os = \"dragonfly\", target_os = \"freebsd\", target_os = \"hurd\", target_os = \"illumos\", target_os = \"cygwin\", all(target_os = \"horizon\", target_arch = \"arm\")))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775343,
+        "version_id": 2595199,
+        "crate_id": "r-efi",
+        "req": "^6",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(all(target_os = \"uefi\", getrandom_backend = \"efi_rng\"))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775341,
+        "version_id": 2595199,
+        "crate_id": "wasm-bindgen-test",
+        "req": "^0.3",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_family = \"wasm\", any(target_os = \"unknown\", target_os = \"none\")))",
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 28775342,
+        "version_id": 2595199,
+        "crate_id": "js-sys",
+        "req": "^0.3.77",
+        "optional": true,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(all(target_family = \"wasm\", any(target_os = \"unknown\", target_os = \"none\"), target_feature = \"atomics\"))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775338,
+        "version_id": 2595199,
+        "crate_id": "rand_core",
+        "req": "^0.10.0",
+        "optional": true,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 28775340,
+        "version_id": 2595199,
+        "crate_id": "wasm-bindgen",
+        "req": "^0.2.98",
+        "optional": true,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(all(target_family = \"wasm\", any(target_os = \"unknown\", target_os = \"none\")))",
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "iana-time-zone",
+    "version": "0.1.65",
+    "dependencies": [
+      {
+        "id": 20740285,
+        "version_id": 1979258,
+        "crate_id": "android_system_properties",
+        "req": "^0.1.5",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(target_os = \"android\")",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20740278,
+        "version_id": 1979258,
+        "crate_id": "chrono-tz",
+        "req": "^0.10.1",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 20740288,
+        "version_id": 1979258,
+        "crate_id": "core-foundation-sys",
+        "req": "^0.8.6",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(target_vendor = \"apple\")",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20740279,
+        "version_id": 1979258,
+        "crate_id": "getrandom",
+        "req": "^0.2.1",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 20740283,
+        "version_id": 1979258,
+        "crate_id": "getrandom",
+        "req": "^0.2.1",
+        "optional": false,
+        "default_features": true,
+        "features": [
+          "js"
+        ],
+        "target": "cfg(all(target_arch = \"wasm32\", target_os = \"unknown\"))",
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 20740286,
+        "version_id": 1979258,
+        "crate_id": "iana-time-zone-haiku",
+        "req": "^0.1.1",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(target_os = \"haiku\")",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20740280,
+        "version_id": 1979258,
+        "crate_id": "js-sys",
+        "req": "^0.3.66",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_arch = \"wasm32\", target_os = \"unknown\"))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20740281,
+        "version_id": 1979258,
+        "crate_id": "log",
+        "req": "^0.4.14",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_arch = \"wasm32\", target_os = \"unknown\"))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20740282,
+        "version_id": 1979258,
+        "crate_id": "wasm-bindgen",
+        "req": "^0.2.89",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_arch = \"wasm32\", target_os = \"unknown\"))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 20740284,
+        "version_id": 1979258,
+        "crate_id": "wasm-bindgen-test",
+        "req": "^0.3.46",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_arch = \"wasm32\", target_os = \"unknown\"))",
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 20740287,
+        "version_id": 1979258,
+        "crate_id": "windows-core",
+        "req": ">=0.56, <=0.62",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(target_os = \"windows\")",
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "ring",
+    "version": "0.17.14",
+    "dependencies": [
+      {
+        "id": 14318669,
+        "version_id": 1478996,
+        "crate_id": "cc",
+        "req": "^1.2.8",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "build",
+        "downloads": 0
+      },
+      {
+        "id": 14318666,
+        "version_id": 1478996,
+        "crate_id": "cfg-if",
+        "req": "^1.0.0",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 14318667,
+        "version_id": 1478996,
+        "crate_id": "getrandom",
+        "req": "^0.2.10",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 14318674,
+        "version_id": 1478996,
+        "crate_id": "libc",
+        "req": "^0.2.148",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(any(unix, windows, target_os = \"wasi\"))",
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 14318671,
+        "version_id": 1478996,
+        "crate_id": "libc",
+        "req": "^0.2.155",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(all(all(target_arch = \"aarch64\", target_endian = \"little\"), target_vendor = \"apple\", any(target_os = \"ios\", target_os = \"macos\", target_os = \"tvos\", target_os = \"visionos\", target_os = \"watchos\")))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 14318672,
+        "version_id": 1478996,
+        "crate_id": "libc",
+        "req": "^0.2.148",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": "cfg(all(any(all(target_arch = \"aarch64\", target_endian = \"little\"), all(target_arch = \"arm\", target_endian = \"little\")), any(target_os = \"android\", target_os = \"linux\")))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 14318668,
+        "version_id": 1478996,
+        "crate_id": "untrusted",
+        "req": "^0.9",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 14318673,
+        "version_id": 1478996,
+        "crate_id": "wasm-bindgen-test",
+        "req": "^0.3.37",
+        "optional": false,
+        "default_features": false,
+        "features": [
+          "std"
+        ],
+        "target": "cfg(all(target_arch = \"wasm32\", target_os = \"unknown\"))",
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 14318670,
+        "version_id": 1478996,
+        "crate_id": "windows-sys",
+        "req": "^0.52",
+        "optional": false,
+        "default_features": true,
+        "features": [
+          "Win32_Foundation",
+          "Win32_System_Threading"
+        ],
+        "target": "cfg(all(all(target_arch = \"aarch64\", target_endian = \"little\"), target_os = \"windows\"))",
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "serde_derive",
+    "version": "1.0.229",
+    "dependencies": [
+      {
+        "id": 31200776,
+        "version_id": 2817183,
+        "crate_id": "proc-macro2",
+        "req": "^1.0.74",
+        "optional": false,
+        "default_features": false,
+        "features": [
+          "proc-macro"
+        ],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 31200777,
+        "version_id": 2817183,
+        "crate_id": "quote",
+        "req": "^1.0.35",
+        "optional": false,
+        "default_features": false,
+        "features": [
+          "proc-macro"
+        ],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 31200779,
+        "version_id": 2817183,
+        "crate_id": "serde",
+        "req": "^1",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "dev",
+        "downloads": 0
+      },
+      {
+        "id": 31200778,
+        "version_id": 2817183,
+        "crate_id": "syn",
+        "req": "^3",
+        "optional": false,
+        "default_features": false,
+        "features": [
+          "clone-impls",
+          "derive",
+          "parsing",
+          "printing",
+          "proc-macro"
+        ],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "thiserror-impl",
+    "version": "2.0.21",
+    "dependencies": [
+      {
+        "id": 37283631,
+        "version_id": 3307867,
+        "crate_id": "proc-macro2",
+        "req": "^1.0.74",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 37283632,
+        "version_id": 3307867,
+        "crate_id": "quote",
+        "req": "^1.0.35",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 37283633,
+        "version_id": 3307867,
+        "crate_id": "syn",
+        "req": "^3",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "wasm-bindgen-macro-support",
+    "version": "0.2.130",
+    "dependencies": [
+      {
+        "id": 41682595,
+        "version_id": 3653633,
+        "crate_id": "bumpalo",
+        "req": "^3.0.0",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 41682596,
+        "version_id": 3653633,
+        "crate_id": "proc-macro2",
+        "req": "^1.0",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 41682597,
+        "version_id": 3653633,
+        "crate_id": "quote",
+        "req": "^1.0",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 41682598,
+        "version_id": 3653633,
+        "crate_id": "syn",
+        "req": "^3.0",
+        "optional": false,
+        "default_features": true,
+        "features": [
+          "visit",
+          "visit-mut",
+          "full",
+          "extra-traits"
+        ],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 41682599,
+        "version_id": 3653633,
+        "crate_id": "wasm-bindgen-shared",
+        "req": "=0.2.130",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "winapi-util",
+    "version": "0.1.11",
+    "dependencies": [
+      {
+        "id": 17284616,
+        "version_id": 1718478,
+        "crate_id": "windows-sys",
+        "req": ">=0.48.0, <=0.61",
+        "optional": false,
+        "default_features": true,
+        "features": [
+          "Win32_Foundation",
+          "Win32_Storage_FileSystem",
+          "Win32_System_Console",
+          "Win32_System_SystemInformation"
+        ],
+        "target": "cfg(windows)",
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "windows-core",
+    "version": "0.62.2",
+    "dependencies": [
+      {
+        "id": 17855923,
+        "version_id": 1761931,
+        "crate_id": "windows-implement",
+        "req": "^0.60.2",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 17855924,
+        "version_id": 1761931,
+        "crate_id": "windows-interface",
+        "req": "^0.59.3",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 17855925,
+        "version_id": 1761931,
+        "crate_id": "windows-link",
+        "req": "^0.2.1",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 17855926,
+        "version_id": 1761931,
+        "crate_id": "windows-result",
+        "req": "^0.4.1",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 17855927,
+        "version_id": 1761931,
+        "crate_id": "windows-strings",
+        "req": "^0.5.1",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "windows-implement",
+    "version": "0.60.2",
+    "dependencies": [
+      {
+        "id": 17855873,
+        "version_id": 1761925,
+        "crate_id": "proc-macro2",
+        "req": "^1.0",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 17855874,
+        "version_id": 1761925,
+        "crate_id": "quote",
+        "req": "^1.0",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 17855875,
+        "version_id": 1761925,
+        "crate_id": "syn",
+        "req": "^2.0",
+        "optional": false,
+        "default_features": false,
+        "features": [
+          "parsing",
+          "proc-macro",
+          "printing",
+          "full",
+          "clone-impls"
+        ],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "windows-interface",
+    "version": "0.59.3",
+    "dependencies": [
+      {
+        "id": 17855885,
+        "version_id": 1761927,
+        "crate_id": "proc-macro2",
+        "req": "^1.0",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 17855886,
+        "version_id": 1761927,
+        "crate_id": "quote",
+        "req": "^1.0",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 17855887,
+        "version_id": 1761927,
+        "crate_id": "syn",
+        "req": "^2.0",
+        "optional": false,
+        "default_features": false,
+        "features": [
+          "parsing",
+          "proc-macro",
+          "printing",
+          "full",
+          "clone-impls"
+        ],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "windows-result",
+    "version": "0.4.1",
+    "dependencies": [
+      {
+        "id": 17855888,
+        "version_id": 1761928,
+        "crate_id": "windows-link",
+        "req": "^0.2.1",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "windows-strings",
+    "version": "0.5.1",
+    "dependencies": [
+      {
+        "id": 17855922,
+        "version_id": 1761930,
+        "crate_id": "windows-link",
+        "req": "^0.2.1",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "windows-sys",
+    "version": "0.52.0",
+    "dependencies": [
+      {
+        "id": 8296348,
+        "version_id": 956125,
+        "crate_id": "windows-targets",
+        "req": "^0.52.0",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "windows-sys",
+    "version": "0.61.2",
+    "dependencies": [
+      {
+        "id": 17856048,
+        "version_id": 1761942,
+        "crate_id": "windows-link",
+        "req": "^0.2.1",
+        "optional": false,
+        "default_features": false,
+        "features": [],
+        "target": null,
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  },
+  {
+    "name": "windows-targets",
+    "version": "0.52.6",
+    "dependencies": [
+      {
+        "id": 11012677,
+        "version_id": 1191992,
+        "crate_id": "windows_aarch64_gnullvm",
+        "req": "^0.52.6",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "aarch64-pc-windows-gnullvm",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 11012679,
+        "version_id": 1191992,
+        "crate_id": "windows_aarch64_msvc",
+        "req": "^0.52.6",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_arch = \"aarch64\", target_env = \"msvc\", not(windows_raw_dylib)))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 11012680,
+        "version_id": 1191992,
+        "crate_id": "windows_i686_gnu",
+        "req": "^0.52.6",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_arch = \"x86\", target_env = \"gnu\", not(target_abi = \"llvm\"), not(windows_raw_dylib)))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 11012683,
+        "version_id": 1191992,
+        "crate_id": "windows_i686_gnullvm",
+        "req": "^0.52.6",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "i686-pc-windows-gnullvm",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 11012681,
+        "version_id": 1191992,
+        "crate_id": "windows_i686_msvc",
+        "req": "^0.52.6",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_arch = \"x86\", target_env = \"msvc\", not(windows_raw_dylib)))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 11012682,
+        "version_id": 1191992,
+        "crate_id": "windows_x86_64_gnu",
+        "req": "^0.52.6",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(target_arch = \"x86_64\", target_env = \"gnu\", not(target_abi = \"llvm\"), not(windows_raw_dylib)))",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 11012684,
+        "version_id": 1191992,
+        "crate_id": "windows_x86_64_gnullvm",
+        "req": "^0.52.6",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "x86_64-pc-windows-gnullvm",
+        "kind": "normal",
+        "downloads": 0
+      },
+      {
+        "id": 11012678,
+        "version_id": 1191992,
+        "crate_id": "windows_x86_64_msvc",
+        "req": "^0.52.6",
+        "optional": false,
+        "default_features": true,
+        "features": [],
+        "target": "cfg(all(any(target_arch = \"x86_64\", target_arch = \"arm64ec\"), target_env = \"msvc\", not(windows_raw_dylib)))",
+        "kind": "normal",
+        "downloads": 0
+      }
+    ]
+  }
+]

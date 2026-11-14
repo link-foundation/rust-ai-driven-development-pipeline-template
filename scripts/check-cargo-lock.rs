@@ -14,13 +14,13 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! regex = "1"
-//! serde_json = "1"
+//! regex = "1.13.1"
+//! serde_json = "1.0.154"
 //! ```
 
 use std::path::{Path, PathBuf};
 #[cfg(not(test))]
-use std::process::{exit, Command};
+use std::process::{Command, exit};
 
 use serde_json::Value;
 
@@ -301,7 +301,8 @@ mod tests {
 
     #[test]
     fn cargo_metadata_binary_target_requires_committed_cargo_lock() {
-        let metadata = serde_json::json!({
+        let metadata = serde_json::from_str::<Value>(
+            r#"{
             "packages": [{
                 "manifest_path": "/repo/Cargo.toml",
                 "targets": [{
@@ -309,7 +310,9 @@ mod tests {
                     "name": "demo-bin"
                 }]
             }]
-        });
+        }"#,
+        )
+        .unwrap();
 
         assert!(package_has_installable_binary(&metadata, Path::new("/repo/Cargo.toml")).unwrap());
     }
@@ -350,7 +353,8 @@ mod tests {
 
     #[test]
     fn cargo_metadata_library_target_does_not_require_cargo_lock() {
-        let metadata = serde_json::json!({
+        let metadata = serde_json::from_str::<Value>(
+            r#"{
             "packages": [{
                 "manifest_path": "/repo/Cargo.toml",
                 "targets": [{
@@ -358,14 +362,17 @@ mod tests {
                     "name": "demo_lib"
                 }]
             }]
-        });
+        }"#,
+        )
+        .unwrap();
 
         assert!(!package_has_installable_binary(&metadata, Path::new("/repo/Cargo.toml")).unwrap());
     }
 
     #[test]
     fn cargo_metadata_requires_the_selected_package_manifest() {
-        let metadata = serde_json::json!({
+        let metadata = serde_json::from_str::<Value>(
+            r#"{
             "packages": [{
                 "manifest_path": "/repo/other/Cargo.toml",
                 "targets": [{
@@ -373,7 +380,9 @@ mod tests {
                     "name": "other-bin"
                 }]
             }]
-        });
+        }"#,
+        )
+        .unwrap();
 
         let error =
             package_has_installable_binary(&metadata, Path::new("/repo/Cargo.toml")).unwrap_err();

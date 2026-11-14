@@ -2,7 +2,12 @@
   "private": true,
   "description": "Locked CI credential scanner",
   "devDependencies": {
-    "@secretlint/secretlint-rule-preset-recommend": "13.0.7",
-    "secretlint": "13.0.7"
-  }
+    "@secretlint/secretlint-rule-preset-recommend": "13.1.0",
+    "secretlint": "13.1.0"
+  },
+  "engines": {
+    "node": ">=26.13.1",
+    "npm": ">=12.2.2"
+  },
+  "packageManager": "npm@12.2.2"
 }

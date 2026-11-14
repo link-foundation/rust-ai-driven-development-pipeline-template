@@ -53,9 +53,9 @@ fn manifest_merge_publishes_and_verifies_both_platforms() {
     let workflow = release_workflow();
     let merge = job_block(&workflow, "docker-merge-manifest");
 
-    assert!(
-        merge.contains("needs: [javascript-first, auto-release, manual-release, docker-publish, release-preflight]")
-    );
+    assert!(merge.contains(
+        "needs: [javascript-first, auto-release, manual-release, docker-publish, release-preflight]"
+    ));
     assert!(merge.contains("docker buildx imagetools create"));
     assert!(merge.contains("${DOCKERHUB_IMAGE}:latest"));
     assert!(merge.contains("${DOCKERHUB_IMAGE}:${RELEASE_VERSION}"));

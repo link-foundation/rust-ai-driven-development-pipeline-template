@@ -89,17 +89,17 @@ fn credentials_persist_explicitly_only_in_serialized_release_writers() {
 fn security_scanners_and_secretlint_are_pinned() {
     let workflow = read(".github/workflows/workflows.yml");
     assert!(workflow.contains("min-confidence: low"));
-    assert!(workflow.contains("zizmor-action@v0.6.4"));
-    assert!(workflow.contains("version: 1.30.1"));
+    assert!(workflow.contains("zizmor-action@v0.8.1"));
+    assert!(workflow.contains("version: 1.32.0"));
     let release = read(".github/workflows/release.yml");
-    assert!(release.contains("secretlint@13.0.7"));
-    assert!(release.contains("@secretlint/secretlint-rule-preset-recommend@13.0.7"));
+    assert!(release.contains("secretlint@13.1.0"));
+    assert!(release.contains("@secretlint/secretlint-rule-preset-recommend@13.1.0"));
     assert!(release.contains("npm ci --prefix .github/secretlint --ignore-scripts"));
     assert!(release.contains("node --test .github/scripts/check-secrets.test.mjs"));
     assert!(release.contains("node .github/scripts/check-secrets.mjs"));
     let manifest = read(".github/secretlint/package.json");
-    assert!(manifest.contains("\"secretlint\": \"13.0.7\""));
-    assert!(manifest.contains("\"@secretlint/secretlint-rule-preset-recommend\": \"13.0.7\""));
+    assert!(manifest.contains("\"secretlint\": \"13.1.0\""));
+    assert!(manifest.contains("\"@secretlint/secretlint-rule-preset-recommend\": \"13.1.0\""));
     assert!(read(".github/secretlint/package-lock.json").contains("\"lockfileVersion\": 3"));
 }
 

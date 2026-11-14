@@ -83,7 +83,9 @@ mod tests {
     #[test]
     fn fenced_headings_do_not_truncate_or_select_notes() {
         for delimiter in ["```", "~~~~", "  ````"] {
-            let body = format!("\r\n  Example:\r\n{delimiter}md\r\n## [9.9.9]\r\n{delimiter}\r\n\r\n### Fixed\r\n  Remaining details.\r\n\r\n");
+            let body = format!(
+                "\r\n  Example:\r\n{delimiter}md\r\n## [9.9.9]\r\n{delimiter}\r\n\r\n### Fixed\r\n  Remaining details.\r\n\r\n"
+            );
             let content = format!("## [1.2.3]\r\n{body}## [1.2.2]\r\nold");
             assert_eq!(extract_section(&content, "1.2.3").unwrap(), body);
             assert!(extract_section(&content, "9.9.9").is_err());

@@ -1,0 +1,72 @@
+[
+  {
+    "name": "audit",
+    "repo": "RustSec/rustsec",
+    "id": 1241,
+    "chunk_id": "f3e701",
+    "wall_time_seconds": 1.689118003,
+    "exit_code": 0,
+    "original_token_count": 18,
+    "output": "https://github.com/rustsec/rustsec/issues/1241#issuecomment-6872305660\n"
+  },
+  {
+    "name": "artifact",
+    "repo": "actions/download-artifact",
+    "id": 484,
+    "chunk_id": "fa332e",
+    "wall_time_seconds": 1.8185284670000001,
+    "exit_code": 0,
+    "original_token_count": 20,
+    "output": "https://github.com/actions/download-artifact/issues/484#issuecomment-6872306034\n"
+  },
+  {
+    "name": "pages",
+    "repo": "actions/deploy-pages",
+    "id": 434,
+    "chunk_id": "4429e9",
+    "wall_time_seconds": 1.303713827,
+    "exit_code": 0,
+    "original_token_count": 19,
+    "output": "https://github.com/actions/deploy-pages/issues/434#issuecomment-6872306330\n"
+  },
+  {
+    "name": "actionlint",
+    "repo": "rhysd/actionlint",
+    "id": 657,
+    "chunk_id": "7b59d4",
+    "wall_time_seconds": 1.24808805,
+    "exit_code": 0,
+    "original_token_count": 18,
+    "output": "https://github.com/rhysd/actionlint/issues/657#issuecomment-6872306583\n"
+  },
+  {
+    "name": "lychee",
+    "repo": "lycheeverse/lychee",
+    "id": 2297,
+    "chunk_id": "3074dc",
+    "wall_time_seconds": 1.700076902,
+    "exit_code": 0,
+    "original_token_count": 19,
+    "output": "https://github.com/lycheeverse/lychee/issues/2297#issuecomment-6872306899\n"
+  },
+  {
+    "name": "buildx",
+    "repo": "docker/setup-buildx-action",
+    "id": 510,
+    "chunk_id": "fe168d",
+    "wall_time_seconds": 1.580033116,
+    "exit_code": 0,
+    "original_token_count": 21,
+    "output": "https://github.com/docker/setup-buildx-action/issues/510#issuecomment-6872307251\n"
+  },
+  {
+    "name": "codeql",
+    "repo": "github/codeql",
+    "id": 19982,
+    "chunk_id": "953d91",
+    "wall_time_seconds": 1.288975299,
+    "exit_code": 0,
+    "original_token_count": 18,
+    "output": "https://github.com/github/codeql/issues/19982#issuecomment-6872307530\n"
+  }
+]

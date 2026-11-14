@@ -1,0 +1,3232 @@
+{
+  "cargo": {
+    "aho-corasick": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.5"
+      },
+      {
+        "file": "scripts/get-version.rs (resolved)",
+        "version": "1.1.5"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.1.5"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "1.1.5"
+      },
+      {
+        "file": "scripts/publish-crate.rs (resolved)",
+        "version": "1.1.5"
+      },
+      {
+        "file": "scripts/detect-code-changes.rs (resolved)",
+        "version": "1.1.5"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.1.5"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "1.1.5"
+      },
+      {
+        "file": "scripts/smoke-test-published-crate.rs (resolved)",
+        "version": "1.1.5"
+      },
+      {
+        "file": "scripts/check-changelog-fragment.rs (resolved)",
+        "version": "1.1.5"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.1.5"
+      },
+      {
+        "file": "scripts/get-bump-type.rs (resolved)",
+        "version": "1.1.5"
+      }
+    ],
+    "anstream": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.0"
+      }
+    ],
+    "anstyle": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.14"
+      }
+    ],
+    "anstyle-parse": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.0"
+      }
+    ],
+    "anstyle-query": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.5"
+      }
+    ],
+    "anstyle-wincon": [
+      {
+        "file": "Cargo.lock",
+        "version": "3.0.11"
+      }
+    ],
+    "clap": [
+      {
+        "file": "Cargo.lock",
+        "version": "4.6.7"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "4.6.7"
+      }
+    ],
+    "clap_builder": [
+      {
+        "file": "Cargo.lock",
+        "version": "4.6.7"
+      }
+    ],
+    "clap_derive": [
+      {
+        "file": "Cargo.lock",
+        "version": "4.6.7"
+      }
+    ],
+    "clap_lex": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.1"
+      }
+    ],
+    "colorchoice": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.5"
+      }
+    ],
+    "ctor": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.14"
+      }
+    ],
+    "dotenvy": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.15.7"
+      }
+    ],
+    "equivalent": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.3"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.3"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.0.3"
+      }
+    ],
+    "hashbrown": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.17.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.17.1"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "0.17.1"
+      }
+    ],
+    "heck": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.5.0"
+      }
+    ],
+    "indexmap": [
+      {
+        "file": "Cargo.lock",
+        "version": "2.14.2"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "2.14.2"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "2.14.2"
+      }
+    ],
+    "is_terminal_polyfill": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.70.2"
+      }
+    ],
+    "itoa": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.19"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.0.19"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.19"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "1.0.19"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.0.19"
+      }
+    ],
+    "link-section": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.19.4"
+      }
+    ],
+    "linktime-proc-macro": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.2.3"
+      }
+    ],
+    "lino-arguments": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.5.0"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "0.5.0"
+      }
+    ],
+    "lino-env": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.1.0"
+      }
+    ],
+    "memchr": [
+      {
+        "file": "Cargo.lock",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/get-version.rs (resolved)",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/publish-crate.rs (resolved)",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/detect-code-changes.rs (resolved)",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/smoke-test-published-crate.rs (resolved)",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/check-changelog-fragment.rs (resolved)",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "2.8.3"
+      },
+      {
+        "file": "scripts/get-bump-type.rs (resolved)",
+        "version": "2.8.3"
+      }
+    ],
+    "once_cell_polyfill": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.70.2"
+      }
+    ],
+    "proc-macro2": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.107"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.0.107"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.107"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "1.0.107"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "1.0.107"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "1.0.107"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.0.107"
+      }
+    ],
+    "quote": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.47"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.0.47"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.47"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "1.0.47"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "1.0.47"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "1.0.47"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.0.47"
+      }
+    ],
+    "regex": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/bump-version.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/check-cargo-lock.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/check-changelog-fragment.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/check-crate-size.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/check-release-needed.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/check-version-modification.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/collect-changelog.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/create-github-release.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/detect-code-changes.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/get-bump-type.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/get-version.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/publish-crate.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/smoke-test-published-crate.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs",
+        "version": "1.13.1"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/get-version.rs (resolved)",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/publish-crate.rs (resolved)",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/detect-code-changes.rs (resolved)",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/smoke-test-published-crate.rs (resolved)",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/check-changelog-fragment.rs (resolved)",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.13.1"
+      },
+      {
+        "file": "scripts/get-bump-type.rs (resolved)",
+        "version": "1.13.1"
+      }
+    ],
+    "regex-automata": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.4.18"
+      },
+      {
+        "file": "scripts/get-version.rs (resolved)",
+        "version": "0.4.18"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.4.18"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "0.4.18"
+      },
+      {
+        "file": "scripts/publish-crate.rs (resolved)",
+        "version": "0.4.18"
+      },
+      {
+        "file": "scripts/detect-code-changes.rs (resolved)",
+        "version": "0.4.18"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.4.18"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.4.18"
+      },
+      {
+        "file": "scripts/smoke-test-published-crate.rs (resolved)",
+        "version": "0.4.18"
+      },
+      {
+        "file": "scripts/check-changelog-fragment.rs (resolved)",
+        "version": "0.4.18"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "0.4.18"
+      },
+      {
+        "file": "scripts/get-bump-type.rs (resolved)",
+        "version": "0.4.18"
+      }
+    ],
+    "regex-syntax": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.8.11"
+      },
+      {
+        "file": "scripts/get-version.rs (resolved)",
+        "version": "0.8.11"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.8.11"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "0.8.11"
+      },
+      {
+        "file": "scripts/publish-crate.rs (resolved)",
+        "version": "0.8.11"
+      },
+      {
+        "file": "scripts/detect-code-changes.rs (resolved)",
+        "version": "0.8.11"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.8.11"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.8.11"
+      },
+      {
+        "file": "scripts/smoke-test-published-crate.rs (resolved)",
+        "version": "0.8.11"
+      },
+      {
+        "file": "scripts/check-changelog-fragment.rs (resolved)",
+        "version": "0.8.11"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "0.8.11"
+      },
+      {
+        "file": "scripts/get-bump-type.rs (resolved)",
+        "version": "0.8.11"
+      }
+    ],
+    "same-file": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.6"
+      },
+      {
+        "file": "scripts/check-file-size.rs (resolved)",
+        "version": "1.0.6"
+      }
+    ],
+    "serde": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/check-release-needed.rs",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/create-github-release.rs",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "1.0.229"
+      }
+    ],
+    "serde_core": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.0.229"
+      }
+    ],
+    "serde_derive": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "1.0.229"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.0.229"
+      }
+    ],
+    "serde_json": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.154"
+      },
+      {
+        "file": "scripts/check-cargo-lock.rs",
+        "version": "1.0.154"
+      },
+      {
+        "file": "scripts/check-release-needed.rs",
+        "version": "1.0.154"
+      },
+      {
+        "file": "scripts/create-github-release.rs",
+        "version": "1.0.154"
+      },
+      {
+        "file": "scripts/registry.rs",
+        "version": "1.0.154"
+      },
+      {
+        "file": "scripts/version-and-commit.rs",
+        "version": "1.0.154"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "1.0.154"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.0.154"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.154"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "1.0.154"
+      }
+    ],
+    "serde_spanned": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.3"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.1.3"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.1.3"
+      }
+    ],
+    "strsim": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.11.1"
+      }
+    ],
+    "syn": [
+      {
+        "file": "Cargo.lock",
+        "version": "3.0.10"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "3.0.10"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "2.0.119"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "3.0.10"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "3.0.10"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "2.0.119"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "3.0.10"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "2.0.119"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "3.0.10"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "3.0.10"
+      }
+    ],
+    "thiserror": [
+      {
+        "file": "Cargo.lock",
+        "version": "2.0.21"
+      }
+    ],
+    "thiserror-impl": [
+      {
+        "file": "Cargo.lock",
+        "version": "2.0.21"
+      }
+    ],
+    "toml": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.2.1+spec-1.1.0"
+      },
+      {
+        "file": "scripts/check-version-modification.rs",
+        "version": "1.2.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs",
+        "version": "1.2.1"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "1.2.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.2.1+spec-1.1.0"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.2.1+spec-1.1.0"
+      }
+    ],
+    "toml_datetime": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.3+spec-1.1.0"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.1.3+spec-1.1.0"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.1.3+spec-1.1.0"
+      }
+    ],
+    "toml_parser": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.1.5+spec-1.1.0"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.1.5+spec-1.1.0"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.1.5+spec-1.1.0"
+      }
+    ],
+    "toml_writer": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.2.0+spec-1.1.0"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.2.0+spec-1.1.0"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.2.0+spec-1.1.0"
+      }
+    ],
+    "unicode-ident": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.27"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.0.27"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.27"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "1.0.27"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "1.0.27"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "1.0.27"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.0.27"
+      }
+    ],
+    "utf8parse": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.2.2"
+      }
+    ],
+    "walkdir": [
+      {
+        "file": "Cargo.lock",
+        "version": "2.5.0"
+      },
+      {
+        "file": "scripts/check-file-size.rs",
+        "version": "2.5.0"
+      },
+      {
+        "file": "Cargo.toml",
+        "version": "2.5.0"
+      },
+      {
+        "file": "scripts/check-file-size.rs (resolved)",
+        "version": "2.5.0"
+      }
+    ],
+    "winapi-util": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.1.11"
+      },
+      {
+        "file": "scripts/check-file-size.rs (resolved)",
+        "version": "0.1.11"
+      }
+    ],
+    "windows-link": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.2.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.2.1"
+      },
+      {
+        "file": "scripts/check-file-size.rs (resolved)",
+        "version": "0.2.1"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.2.1"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.2.1"
+      }
+    ],
+    "windows-sys": [
+      {
+        "file": "Cargo.lock",
+        "version": "0.61.2"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.52.0"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.52.0"
+      },
+      {
+        "file": "scripts/check-file-size.rs (resolved)",
+        "version": "0.61.2"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.52.0"
+      }
+    ],
+    "winnow": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.5"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.5"
+      },
+      {
+        "file": "scripts/check-version-modification.rs (resolved)",
+        "version": "1.0.5"
+      }
+    ],
+    "zmij": [
+      {
+        "file": "Cargo.lock",
+        "version": "1.0.23"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.0.23"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.23"
+      },
+      {
+        "file": "scripts/create-github-release.rs (resolved)",
+        "version": "1.0.23"
+      }
+    ],
+    "ureq": [
+      {
+        "file": "scripts/check-release-needed.rs",
+        "version": "3.5.2"
+      },
+      {
+        "file": "scripts/registry.rs",
+        "version": "3.5.2"
+      },
+      {
+        "file": "scripts/version-and-commit.rs",
+        "version": "3.5.2"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs",
+        "version": "3.5.2"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "3.5.2"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "3.5.2"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "3.5.2"
+      }
+    ],
+    "chrono": [
+      {
+        "file": "scripts/collect-changelog.rs",
+        "version": "0.4.45"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs",
+        "version": "0.4.45"
+      },
+      {
+        "file": "scripts/version-and-commit.rs",
+        "version": "0.4.45"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.4.45"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.4.45"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.4.45"
+      }
+    ],
+    "getrandom": [
+      {
+        "file": "scripts/create-changelog-fragment.rs",
+        "version": "0.4.3"
+      },
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.2.17"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.2.17"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.2.17"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.4.3"
+      }
+    ],
+    "cargo-audit": [],
+    "cargo-llvm-cov": [],
+    "rust-script": [],
+    "cargo-edit": [],
+    "adler2": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "2.0.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "2.0.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "2.0.1"
+      }
+    ],
+    "base64": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.23.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.23.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.23.1"
+      }
+    ],
+    "bytes": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.12.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.12.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.12.1"
+      }
+    ],
+    "cc": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.11.2"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.11.2"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.11.2"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "1.11.2"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "1.11.2"
+      }
+    ],
+    "cfg-if": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.0.5"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.5"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.0.5"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "1.0.5"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "1.0.5"
+      }
+    ],
+    "crc32fast": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.5.5"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.5.5"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.5.5"
+      }
+    ],
+    "find-msvc-tools": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.1.15"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.1.15"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.1.15"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.1.15"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.1.15"
+      }
+    ],
+    "flate2": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.1.11"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.1.11"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.1.11"
+      }
+    ],
+    "http": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.5.0"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.5.0"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.5.0"
+      }
+    ],
+    "httparse": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.10.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.10.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.10.1"
+      }
+    ],
+    "libc": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.2.191"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.2.191"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.2.191"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.2.191"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.2.191"
+      }
+    ],
+    "log": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.4.35"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.4.35"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.4.35"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.4.35"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.4.35"
+      }
+    ],
+    "miniz_oxide": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.9.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.9.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.9.1"
+      }
+    ],
+    "once_cell": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.21.4"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.21.4"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.21.4"
+      }
+    ],
+    "percent-encoding": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "2.3.2"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "2.3.2"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "2.3.2"
+      }
+    ],
+    "ring": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.17.14"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.17.14"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.17.14"
+      }
+    ],
+    "rustls": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.23.46"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.23.46"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.23.46"
+      }
+    ],
+    "rustls-pki-types": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.16.0"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.16.0"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.16.0"
+      }
+    ],
+    "rustls-webpki": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.103.17"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.103.17"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.103.17"
+      }
+    ],
+    "shlex": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "2.0.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "2.0.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "2.0.1"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "2.0.1"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "2.0.1"
+      }
+    ],
+    "simd-adler32": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.3.10"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.3.10"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.3.10"
+      }
+    ],
+    "subtle": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "2.6.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "2.6.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "2.6.1"
+      }
+    ],
+    "untrusted": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.9.0"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.9.0"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.9.0"
+      }
+    ],
+    "ureq-proto": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.7.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.7.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.7.1"
+      }
+    ],
+    "utf8-zero": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.8.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.8.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.8.1"
+      }
+    ],
+    "wasi": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.11.1+wasi-snapshot-preview1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.11.1+wasi-snapshot-preview1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.11.1+wasi-snapshot-preview1"
+      }
+    ],
+    "webpki-roots": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.0.12"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.12"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.0.12"
+      }
+    ],
+    "windows-targets": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.52.6"
+      }
+    ],
+    "windows_aarch64_gnullvm": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.52.6"
+      }
+    ],
+    "windows_aarch64_msvc": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.52.6"
+      }
+    ],
+    "windows_i686_gnu": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.52.6"
+      }
+    ],
+    "windows_i686_gnullvm": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.52.6"
+      }
+    ],
+    "windows_i686_msvc": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.52.6"
+      }
+    ],
+    "windows_x86_64_gnu": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.52.6"
+      }
+    ],
+    "windows_x86_64_gnullvm": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.52.6"
+      }
+    ],
+    "windows_x86_64_msvc": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.52.6"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.52.6"
+      }
+    ],
+    "zeroize": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "1.9.1"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.9.1"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "1.9.1"
+      }
+    ],
+    "zlib-rs": [
+      {
+        "file": "scripts/registry.rs (resolved)",
+        "version": "0.6.8"
+      },
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.6.8"
+      },
+      {
+        "file": "scripts/wait-for-crate.rs (resolved)",
+        "version": "0.6.8"
+      }
+    ],
+    "android_system_properties": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.1.6"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.1.6"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.1.6"
+      }
+    ],
+    "autocfg": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.5.1"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "1.5.1"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "1.5.1"
+      }
+    ],
+    "bumpalo": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "3.20.4"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "3.20.4"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "3.20.4"
+      }
+    ],
+    "core-foundation-sys": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.8.7"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.8.7"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.8.7"
+      }
+    ],
+    "futures-core": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.3.34"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.3.34"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.3.34"
+      }
+    ],
+    "futures-task": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.3.34"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.3.34"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.3.34"
+      }
+    ],
+    "futures-util": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.3.34"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.3.34"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.3.34"
+      }
+    ],
+    "iana-time-zone": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.1.65"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.1.65"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.1.65"
+      }
+    ],
+    "iana-time-zone-haiku": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.1.2"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.1.2"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.1.2"
+      }
+    ],
+    "js-sys": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.3.107"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.3.107"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.3.107"
+      }
+    ],
+    "num-traits": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.2.19"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.2.19"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.2.19"
+      }
+    ],
+    "pin-project-lite": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.2.17"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.2.17"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.2.17"
+      }
+    ],
+    "rustversion": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "1.0.23"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "1.0.23"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "1.0.23"
+      }
+    ],
+    "slab": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.4.12"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.4.12"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.4.12"
+      }
+    ],
+    "wasm-bindgen": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.2.130"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.2.130"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.2.130"
+      }
+    ],
+    "wasm-bindgen-macro": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.2.130"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.2.130"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.2.130"
+      }
+    ],
+    "wasm-bindgen-macro-support": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.2.130"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.2.130"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.2.130"
+      }
+    ],
+    "wasm-bindgen-shared": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.2.130"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.2.130"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.2.130"
+      }
+    ],
+    "windows-core": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.62.2"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.62.2"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.62.2"
+      }
+    ],
+    "windows-implement": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.60.2"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.60.2"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.60.2"
+      }
+    ],
+    "windows-interface": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.59.3"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.59.3"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.59.3"
+      }
+    ],
+    "windows-result": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.4.1"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.4.1"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.4.1"
+      }
+    ],
+    "windows-strings": [
+      {
+        "file": "scripts/version-and-commit.rs (resolved)",
+        "version": "0.5.1"
+      },
+      {
+        "file": "scripts/collect-changelog.rs (resolved)",
+        "version": "0.5.1"
+      },
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "0.5.1"
+      }
+    ],
+    "r-efi": [
+      {
+        "file": "scripts/create-changelog-fragment.rs (resolved)",
+        "version": "6.0.0"
+      }
+    ]
+  },
+  "npm": {
+    "smol-toml": [
+      {
+        "file": ".github/dependency-policy/package-lock.json",
+        "version": "1.9.1"
+      }
+    ],
+    "yaml": [
+      {
+        "file": ".github/dependency-policy/package-lock.json",
+        "version": "2.9.1"
+      }
+    ],
+    "@azu/format-text": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.0.2"
+      }
+    ],
+    "@azu/style-format": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.0.1"
+      }
+    ],
+    "@babel/code-frame": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.29.7"
+      }
+    ],
+    "@babel/helper-validator-identifier": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.29.7"
+      }
+    ],
+    "@secretlint/config-creator": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "@secretlint/config-loader": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "@secretlint/core": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "@secretlint/formatter": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "@secretlint/node": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "@secretlint/profiler": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "@secretlint/resolver": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "@secretlint/secretlint-rule-preset-recommend": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "@secretlint/source-creator": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "@secretlint/types": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "@secretlint/walker": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "@textlint/ast-node-types": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "15.8.0"
+      }
+    ],
+    "@textlint/linter-formatter": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "15.8.0"
+      }
+    ],
+    "pluralize": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.0"
+      },
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "8.0.0"
+      }
+    ],
+    "@textlint/module-interop": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "15.8.0"
+      }
+    ],
+    "@textlint/resolver": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "15.8.0"
+      }
+    ],
+    "@textlint/types": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "15.8.0"
+      }
+    ],
+    "@types/normalize-package-data": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.4.4"
+      }
+    ],
+    "ajv": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "8.20.0"
+      }
+    ],
+    "ansi-escapes": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.3.0"
+      }
+    ],
+    "ansi-regex": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.0.1"
+      }
+    ],
+    "ansi-styles": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.3.0"
+      }
+    ],
+    "argparse": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.1"
+      }
+    ],
+    "astral-regex": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.0"
+      }
+    ],
+    "binaryextensions": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.11.0"
+      }
+    ],
+    "boundary": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.0"
+      }
+    ],
+    "chalk": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.6.2"
+      }
+    ],
+    "color-convert": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.1"
+      }
+    ],
+    "color-name": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.1.4"
+      }
+    ],
+    "debug": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.4.3"
+      }
+    ],
+    "editions": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.22.0"
+      }
+    ],
+    "emoji-regex": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "8.0.0"
+      }
+    ],
+    "environment": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.1.0"
+      }
+    ],
+    "fast-deep-equal": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.1.3"
+      }
+    ],
+    "fast-uri": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.1.9"
+      }
+    ],
+    "has-flag": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.0.1"
+      }
+    ],
+    "hosted-git-info": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "9.0.3"
+      }
+    ],
+    "ignore": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.0.14"
+      }
+    ],
+    "index-to-position": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.2.0"
+      }
+    ],
+    "is-fullwidth-code-point": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.0.0"
+      }
+    ],
+    "istextorbinary": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "9.5.0"
+      }
+    ],
+    "js-tokens": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.0.0"
+      }
+    ],
+    "js-yaml": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.3.2"
+      }
+    ],
+    "json-schema-traverse": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.0.0"
+      }
+    ],
+    "json5": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.2.3"
+      }
+    ],
+    "lodash": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.18.1"
+      }
+    ],
+    "lru-cache": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "11.5.3"
+      }
+    ],
+    "ms": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.1.3"
+      }
+    ],
+    "normalize-package-data": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "8.0.0"
+      }
+    ],
+    "p-map": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.1.1"
+      }
+    ],
+    "parse-json": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "8.3.0"
+      }
+    ],
+    "type-fest": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.41.0"
+      },
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.10.0"
+      }
+    ],
+    "picocolors": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.1.1"
+      }
+    ],
+    "picomatch": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.0.7"
+      }
+    ],
+    "rc-config-loader": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.1.4"
+      }
+    ],
+    "read-pkg": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "10.1.0"
+      }
+    ],
+    "require-from-string": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.0.2"
+      }
+    ],
+    "secretlint": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "13.1.0"
+      }
+    ],
+    "semver": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "7.8.6"
+      }
+    ],
+    "slice-ansi": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.0.0"
+      }
+    ],
+    "spdx-correct": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.2.0"
+      }
+    ],
+    "spdx-exceptions": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "2.5.0"
+      }
+    ],
+    "spdx-expression-parse": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.0.1"
+      }
+    ],
+    "spdx-license-ids": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.0.24"
+      }
+    ],
+    "string-width": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.2.3"
+      }
+    ],
+    "strip-ansi": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.0.1"
+      }
+    ],
+    "structured-source": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.0.0"
+      }
+    ],
+    "supports-color": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "10.2.2"
+      }
+    ],
+    "supports-hyperlinks": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.6.0"
+      }
+    ],
+    "table": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.10.1"
+      }
+    ],
+    "tagged-tag": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "1.0.0"
+      }
+    ],
+    "terminal-link": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "5.0.0"
+      }
+    ],
+    "text-table": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "0.2.0"
+      }
+    ],
+    "textextensions": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "6.11.0"
+      }
+    ],
+    "unicorn-magic": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "0.4.1"
+      }
+    ],
+    "validate-npm-package-license": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "3.0.4"
+      }
+    ],
+    "version-range": [
+      {
+        "file": ".github/secretlint/package-lock.json",
+        "version": "4.15.0"
+      }
+    ]
+  },
+  "actions": {
+    "actions/download-artifact": [
+      {
+        "file": ".github/actions/download-artifact/action.yml",
+        "version": "9000827ccba6bdab643e8b6fd33ac0654aef8333"
+      }
+    ],
+    "docker/setup-buildx-action": [
+      {
+        "file": ".github/actions/setup-buildx-resilient/action.yml",
+        "version": "v4"
+      },
+      {
+        "file": ".github/actions/setup-buildx-resilient/action.yml",
+        "version": "v4"
+      },
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "v4"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v4"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v4"
+      }
+    ],
+    "actions/setup-python": [
+      {
+        "file": ".github/actions/setup-python/action.yml",
+        "version": "v7.1.0"
+      }
+    ],
+    "actions/checkout": [
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/javascript-first-gate.yml",
+        "version": "3d3c42e5aac5ba805825da76410c181273ba90b1"
+      },
+      {
+        "file": ".github/workflows/javascript-first-gate.yml",
+        "version": "3d3c42e5aac5ba805825da76410c181273ba90b1"
+      },
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/rerun-infrastructure-failures.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/rerun-infrastructure-failures.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      }
+    ],
+    "dtolnay/rust-toolchain": [
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "683b588c487a69d01f6c6ddf40f036ff682cc2c8"
+      }
+    ],
+    "actions/upload-artifact": [
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v7"
+      }
+    ],
+    "actions/attest": [
+      {
+        "file": ".github/workflows/desktop-release.yml",
+        "version": "v4"
+      }
+    ],
+    "docker/build-push-action": [
+      {
+        "file": ".github/workflows/javascript-first-example.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v7"
+      }
+    ],
+    "actions/setup-node": [
+      {
+        "file": ".github/workflows/javascript-first-gate.yml",
+        "version": "949feb2413d6458794dcd2491c4babbbce0c15c1"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "949feb2413d6458794dcd2491c4babbbce0c15c1"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "949feb2413d6458794dcd2491c4babbbce0c15c1"
+      }
+    ],
+    "actions/cache": [
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      }
+    ],
+    "lycheeverse/lychee-action": [
+      {
+        "file": ".github/workflows/links.yml",
+        "version": "v2"
+      }
+    ],
+    "taiki-e/install-action": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "cfdb7ed4ccc7c7dce37759eae89dc5674b469b39"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "cfdb7ed4ccc7c7dce37759eae89dc5674b469b39"
+      }
+    ],
+    "codecov/codecov-action": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "303a32d7a59b442fa8d48b6a1cc6825c09c847a5"
+      }
+    ],
+    "rust-lang/crates-io-auth-action": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "3268eb413133e2960fa4ae0e963ca76380c54cd9"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "3268eb413133e2960fa4ae0e963ca76380c54cd9"
+      }
+    ],
+    "docker/login-action": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v4"
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v4"
+      }
+    ],
+    "peter-evans/create-pull-request": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "3ffccacd46053766916f087ce41d627c0b8cf2d1"
+      }
+    ],
+    "actions/configure-pages": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v6"
+      }
+    ],
+    "actions/upload-pages-artifact": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v5"
+      }
+    ],
+    "actions/deploy-pages": [
+      {
+        "file": ".github/workflows/release.yml",
+        "version": "v5"
+      }
+    ],
+    "github/codeql-action": [
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v4"
+      },
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v4"
+      }
+    ],
+    "actions/dependency-review-action": [
+      {
+        "file": ".github/workflows/security.yml",
+        "version": "v5"
+      }
+    ],
+    "zizmorcore/zizmor-action": [
+      {
+        "file": ".github/workflows/workflows.yml",
+        "version": "v0.8.1"
+      }
+    ]
+  },
+  "pypi": {
+    "boolean-py": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "5.0"
+      }
+    ],
+    "cachecontrol": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "0.14.4"
+      }
+    ],
+    "certifi": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "2026.10.23"
+      }
+    ],
+    "cfgv": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "3.5.0"
+      }
+    ],
+    "charset-normalizer": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "3.5.2"
+      }
+    ],
+    "cyclonedx-python-lib": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "11.12.0"
+      }
+    ],
+    "defusedxml": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "0.7.1"
+      }
+    ],
+    "distlib": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "0.4.4"
+      }
+    ],
+    "filelock": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "4.2.10"
+      }
+    ],
+    "identify": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "2.6.20"
+      }
+    ],
+    "idna": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "3.20"
+      }
+    ],
+    "license-expression": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "30.4.4"
+      }
+    ],
+    "markdown-it-py": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "4.3.0"
+      }
+    ],
+    "mdurl": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "0.1.2"
+      }
+    ],
+    "msgpack": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "1.2.4"
+      }
+    ],
+    "nodeenv": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "1.12.0"
+      }
+    ],
+    "packageurl-python": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "0.17.6"
+      }
+    ],
+    "packaging": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "26.3"
+      }
+    ],
+    "pip": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "26.3"
+      }
+    ],
+    "pip-api": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "0.0.35"
+      }
+    ],
+    "pip-audit": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "2.10.1"
+      }
+    ],
+    "pip-requirements-parser": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "32.0.1"
+      }
+    ],
+    "platformdirs": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "4.14.5"
+      }
+    ],
+    "pre-commit": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "4.7.0"
+      }
+    ],
+    "pre-commit-hooks": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "6.0.0"
+      }
+    ],
+    "py-serializable": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "2.2.0"
+      }
+    ],
+    "pyflakes": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "4.1.0"
+      }
+    ],
+    "pygments": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "2.21.0"
+      }
+    ],
+    "pyparsing": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "3.3.3"
+      }
+    ],
+    "python-discovery": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "1.9.5"
+      }
+    ],
+    "pyyaml": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "6.0.3"
+      }
+    ],
+    "requests": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "2.34.2"
+      }
+    ],
+    "rich": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "15.0.0"
+      }
+    ],
+    "ruamel-yaml": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "0.19.1"
+      }
+    ],
+    "shellcheck-py": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "0.11.0.1"
+      }
+    ],
+    "sortedcontainers": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "2.4.0"
+      }
+    ],
+    "tomli": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "2.5.0"
+      }
+    ],
+    "tomli-w": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "1.2.0"
+      }
+    ],
+    "typing-extensions": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "4.16.0"
+      }
+    ],
+    "urllib3": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "2.8.0"
+      }
+    ],
+    "uv": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "0.13.8"
+      }
+    ],
+    "virtualenv": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "21.15.6"
+      }
+    ],
+    "zizmor": [
+      {
+        "file": "requirements-dev.txt",
+        "version": "1.32.0"
+      }
+    ]
+  }
+}

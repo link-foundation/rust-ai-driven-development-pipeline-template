@@ -1,0 +1,26 @@
+Name:      docker.io/rhysd/actionlint:1.7.12
+MediaType: application/vnd.oci.image.index.v1+json
+Digest:    sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+
+Manifests:
+  Name:        docker.io/rhysd/actionlint:1.7.12@sha256:9d36088643581e728c969f35141f88139fec77280b2be23c1f66f8e40e1025e7
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/amd64
+
+  Name:        docker.io/rhysd/actionlint:1.7.12@sha256:33ffa3f1ad576165ea9c26f726884defdc411fb1fcb9ccc6a117b2f554ba1723
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/arm64
+
+  Name:        docker.io/rhysd/actionlint:1.7.12@sha256:613e2c1e3b1f04e73579c36e5593432984bd4dae53ce216b79b4fc76034c0032
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    vnd.docker.reference.digest: sha256:9d36088643581e728c969f35141f88139fec77280b2be23c1f66f8e40e1025e7
+    vnd.docker.reference.type:   attestation-manifest
+
+  Name:        docker.io/rhysd/actionlint:1.7.12@sha256:82d5a771fd4c4ed0297bdabeebdd09578aad1a9caa2190cb743dcbae25ca83db
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    vnd.docker.reference.digest: sha256:33ffa3f1ad576165ea9c26f726884defdc411fb1fcb9ccc6a117b2f554ba1723
+    vnd.docker.reference.type:   attestation-manifest

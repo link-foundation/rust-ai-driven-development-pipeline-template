@@ -116,7 +116,10 @@ impl ReleaseIndex {
         )?;
         for path in paths(&modified)?.into_iter().chain(paths(&staged)?) {
             if !self.allowed.contains(&path) {
-                return Err(format!("Refusing release: unrelated modified, untracked or staged path {:?}. Commit or move this work before releasing; no files were discarded.", path));
+                return Err(format!(
+                    "Refusing release: unrelated modified, untracked or staged path {:?}. Commit or move this work before releasing; no files were discarded.",
+                    path
+                ));
             }
         }
         Ok(())
@@ -208,10 +211,12 @@ mod tests {
         fs::remove_file(root.join("changelog.d/old.md")).unwrap();
         assert!(index.validate().is_ok());
         // Rebuilding the allowlist after a fragment was deleted also permits it.
-        assert!(ReleaseIndex::new(&root, &root.join("member/Cargo.toml"))
-            .unwrap()
-            .validate()
-            .is_ok());
+        assert!(
+            ReleaseIndex::new(&root, &root.join("member/Cargo.toml"))
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
         git(&repo.0, &["add", "-A"]).unwrap();
         assert!(index.validate().is_ok());
         git(&repo.0, &["commit", "-qm", "release"]).unwrap();

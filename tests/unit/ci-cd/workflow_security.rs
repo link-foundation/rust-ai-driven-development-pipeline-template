@@ -241,7 +241,7 @@ fn security_workflow_audits_the_committed_cargo_lock() {
     assert!(audit.contains("name: Cargo audit"));
     assert!(audit.contains("timeout-minutes: 10"));
     assert!(audit.contains("uses: actions/checkout@v7"));
-    assert!(audit.contains("tool: cargo-audit@0.22.2"));
+    assert!(audit.contains("tool: cargo-audit@0.23.0"));
     assert!(
         audit.contains("run: cargo audit --file Cargo.lock --deny warnings"),
         "`unmaintained`, `unsound` and `yanked` findings are warnings that do \

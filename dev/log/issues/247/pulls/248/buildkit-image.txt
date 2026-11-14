@@ -1,0 +1,70 @@
+Name:      docker.io/moby/buildkit:buildx-stable-1
+MediaType: application/vnd.oci.image.index.v1+json
+Digest:    sha256:c5f8862f52499773af85bc07695b2379ef08e8002352b0df2c4864c91d78dabe
+
+Manifests:
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:b40a530be3127c531fd5107678c7756fef5ccc9b94ae525a9211cc59cbc79975
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/ppc64le
+
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:1cda5237785eadfb70c836ad0d94c052354b96f70a1d6ae67b9a5a7411d87bab
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    vnd.docker.reference.digest: sha256:b40a530be3127c531fd5107678c7756fef5ccc9b94ae525a9211cc59cbc79975
+    vnd.docker.reference.type:   attestation-manifest
+
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:acee476802e274483afae6b3c620df9d4069187e1e45a4fb4a2f14cc9ed0e74a
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/s390x
+
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:45b40b38c24c2949fa12e07709dd0eb0d709e6ec2c21e3beb221da8e13ce63f4
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    vnd.docker.reference.digest: sha256:acee476802e274483afae6b3c620df9d4069187e1e45a4fb4a2f14cc9ed0e74a
+    vnd.docker.reference.type:   attestation-manifest
+
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:316b90aa9b1e7a2ed4394110f05cb369a4ee3819ac6ba7cef80d4e0739499742
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/arm/v7
+
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:ab0f1c2f7915ac2780c33eb7025a09177f58f64f632ec286c762bfed64000da1
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    vnd.docker.reference.digest: sha256:316b90aa9b1e7a2ed4394110f05cb369a4ee3819ac6ba7cef80d4e0739499742
+    vnd.docker.reference.type:   attestation-manifest
+
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:92f93f25966c544549b88144406ce8cd9dcdf5df128250711031a4acd9149a8e
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/arm64
+
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:c1455668bd3fd960983e5a963122e8def6d13be1903a6987e4a4aa2bb15d45af
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    vnd.docker.reference.digest: sha256:92f93f25966c544549b88144406ce8cd9dcdf5df128250711031a4acd9149a8e
+    vnd.docker.reference.type:   attestation-manifest
+
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:97719ccb2ac86fb44fd36f330a6d302f63dddd5326f3ada24f9c05ccac0d9098
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/amd64
+
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:f21a1372a4239ed443f1e76279ab3e6bd3a95920732bec7a47a2300aa0aacee0
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    vnd.docker.reference.digest: sha256:97719ccb2ac86fb44fd36f330a6d302f63dddd5326f3ada24f9c05ccac0d9098
+    vnd.docker.reference.type:   attestation-manifest
+
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:dcff6c8206a2153ef2e1499256721c89d9d9d74495e48c7b5bac163fc1819aff
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    linux/riscv64
+
+  Name:        docker.io/moby/buildkit:buildx-stable-1@sha256:4d4d0df80c495fffd7b3cd9156840dc5fb25815edad91ac8bdf3ca429c3b45d8
+  MediaType:   application/vnd.oci.image.manifest.v1+json
+  Platform:    unknown/unknown
+  Annotations:
+    vnd.docker.reference.digest: sha256:dcff6c8206a2153ef2e1499256721c89d9d9d74495e48c7b5bac163fc1819aff
+    vnd.docker.reference.type:   attestation-manifest
