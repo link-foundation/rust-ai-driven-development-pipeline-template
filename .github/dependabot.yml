@@ -1,0 +1,39 @@
+# Weekly updates with a seven-day cooldown match the sibling templates.
+# Only directories with updatable dependencies belong here. CI checks coverage.
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: /examples/javascript-first
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: npm
+    directories:
+      - /.github/secretlint
+      - /.github/dependency-policy
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      ci-tools:
+        patterns: ['*']

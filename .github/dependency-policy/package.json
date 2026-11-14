@@ -1,0 +1,10 @@
+{
+  "name": "dependency-policy",
+  "private": true,
+  "type": "module",
+  "description": "Locked parsers for the offline Dependabot coverage check",
+  "devDependencies": {
+    "smol-toml": "1.9.1",
+    "yaml": "2.9.1"
+  }
+}
