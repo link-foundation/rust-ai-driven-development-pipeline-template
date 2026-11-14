@@ -268,6 +268,15 @@ jobs:
         # secretlint@13.0.7 and @secretlint/secretlint-rule-preset-recommend@13.0.7
         run: npm ci --prefix .github/secretlint --ignore-scripts --no-audit --no-fund
 
+      - name: Install locked dependency policy parsers
+        run: npm ci --prefix .github/dependency-policy --ignore-scripts --no-audit --no-fund
+
+      - name: Test dependency update coverage
+        run: node --test .github/dependency-policy/check.test.mjs
+
+      - name: Check Dependabot coverage of tracked dependencies
+        run: node .github/dependency-policy/check.mjs
+
       - name: Test tracked evidence scanner
         run: node --test .github/scripts/check-secrets.test.mjs
 
