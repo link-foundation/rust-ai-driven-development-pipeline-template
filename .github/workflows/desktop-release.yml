@@ -109,7 +109,7 @@ jobs:
         env:
           TESTED_SHA: ${{ needs.javascript-first.outputs.tested-sha }}
         run: test "$(git rev-parse HEAD)" = "$TESTED_SHA"
-      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
