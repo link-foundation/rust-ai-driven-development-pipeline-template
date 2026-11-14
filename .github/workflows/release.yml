@@ -94,7 +94,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -193,7 +193,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -227,7 +227,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -303,7 +303,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -411,7 +411,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -456,7 +456,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -567,7 +567,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -660,7 +660,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -723,7 +723,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -743,7 +743,7 @@ jobs:
             ${{ runner.os }}-cargo-coverage-
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@e67fa11c4b9316fa714ddf0abed07a0c3143b95b # v2.87.4
+        uses: taiki-e/install-action@3a3daafd3b7f23b8f65d9f5ba2db203fb59b79e2 # v2.90.2
         with:
           # The `cargo-llvm-cov` ref is what supplied the tool name; once
           # pinned to a hash the input has to be restated explicitly.
@@ -758,7 +758,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: env.CODECOV_TOKEN != ''
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ env.CODECOV_TOKEN }}
           files: lcov.info
@@ -797,7 +797,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -890,7 +890,7 @@ jobs:
           git branch --set-upstream-to="origin/$RELEASE_BRANCH" "$RELEASE_BRANCH"
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -915,7 +915,7 @@ jobs:
 
       - name: Authenticate with crates.io (trusted publishing)
         id: crates_auth
-        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+        uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
         continue-on-error: true # Existing repositories may still need token fallback.
         if: steps.check.outputs.should_release == 'true' && steps.check.outputs.crate_published != 'true'
 
@@ -1099,7 +1099,7 @@ jobs:
           git branch --set-upstream-to="origin/$RELEASE_BRANCH" "$RELEASE_BRANCH"
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -1113,7 +1113,7 @@ jobs:
 
       - name: Authenticate with crates.io (trusted publishing)
         id: crates_auth
-        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+        uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
         continue-on-error: true # Existing repositories may still need token fallback.
 
       - name: Verify selected publishing credential
@@ -1392,7 +1392,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
@@ -1408,7 +1408,7 @@ jobs:
         run: rust-script scripts/create-changelog-fragment.rs --bump-type "$BUMP_TYPE" --description "$DESCRIPTION"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        uses: peter-evans/create-pull-request@15733dbdfeedb4f7fdb73d13c6f5ac83b710fab8 # v8.1.2
         with:
           token: ${{ secrets.RELEASE_PR_TOKEN }}
           commit-message: 'chore: add changelog for manual ${{ github.event.inputs.bump_type }} release'
@@ -1471,7 +1471,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # safely handle action inputs (#187)
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
