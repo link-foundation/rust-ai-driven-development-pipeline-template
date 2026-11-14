@@ -73,6 +73,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.22.4] - 2026-11-14
+
+### Changed
+- Refresh every dependency ecosystem and pin current Rust, Node and Python tools with reproducible locks and automatic update coverage.
+- Adopt Rust 2024 with minimum supported Rust 1.85 and migrate release scripts to ureq 3, toml 1 and getrandom 0.4.
+
+### Fixed
+- Regenerate the malformed Cargo dependency graph, preserve action security assertions across updates, and avoid standalone JSON fixture macro extraction failures in CodeQL.
 ## [0.22.3] - 2026-11-14
 
 ### Fixed
