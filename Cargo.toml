@@ -36,7 +36,7 @@ lino-arguments = "0.3"
 clap = { version = "4.4", features = ["derive", "env"] }
 
 [dev-dependencies]
-toml = "0.8"
+toml = "1.2"
 regex = "1"
 serde_json = "1"
 walkdir = "2"
