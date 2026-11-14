@@ -257,7 +257,7 @@ fn cargo_cache_keys_are_scoped_by_job() {
         "Windows test cache should use a test registry key"
     );
     assert!(
-        test.contains("key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}"),
+        test.contains("key: ${{ runner.os }}-cargo-test-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}"),
         "Unix test cache should use a test target key"
     );
     assert!(
@@ -302,8 +302,10 @@ fn coverage_upload_requires_token_and_reports_missing_token_as_notice() {
 
     let skipped = step_block(coverage, "Report skipped Codecov upload");
     assert!(skipped.contains("if: env.CODECOV_TOKEN == ''"));
-    assert!(skipped
-        .contains("::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured"));
+    assert!(
+        skipped
+            .contains("::notice::Skipping Codecov upload because CODECOV_TOKEN is not configured")
+    );
 }
 
 #[test]

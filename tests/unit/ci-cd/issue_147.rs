@@ -100,9 +100,9 @@ fn rust_toolchain_is_hash_pinned_everywhere() {
 /// out of upstream history despite being valid full-length hashes.
 #[test]
 fn rust_toolchain_pin_uses_verified_master_history() {
-    // Verified against upstream master on 2026-10-26. Recheck ancestry when
+    // Verified against upstream master on 2026-11-14. Recheck ancestry when
     // updating: gh api repos/dtolnay/rust-toolchain/compare/<sha>...master
-    const VERIFIED_MASTER_COMMIT: &str = "e2a55d2ffb04f378e9626c28d38b36d230d1e12f";
+    const VERIFIED_MASTER_COMMIT: &str = "683b588c487a69d01f6c6ddf40f036ff682cc2c8";
     for (name, body) in all_workflows() {
         for line in body.lines().filter(|line| {
             line.trim_start()
@@ -128,8 +128,11 @@ fn hash_pinned_rust_toolchain_restates_the_toolchain_input() {
             let tail = &body[index..];
             let block: String = tail.lines().take(8).collect::<Vec<_>>().join("\n");
             assert!(
-                block.contains("toolchain: stable"),
-                "{name} uses a hash-pinned dtolnay/rust-toolchain without restating `toolchain: stable`; \
+                block.contains("toolchain: 1.100.0")
+                    || (block.contains("toolchain: ${{ matrix.toolchain }}")
+                        && body.contains("toolchain: ['1.100.0']")
+                        && body.contains("toolchain: '1.85.0'")),
+                "{name} uses a hash-pinned dtolnay/rust-toolchain without restating `toolchain: 1.100.0`; \
                  the action would otherwise install the wrong toolchain"
             );
         }

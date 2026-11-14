@@ -1,0 +1,40 @@
+### What happened
+
+A normal successful `actions/deploy-pages@v5` invocation emits:
+
+```text
+(node:...) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+```
+
+Public reproduction: the `Deploy Pages artifact` step in https://github.com/link-assistant/formal-ai/actions/runs/29463393707.
+
+### Minimal workflow
+
+```yaml
+- uses: actions/deploy-pages@v5
+  with:
+    token: ${{ github.token }}
+```
+
+### Suggested fix
+
+Update the dependency that imports Node core `punycode`, regenerate `dist/`, and add a Node 24 smoke test that fails on DEP0040. Successful deployments should not require consumers to suppress runtime warnings.
+
+Still observed on a successful `actions/deploy-pages@v5` invocation on September 24, 2026: [public main deployment log](https://github.com/pirl-unc/hitlist/actions/runs/35964920473). The hosted runner is 2.337.0 / Ubuntu 24.04; the action targets Node 24. The `Deploy to GitHub Pages` step emits DEP0040 for core `punycode`, then reports success.
+
+This appeared after updating our checkout/setup/cache/artifact/Pages actions to their current Node 24 versions. The retired-Node-20 warning is resolved; this remaining warning is distinct. No warning suppression or older runtime was used. Adding the current successful reproduction here rather than filing another duplicate.
+
+
+@yoannchaudet could you take a look?
+
+Still happening on `actions/deploy-pages@v5` (run from 2026-11-13, GitHub-hosted runner).
+
+The action reports success, but every run prints:
+
+    (node:2225) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+
+After this run the GitHub Pages site returns 404, even though the log ends with `Reported success!` and the deployment was created for the expected commit. I cannot tell yet whether the 404 is related to the warning or is a separate problem.
+
+Inputs are the defaults (`artifact_name: github-pages`, `preview: false`). Nothing in the workflow touches `punycode`, so the warning comes from a dependency bundled in the action.
+
+Is a release with updated dependencies planned?

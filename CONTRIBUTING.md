@@ -19,18 +19,24 @@ Thank you for your interest in contributing! This document provides guidelines a
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
 
+The repository pins Rust in `rust-toolchain.toml`, Python in `.python-version`,
+and requires Node >=26.13.1 with npm >=12.2.2. The crate supports Rust >=1.85 (Rust 2024).
+
 3. **Install development tools**
 
    ```bash
    rustup component add rustfmt clippy
    ./scripts/install-rust-script.sh
+   npm install --global npm@12.2.2 --ignore-scripts
+   npm ci --prefix .github/dependency-policy --ignore-scripts
    ```
 
 4. **Install pre-commit hooks** (optional but recommended)
 
    ```bash
-   pip install pre-commit
-   pre-commit install
+   python3 -m venv .venv
+   .venv/bin/pip install --require-hashes -r requirements-dev.txt
+   .venv/bin/pre-commit install
    ```
 
 5. **Build the project**
@@ -102,6 +108,7 @@ Thank you for your interest in contributing! This document provides guidelines a
    that only `main` reaches shows up as dead code. The `script-tests` job runs the
    same script, including offline Git regressions and mocked registry/link tests,
    and `build` -- and therefore every release -- is gated on it.
+   The Buildx adapter regression uses the locked YAML parser installed in step 3.
 
    Rust's built-in `cargo test` runner does not provide a portable global per-test timeout, so wrap long-running network, IO, or async tests with explicit test-level deadlines. If a repository adopts `cargo nextest`, configure runner deadlines with options such as `--slow-timeout` and `--leak-timeout`.
 
@@ -347,3 +354,11 @@ The gate automatically detects production JavaScript counterparts. Tooling and
 examples alone do not require a JavaScript port, and Rust-only projects pass
 without one. Detected counterparts require real native, strict parity and
 regeneration commands before any Rust work.
+
+## Updating developer tools
+
+Regenerate Python dependencies with `uv pip compile requirements-dev.in --upgrade --universal --generate-hashes --output-file requirements-dev.txt`.
+Install with `pip install --require-hashes -r requirements-dev.txt` in a virtual environment.
+Run `pip-audit --strict --disable-pip --require-hashes -r requirements-dev.txt` and
+`git ls-files -z '*.py' | xargs -0 pyflakes`. Weekly Dependabot updates cover Python,
+pre-commit, Rust toolchains, Cargo, npm, actions and Docker dependencies.

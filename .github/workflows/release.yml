@@ -98,7 +98,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -197,7 +197,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -231,7 +231,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -262,10 +262,14 @@ jobs:
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '24'
+          node-version: '26.13.1'
+
+      # npm is the package-manager bootstrap; its release bundles its dependencies.
+      - name: Use current npm
+        run: npm install --global npm@12.2.2 --ignore-scripts --no-audit --no-fund # zizmor: ignore[adhoc-packages]
 
       - name: Install locked secretlint
-        # secretlint@13.0.7 and @secretlint/secretlint-rule-preset-recommend@13.0.7
+        # secretlint@13.1.0 and @secretlint/secretlint-rule-preset-recommend@13.1.0
         run: npm ci --prefix .github/secretlint --ignore-scripts --no-audit --no-fund
 
       - name: Install locked dependency policy parsers
@@ -302,12 +306,14 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      - uses: ./.github/actions/setup-python # zizmor: ignore[self-repository]
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
           components: rustfmt, clippy
 
       - name: Cache cargo registry
@@ -415,7 +421,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -460,7 +466,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
           components: rustfmt, clippy
 
       - name: Install rust-script
@@ -533,13 +539,13 @@ jobs:
   # === TEST ===
   # Test runs independently of changelog check and only for code-affecting changes
   test:
-    name: Test (${{ matrix.os }})
+    name: Test (${{ matrix.os }}, Rust ${{ matrix.toolchain }})
     runs-on: ${{ matrix.os }}
     # Backstop only. The budgeted steps below own the real deadline; see
     # scripts/run-with-budget-warning.sh for why that distinction matters.
     timeout-minutes: 30
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}
+      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.os }}-${{ matrix.toolchain }}
       cancel-in-progress: true
     needs: [javascript-first, detect-changes, cargo-lock]
     # Note: !cancelled() is required because detect-changes is skipped on workflow_dispatch,
@@ -560,6 +566,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, macos-26, windows-2025]
+        toolchain: ['1.100.0']
+        include:
+          - os: ubuntu-24.04
+            toolchain: '1.85.0'
     steps:
       - uses: actions/checkout@v7
         with:
@@ -571,7 +581,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: ${{ matrix.toolchain }}
 
       - name: Cache cargo registry on Windows
         if: runner.os == 'Windows'
@@ -594,9 +604,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-test-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-test-
+            ${{ runner.os }}-cargo-test-${{ matrix.toolchain }}-
 
       # cargo test includes doc tests with the same feature set.
       - name: Run tests
@@ -659,12 +669,14 @@ jobs:
           ref: ${{ needs.javascript-first.outputs.tested-sha == github.sha && github.sha }}
           persist-credentials: false
 
+      - uses: ./.github/actions/setup-python # zizmor: ignore[self-repository]
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -679,6 +691,17 @@ jobs:
           key: ${{ runner.os }}-cargo-script-tests-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-script-tests-
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26.13.1
+
+      # npm is the package-manager bootstrap; its release bundles its dependencies.
+      - name: Use current npm
+        run: npm install --global npm@12.2.2 --ignore-scripts --no-audit --no-fund # zizmor: ignore[adhoc-packages]
+
+      - name: Install locked workflow parsers
+        run: npm ci --prefix .github/dependency-policy --ignore-scripts
 
       - name: Run release script unit tests
         # Every script carrying a `#[cfg(test)]` module is built as its own test
@@ -727,7 +750,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
           components: llvm-tools-preview
 
       - name: Cache cargo registry
@@ -743,11 +766,11 @@ jobs:
             ${{ runner.os }}-cargo-coverage-
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@3a3daafd3b7f23b8f65d9f5ba2db203fb59b79e2 # v2.90.2
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
           # The `cargo-llvm-cov` ref is what supplied the tool name; once
           # pinned to a hash the input has to be restated explicitly.
-          tool: cargo-llvm-cov
+          tool: cargo-llvm-cov@0.9.1
 
       - name: Generate code coverage
         env:
@@ -801,7 +824,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -894,7 +917,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -1103,7 +1126,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -1396,7 +1419,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
 
       - name: Install rust-script
         run: ./scripts/install-rust-script.sh
@@ -1408,7 +1431,7 @@ jobs:
         run: rust-script scripts/create-changelog-fragment.rs --bump-type "$BUMP_TYPE" --description "$DESCRIPTION"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@15733dbdfeedb4f7fdb73d13c6f5ac83b710fab8 # v8.1.2
+        uses: peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1 # v8.1.3
         with:
           token: ${{ secrets.RELEASE_PR_TOKEN }}
           commit-message: 'chore: add changelog for manual ${{ github.event.inputs.bump_type }} release'
@@ -1470,12 +1493,14 @@ jobs:
           ref: ${{ needs.javascript-first.outputs.tested-sha == github.sha && github.sha }}
           persist-credentials: false
 
+      - uses: ./.github/actions/setup-python # zizmor: ignore[self-repository]
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # safely handle action inputs (#187)
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
 
       - name: Build documentation
         # Defense in depth: same fail-closed flags as the lint job's gate.

@@ -96,7 +96,7 @@ test('malformed configuration and bypasses fail closed', () => {
   ]) {
     assert.ok(coverageErrors(config({ ...update('docker', '/examples/javascript-first'), ...change }), surfaces).length, JSON.stringify(change));
   }
-  assert.match(coverageErrors(config(update('pip', '/')), []).join('\n'), /unsupported ecosystem/);
+  assert.match(coverageErrors(config(update('terraform', '/')), []).join('\n'), /unsupported ecosystem/);
   assert.match(coverageErrors(config(update('docker', '/examples/javascript-first'), update('docker', '/examples/javascript-first')), surfaces).join('\n'), /duplicate/);
 });
 
@@ -133,4 +133,22 @@ test('repository config covers only real dependencies and CI always executes the
   assert.ok(runs.includes('node .github/dependency-policy/check.mjs'));
   assert.ok(workflow.jobs['pipeline-status'].needs.includes('secrets-scan'));
   assert.equal(workflow.on.pull_request.paths, undefined);
+});
+
+
+test('Python tools, remote pre-commit hooks and pinned Rust toolchains require coverage', () => {
+  const surfaces = detect({
+    'requirements-dev.in': '# tools\nzizmor==1.32.0\n',
+    'requirements-dev.txt': '# locked\nzizmor==1.32.0 \\n    --hash=sha256:abc\n',
+    'empty/requirements.txt': '# no third-party packages\n',
+    '.pre-commit-config.yaml': 'repos:\n  - repo: https://github.com/pre-commit/pre-commit-hooks\n    rev: v6.0.0\n',
+    'local/.pre-commit-config.yaml': 'repos:\n  - repo: local\n',
+    'rust-toolchain.toml': '[toolchain]\nchannel = "1.100.0"\n',
+  });
+  assert.deepEqual(surfaces.map(({ ecosystem }) => ecosystem), ['pip', 'pip', 'pre-commit', 'rust-toolchain']);
+  assert.equal(coverageErrors(config(), surfaces).length, 4);
+  assert.deepEqual(coverageErrors(config(update('pip', '/'), update('pre-commit', '/'), update('rust-toolchain', '/')), surfaces), []);
+  for (const ecosystem of ['pip', 'pre-commit', 'rust-toolchain']) {
+    assert.match(coverageErrors(config(update(ecosystem, '/empty')), surfaces).join('\n'), /no updatable dependencies/);
+  }
 });

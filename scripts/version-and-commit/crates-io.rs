@@ -39,9 +39,15 @@ pub(super) fn ensure_version_exceeds_published(
         if (major, minor, patch) <= (pub_major, pub_minor, pub_patch) {
             println!(
                 "Version {}.{}.{} is not greater than max published {}.{}.{}, adjusting to {}.{}.{}",
-                major, minor, patch,
-                pub_major, pub_minor, pub_patch,
-                pub_major, pub_minor, pub_patch + 1
+                major,
+                minor,
+                patch,
+                pub_major,
+                pub_minor,
+                pub_patch,
+                pub_major,
+                pub_minor,
+                pub_patch + 1
             );
             major = pub_major;
             minor = pub_minor;

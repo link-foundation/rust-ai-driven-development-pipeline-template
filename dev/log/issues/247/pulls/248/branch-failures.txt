@@ -1,0 +1,16 @@
+dev/log/issues/247/pulls/248/ci-logs/branch-desktop-43557817327.log:949:Build linux-arm64	Package desktop application	2026-11-14T04:44:20.7596740Z ##[error]Process completed with exit code 101.
+dev/log/issues/247/pulls/248/ci-logs/branch-desktop-43557817327.log:1378:Build windows-x64	Package desktop application	2026-11-14T04:44:00.1587351Z ##[error]Process completed with exit code 101.
+dev/log/issues/247/pulls/248/ci-logs/branch-desktop-43557817327.log:1789:Build macos-x64	Package desktop application	2026-11-14T04:53:36.8766920Z ##[error]Process completed with exit code 101.
+dev/log/issues/247/pulls/248/ci-logs/branch-desktop-43557817327.log:2210:Build windows-arm64	Package desktop application	2026-11-14T04:42:53.9598000Z ##[error]Process completed with exit code 101.
+dev/log/issues/247/pulls/248/ci-logs/branch-desktop-43557817327.log:2622:Build macos-arm64	Package desktop application	2026-11-14T04:52:17.7057210Z ##[error]Process completed with exit code 101.
+dev/log/issues/247/pulls/248/ci-logs/branch-desktop-43557817327.log:3049:Build linux-x64	Package desktop application	2026-11-14T04:42:52.3329575Z ##[error]Process completed with exit code 101.
+dev/log/issues/247/pulls/248/ci-logs/branch-desktop-43557817327.log:3251:Pipeline Status	Check aggregate pipeline status	2026-11-14T04:53:48.3629532Z ##[error]Failing jobs: build
+dev/log/issues/247/pulls/248/ci-logs/branch-desktop-43557817327.log:3252:Pipeline Status	Check aggregate pipeline status	2026-11-14T04:53:51.0129925Z ##[error]Process completed with exit code 1.
+dev/log/issues/247/pulls/248/ci-logs/branch-security-43557817309.log:2408:CodeQL (rust)	Run github/codeql-action/analyze@v4	2026-11-14T04:41:56.4769922Z   expect-error: false
+dev/log/issues/247/pulls/248/ci-logs/branch-security-43557817309.log:2796:CodeQL (rust)	Reject unresolved CodeQL findings	2026-11-14T04:44:05.4467518Z ##[error]Process completed with exit code 1.
+dev/log/issues/247/pulls/248/ci-logs/branch-security-43557817309.log:3026:Cargo audit	Run taiki-e/install-action@3a3daafd3b7f23b8f65d9f5ba2db203fb59b79e2	2026-11-14T04:41:55.5748749Z ^[[36;1m  printf '::error::install-action: %s\n' "$*"^[[0m
+dev/log/issues/247/pulls/248/ci-logs/branch-security-43557817309.log:3088:Cargo audit	Audit committed Cargo.lock	2026-11-14T04:42:00.8788755Z thread 'main' (3082) panicked at cargo-audit/src/presenter.rs:145:14:
+dev/log/issues/247/pulls/248/ci-logs/branch-security-43557817309.log:3091:Cargo audit	Audit committed Cargo.lock	2026-11-14T04:42:00.8863344Z ##[error]Process completed with exit code 101.
+dev/log/issues/247/pulls/248/ci-logs/branch-security-43557817309.log:4605:CodeQL (actions)	Run github/codeql-action/analyze@v4	2026-11-14T04:41:58.0286117Z   expect-error: false
+dev/log/issues/247/pulls/248/ci-logs/branch-security-43557817309.log:5083:Pipeline Status	Check aggregate pipeline status	2026-11-14T04:45:50.7576113Z ##[error]Failing jobs: cargo-audit, codeql
+dev/log/issues/247/pulls/248/ci-logs/branch-security-43557817309.log:5084:Pipeline Status	Check aggregate pipeline status	2026-11-14T04:45:51.4559243Z ##[error]Process completed with exit code 1.

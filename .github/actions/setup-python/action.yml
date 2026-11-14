@@ -1,0 +1,8 @@
+name: Set up repository Python
+description: Use the same current Python runtime for CI and local tools
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v7.1.0
+      with:
+        python-version-file: .python-version

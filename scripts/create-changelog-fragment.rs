@@ -8,12 +8,11 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! chrono = "0.4"
-//! getrandom = "0.2"
+//! chrono = "0.4.45"
+//! getrandom = "0.4.3"
 //! ```
 
 use chrono::Utc;
-use getrandom::getrandom;
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -75,10 +74,9 @@ fn generate_timestamp() -> String {
 }
 
 fn generate_stop_commands_token() -> Result<String, String> {
-    let mut bytes = [0_u8; 16];
-    getrandom(&mut bytes)
-        .map_err(|error| format!("could not generate a stop-commands token: {error}"))?;
-    Ok(bytes.iter().map(|byte| format!("{byte:02x}")).collect())
+    getrandom::u64()
+        .and_then(|high| getrandom::u64().map(|low| format!("{high:016x}{low:016x}")))
+        .map_err(|error| format!("could not generate a stop-commands token: {error}"))
 }
 
 /// Print operator-controlled text without allowing legacy `##[...]` or modern

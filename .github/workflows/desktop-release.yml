@@ -113,7 +113,7 @@ jobs:
         with:
           # The `stable` ref is what supplied the action's default toolchain;
           # once pinned to a hash the input has to be restated explicitly.
-          toolchain: stable
+          toolchain: 1.100.0
       - name: Package desktop application
         env:
           DESKTOP_RELEASE_TAG: ${{ github.event_name == 'pull_request' && 'dry-run' || needs.resolve.outputs.tag }}

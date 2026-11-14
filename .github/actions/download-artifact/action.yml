@@ -16,6 +16,7 @@ inputs:
 runs:
   using: composite
   steps:
+    - uses: ./.github/actions/setup-python # zizmor: ignore[self-repository]
     - name: Allocate raw download directory
       id: raw
       shell: bash

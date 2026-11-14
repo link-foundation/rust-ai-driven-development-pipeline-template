@@ -1,0 +1,194 @@
+{
+  "bin": {
+    "ncu": "build/cli.js",
+    "npm-check-updates": "build/cli.js"
+  },
+  "bugs": {
+    "url": "https://github.com/raineorshine/npm-check-updates/issues"
+  },
+  "dist": {
+    "shasum": "658512e19009bf386567878b7e6072ed3e01f48f",
+    "tarball": "https://registry.npmjs.org/npm-check-updates/-/npm-check-updates-23.1.1.tgz",
+    "fileCount": 13,
+    "integrity": "sha512-UzYDvvsQRkmXR59g9SqsQxygYp7AhFpfEcOOGOJaB/P7pF/XlaqIYLK3UjUGfMHH1+aS2nZvJRaIsk2nk0z5ag==",
+    "signatures": [
+      {
+        "sig": "MEUCID7cvgAo/njG51JX42SUn52BkYwqIMKHOVsmmvVjOcNoAiEA88ZWIrpPv6Ba7khwC0i1k6S7frb4I0huRtm2BKFjwLA=",
+        "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+      },
+      {
+        "sig": "MEUCIQD3usfpwShlfTUVjWjpvL5sxQge9LAltM1gxWIDgBmMDQIgPy8bPYzD4EdIGPEta2hBMto8BBmvetN7A+CehkUQ+yk=",
+        "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+      }
+    ],
+    "unpackedSize": 5560774
+  },
+  "name": "npm-check-updates",
+  "type": "module",
+  "author": {
+    "name": "Tomas Junnonen",
+    "email": "tomas1@gmail.com"
+  },
+  "engines": {
+    "npm": ">=10.0.0",
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./build/index.d.ts",
+      "default": "./build/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "gitHead": "161014ec672069303ce6595a4b8663f1245c0db9",
+  "license": "Apache-2.0",
+  "scripts": {
+    "ncu": "node build/cli.js",
+    "lint": "cross-env FORCE_COLOR=1 npm-run-all --parallel --continue-on-error --aggregate-output lint:*",
+    "test": "npm run lint:types && npm run test:unit && npm run test:e2e",
+    "build": "vite build",
+    "vitest": "vitest",
+    "prepare": "git config core.hooksPath .hooks || exit 0",
+    "lint:src": "eslint --cache --cache-location node_modules/.cache/.eslintcache",
+    "prettier": "prettier . --check",
+    "test:bun": "vitest run --config vitest.config.bun.js",
+    "test:e2e": "bash ./test/e2e.sh",
+    "test:unit": "vitest run",
+    "lint:types": "tsc --noEmit",
+    "prettier:fix": "prettier . --write",
+    "build:analyze": "cross-env ANALYZER=true vite build",
+    "build:options": "node scripts/build-options.ts",
+    "lint:lockfile": "lockfile-lint",
+    "lint:markdown": "markdownlint-cli2 \"**/*.md\" \"!**/node_modules/**/*.md\" \"!build/**/*.md\"",
+    "prepublishOnly": "npm run build",
+    "build:changelog": "node scripts/build-changelog.ts"
+  },
+  "_npmUser": {
+    "name": "raine",
+    "email": "raine@cybersemics.org"
+  },
+  "homepage": "https://github.com/raineorshine/npm-check-updates",
+  "keywords": [
+    "dependencies",
+    "npm",
+    "package.json",
+    "update",
+    "upgrade",
+    "versions"
+  ],
+  "overrides": {
+    "eslint": "$eslint",
+    "typescript": "$typescript",
+    "eslint-config-standard": {
+      "eslint-plugin-n": "$eslint-plugin-n",
+      "eslint-plugin-promise": "$eslint-plugin-promise"
+    }
+  },
+  "repository": {
+    "url": "git+https://github.com/raineorshine/npm-check-updates.git",
+    "type": "git"
+  },
+  "_npmVersion": "11.16.0",
+  "description": "Find newer versions of dependencies than what your package.json allows",
+  "directories": {},
+  "maintainers": [
+    {
+      "name": "raine",
+      "email": "raine@cybersemics.org"
+    },
+    {
+      "name": "tjunnone",
+      "email": "tomas@cloudcraft.co"
+    }
+  ],
+  "_nodeVersion": "26.3.1",
+  "allowScripts": {
+    "yarn@1.22.22": true,
+    "fsevents@2.3.3": true,
+    "unrs-resolver@1.12.2": true
+  },
+  "contributors": [
+    {
+      "url": "https://github.com/raineorshine",
+      "name": "Raine Revere"
+    },
+    {
+      "name": "Imamuzzaki Abu Salam",
+      "email": "imamuzzaki@gmail.com"
+    }
+  ],
+  "_hasShrinkwrap": false,
+  "devDependencies": {
+    "ini": "^7.0.0",
+    "vite": "^8.3.4",
+    "yaml": "^2.9.1",
+    "yarn": "^1.22.22",
+    "p-map": "^7.1.0",
+    "eslint": "^10.12.0",
+    "semver": "^7.8.5",
+    "vitest": "^5.0.3",
+    "find-up": "^8.0.0",
+    "globals": "^17.13.0",
+    "valibot": "^1.5.0",
+    "prettier": "^3.9.10",
+    "progress": "^2.0.3",
+    "camelcase": "^9.0.0",
+    "commander": "^15.0.0",
+    "cross-env": "^10.1.0",
+    "fast-glob": "^3.3.3",
+    "lilconfig": "^3.1.3",
+    "picomatch": "^4.0.7",
+    "untildify": "^6.0.0",
+    "verdaccio": "^6.10.5",
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "^1.4.2",
+    "@types/ini": "^4.1.1",
+    "cli-table3": "^0.6.5",
+    "typescript": "^6.0.3",
+    "@types/node": "^26.6.5",
+    "markdown-it": "^15.0.2",
+    "prompts-ncu": "^3.0.4",
+    "fast-memoize": "^2.5.2",
+    "jsonc-parser": "^3.3.1",
+    "npm-run-all2": "^9.0.3",
+    "semver-utils": "^1.1.4",
+    "spawn-please": "^4.0.0",
+    "unplugin-dts": "^1.1.2",
+    "@types/semver": "^7.8.0",
+    "lockfile-lint": "^5.1.0",
+    "@eslint/compat": "^2.1.1",
+    "@types/progress": "^2.0.7",
+    "eslint-plugin-n": "^18.4.1",
+    "hosted-git-info": "^10.1.1",
+    "update-notifier": "^7.3.1",
+    "@types/picomatch": "^4.0.3",
+    "parse-github-url": "^1.0.4",
+    "markdownlint-cli2": "^0.23.3",
+    "@streamparser/json": "^0.0.26",
+    "npm-registry-fetch": "^20.0.1",
+    "@types/semver-utils": "^1.1.3",
+    "eslint-config-raine": "^0.5.0",
+    "eslint-plugin-jsdoc": "^65.2.4",
+    "vite-bundle-analyzer": "^1.3.9",
+    "eslint-plugin-promise": "^7.3.0",
+    "@types/hosted-git-info": "^3.0.5",
+    "@types/update-notifier": "^6.0.8",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import-x": "^4.17.1",
+    "@types/parse-github-url": "^1.0.3",
+    "@microsoft/api-extractor": "^7.59.4",
+    "ts-json-schema-generator": "^2.9.0",
+    "@types/npm-registry-fetch": "^8.0.9",
+    "@typescript-eslint/parser": "^8.71.1",
+    "@typescript-eslint/eslint-plugin": "^8.71.1",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2"
+  },
+  "_npmOperationalInternal": {
+    "tmp": "tmp/npm-check-updates_23.1.1_1791669878645_0.4562448889374551",
+    "host": "s3://npm-registry-packages-npm-production"
+  },
+  "_id": "npm-check-updates@23.1.1",
+  "version": "23.1.1"
+}

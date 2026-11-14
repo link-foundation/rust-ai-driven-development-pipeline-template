@@ -80,6 +80,7 @@ test('ShellCheck uses the pinned venv binary even when the runner has shellcheck
   const text = readFileSync('.github/workflows/workflows.yml', 'utf8');
   assert.doesNotMatch(text, /pipx run --spec shellcheck/);
   assert.match(text, /python3 -m venv "\$RUNNER_TEMP\/shellcheck-venv"/);
-  assert.match(text, /"\$RUNNER_TEMP\/shellcheck-venv\/bin\/pip" install --quiet --disable-pip-version-check shellcheck-py==0\.11\.0\.1/);
+  assert.match(text, /"\$RUNNER_TEMP\/shellcheck-venv\/bin\/pip" install --quiet --disable-pip-version-check --require-hashes -r requirements-dev\.txt/);
+  assert.match(readFileSync('requirements-dev.in', 'utf8'), /^shellcheck-py==0\.11\.0\.1$/m);
   assert.match(text, /xargs -0 "\$RUNNER_TEMP\/shellcheck-venv\/bin\/shellcheck"/);
 });

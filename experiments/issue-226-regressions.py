@@ -98,7 +98,7 @@ class UnacquiredJobs(unittest.TestCase):
         self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
         self.assertIn('::warning title=Hosted runner not acquired::Build macos-arm64 (attempt 1)', p.stdout)
         self.assertEqual(self.reruns(), [['run', 'rerun', str(RUN_ID), '--failed', '--repo', REPO]])
-        self.assertTrue(any(f'attempts/1/jobs' in ' '.join(c) for c in self.calls()))
+        self.assertTrue(any('attempts/1/jobs' in ' '.join(c) for c in self.calls()))
 
     def test_second_attempt_is_still_rerun(self):
         self.serve([UNACQUIRED], {'1': [{'message': NOT_ACQUIRED}]})

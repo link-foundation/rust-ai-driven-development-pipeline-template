@@ -13,12 +13,11 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! regex = "1"
-//! chrono = "0.4"
-//! ureq = "2"
-//! serde = { version = "1", features = ["derive"] }
-//! serde_json = "1"
-//! toml = "0.8"
+//! regex = "1.13.1"
+//! chrono = "0.4.45"
+//! ureq = "3.5.2"
+//! serde_json = "1.0.154"
+//! toml = "1.2.1"
 //! ```
 
 // Test harnesses replace main; the real build still denies unused helpers.
@@ -30,9 +29,9 @@ use regex::Regex;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 #[cfg(not(test))]
 use std::process::exit;
-use std::process::Command;
 
 #[path = "version-and-commit/source-guard.rs"]
 mod source_guard;
@@ -461,7 +460,9 @@ fn main() -> std::io::Result<()> {
     let bump_type = match get_arg("bump-type") {
         Some(bt) => bt,
         None => {
-            eprintln!("Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>] [--tag-prefix <prefix>] [--release-label <label>]");
+            eprintln!(
+                "Usage: rust-script scripts/version-and-commit.rs --bump-type <major|minor|patch> [--description <desc>] [--rust-root <path>] [--tag-prefix <prefix>] [--release-label <label>]"
+            );
             exit(1);
         }
     };

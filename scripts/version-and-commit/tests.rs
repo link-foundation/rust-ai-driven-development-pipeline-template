@@ -1,6 +1,6 @@
 use super::{
-    classify_push_failure, collect_changelog_with_date, count_changelog_fragments,
-    update_cargo_lock, verify_release_write, PushFailure,
+    PushFailure, classify_push_failure, collect_changelog_with_date, count_changelog_fragments,
+    update_cargo_lock, verify_release_write,
 };
 use std::fs;
 use std::path::PathBuf;
@@ -424,15 +424,17 @@ fn collection_and_verification_ignore_fenced_release_headings() {
     let previous = "## [0.1.0]\r\n  Previous notes.\r\n";
     let changelog = repo.join("CHANGELOG.md");
     fs::write(&changelog, format!("{prefix}{previous}")).unwrap();
-    assert!(verify_release_write(
-        changelog.to_str().unwrap(),
-        dir.to_str().unwrap(),
-        &repo.join("Cargo.lock"),
-        "crate",
-        "0.2.0",
-        true
-    )
-    .is_err());
+    assert!(
+        verify_release_write(
+            changelog.to_str().unwrap(),
+            dir.to_str().unwrap(),
+            &repo.join("Cargo.lock"),
+            "crate",
+            "0.2.0",
+            true
+        )
+        .is_err()
+    );
     fs::write(dir.join("fix.md"), "### Fixed\n- New notes").unwrap();
     collect_changelog_with_date(
         dir.to_str().unwrap(),

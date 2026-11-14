@@ -17,6 +17,8 @@ function fixture(mixed, fn) {
     }
     const env = { ...process.env, EXPECTED_SHA: exec('git', ['rev-parse', 'HEAD']).stdout.trim(),
       JAVASCRIPT_COMMAND: '', PARITY_COMMAND: '', TRANSLATION_COMMAND: '', PROJECT_DIRECTORY: '.', GITHUB_OUTPUT: '' };
+    // A nested test command must start its own runner and execute every assertion.
+    delete env.NODE_TEST_CONTEXT;
     fn(dir, env, () => spawnSync(process.execPath, [runner], { cwd: dir, env, encoding: 'utf8', timeout: 20000 }));
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
@@ -31,6 +33,8 @@ test('Rust-only success records the exact revision for downstream checkouts', ()
 }));
 test('auto-detected complete native counterpart passes the real three commands', () => fixture(true, (dir, env, run) => {
   const result = run(); assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /tests 8/);
+  assert.doesNotMatch(result.stderr, /recursively/);
   assert.match(result.stdout, /Complete native readiness inventory/);
 }));
 for (const name of ['native-failure', 'native-skipped', 'missing-command', 'missing', 'partial', 'carried', 'unsupported', 'drift', 'wrong-sha']) {

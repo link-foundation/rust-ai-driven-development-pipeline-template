@@ -37,9 +37,7 @@ fn content(blob: &str) -> Result<String, String> {
 }
 
 fn toml(blob: &str) -> Result<toml::Value, String> {
-    content(blob)?
-        .parse::<toml::Value>()
-        .map_err(|e| e.to_string())
+    toml::from_str(&content(blob)?).map_err(|e| e.to_string())
 }
 
 fn json(blob: &str) -> Result<serde_json::Value, String> {

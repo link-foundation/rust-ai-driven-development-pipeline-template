@@ -68,6 +68,12 @@ export function dependencySurfaces(files, read) {
       if (dependencyGroups.some(group => Object.keys(manifest[group] ?? {}).length)) add('npm', file);
     } else if (posix.basename(file) === 'Cargo.toml') {
       if (cargoDependencies(parseToml(read(file)))) add('cargo', file);
+    } else if (/^requirements[^/]*\.(?:txt|in)$/.test(posix.basename(file))) {
+      if (/^[A-Za-z0-9][A-Za-z0-9_.-]*(?:\[.*?\])?\s*(?:[<>=!~]|$)/m.test(read(file))) add('pip', file);
+    } else if (/^\.pre-commit-config\.ya?ml$/.test(posix.basename(file))) {
+      if (parseYaml(read(file))?.repos?.some(repo => /^https?:\/\//.test(repo.repo))) add('pre-commit', file);
+    } else if (posix.basename(file) === 'rust-toolchain.toml') {
+      if (parseToml(read(file)).toolchain?.channel) add('rust-toolchain', file);
     } else if (/^\.github\/workflows\/[^/]+\.ya?ml$/.test(file) || /(?:^|\/)action\.ya?ml$/.test(file)) {
       const seen = new Set();
       const hasRemoteAction = value => {
@@ -91,7 +97,7 @@ export function coverageErrors(config, surfaces) {
   for (const update of config.updates) {
     const ecosystem = update?.['package-ecosystem'];
     const label = `Dependabot ${ecosystem}`;
-    if (!['docker', 'github-actions', 'cargo', 'npm'].includes(ecosystem)) {
+    if (!['docker', 'github-actions', 'cargo', 'npm', 'pip', 'pre-commit', 'rust-toolchain'].includes(ecosystem)) {
       errors.push(`${label}: unsupported ecosystem; extend dependency detection and tests first`);
       continue;
     }

@@ -18,6 +18,8 @@ function fixture(fn) {
     const sha = exec('git', ['rev-parse', 'HEAD']).stdout.trim();
     const env = { ...process.env, EXPECTED_SHA: sha, JAVASCRIPT_COMMAND: 'node --test native.test.mjs',
       PARITY_COMMAND: 'node check-parity.mjs', TRANSLATION_COMMAND: 'node generate.mjs --check', GITHUB_OUTPUT: '' };
+    // A nested test command must start its own runner and execute every assertion.
+    delete env.NODE_TEST_CONTEXT;
     fn(dir, env, () => spawnSync('bash', [runner], { cwd: dir, env, encoding: 'utf8', timeout: 20000 }));
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }

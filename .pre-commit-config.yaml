@@ -1,9 +1,12 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
+        # Preserve captured evidence, generated release history and placeholders.
+        exclude: '^(docs/case-studies/|dev/log/|CHANGELOG\.md$|\.gitkeep$)'
       - id: end-of-file-fixer
+        exclude: '^(docs/case-studies/|dev/log/|CHANGELOG\.md$|\.gitkeep$)'
       - id: check-yaml
       - id: check-added-large-files
       - id: check-merge-conflict

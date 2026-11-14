@@ -39,7 +39,7 @@
 //!
 //! ```cargo
 //! [dependencies]
-//! regex = "1"
+//! regex = "1.13.1"
 //! ```
 
 use regex::Regex;
@@ -411,9 +411,11 @@ mod tests {
             &repo,
             &["merge", "--no-ff", "feature", "-m", "Merge empty commit"],
         );
-        assert!(get_changed_files_in_repo(&repo, "pull_request")
-            .unwrap()
-            .is_empty());
+        assert!(
+            get_changed_files_in_repo(&repo, "pull_request")
+                .unwrap()
+                .is_empty()
+        );
     }
 
     #[test]
