@@ -214,7 +214,7 @@ The GitHub Actions workflow provides:
 9. **Manual release**: Workflow dispatch with version bump type selection
 10. **Published crate smoke test**: Installs the just-published crate from crates.io, runs CLI entry points with captured output, and compiles a fresh dependent crate against the library
 11. **Optional Docker Hub publishing**: Pushes `latest` and version tags after the matching crates.io version is visible and smoke-tested
-12. **Documentation**: Automatic docs deployment to GitHub Pages after release
+12. **Documentation**: Optional docs deployment to GitHub Pages after a successful build
 
 #### Multi-Language Monorepos
 
@@ -340,9 +340,9 @@ Add a visible Docker Hub badge next to the crates.io badge in repositories that 
 
 ## Deploying API documentation
 
-The `deploy-docs` job in `.github/workflows/release.yml` publishes `cargo doc --no-deps --all-features` output to GitHub Pages on every push to `main` and on `workflow_dispatch` with `release_mode == 'instant'`. It adds a root `index.html` redirect to the generated crate documentation and a `.nojekyll` marker so rustdoc assets are served verbatim. It uses the official `actions/configure-pages` / `actions/upload-pages-artifact` / `actions/deploy-pages` flow, which requires the repository's Pages source to be set to **GitHub Actions**.
+To enable documentation publishing, open **Settings → Pages** and set **Source** to **GitHub Actions**. Then open **Settings → Secrets and variables → Actions → Variables** and set the repository variable `DEPLOY_GITHUB_PAGES` to `true`. Repositories with an existing Pages site also need the variable to keep publishing.
 
-Before the first run on `main`, open **Settings → Pages** of the new repository and set **Source = GitHub Actions**. This is a one-time manual step and cannot be configured from a workflow. The `deploy-docs` job will then provision the Pages site on its first run.
+With the variable enabled, `deploy-docs` publishes `cargo doc --no-deps --all-features` after a successful build on pushes to `main` and manual dispatches in `instant` mode. It adds a root redirect to the crate documentation and a `.nojekyll` marker to serve rustdoc assets verbatim. If the Pages configuration step fails, check the publishing source and rerun the failed jobs. The workflow posts a setup notice when publishing is disabled.
 
 ### Optional desktop releases
 
@@ -350,7 +350,7 @@ Set the repository variable `DESKTOP_RELEASE_ENABLED` to `true` to enable
 `.github/workflows/desktop-release.yml`. Pull requests then dry-run a six-target
 matrix; successful releases publish the non-empty files produced by
 `scripts/package-desktop.sh`, SLSA provenance attestations, `SHA256SUMS.txt`, and
-`BUILD-PROVENANCE.txt`. The same Pages site exposes the latest assets at
+`BUILD-PROVENANCE.txt`. If Pages publishing is enabled, the site exposes the latest assets at
 `/download/` using the GitHub Releases API.
 
 The included packaging hook builds the example Rust executable. Desktop
@@ -360,8 +360,6 @@ ad-hoc builds, pass `-c.mac.identity=-`, retain `CSC_FOR_PULL_REQUEST=true` for
 the PR dry run, and emit an app with
 `Contents/_CodeSignature/CodeResources`; the workflow smoke test rejects an
 unwrapped `.app` directory.
-
-If this step is skipped, the first `deploy-docs` run fails on `actions/deploy-pages@v5` with `Error: Get Pages site failed.` / `Error: Failed to create deployment`. Flip the Pages source as described above and re-run the failed job; no workflow changes are required.
 
 ## Scripts Reference
 

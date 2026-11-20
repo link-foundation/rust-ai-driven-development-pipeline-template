@@ -243,7 +243,7 @@ fn security_workflow_audits_the_committed_cargo_lock() {
     assert!(audit.contains("uses: actions/checkout@v7"));
     assert!(audit.contains("tool: cargo-audit@0.23.0"));
     assert!(
-        audit.contains("run: cargo audit --file Cargo.lock --deny warnings"),
+        audit.contains("cargo audit --file \"./$lock\" --deny warnings"),
         "`unmaintained`, `unsound` and `yanked` findings are warnings that do \
          not move cargo-audit's exit status; without --deny warnings a yanked \
          release ships with a green audit (issue #164)"

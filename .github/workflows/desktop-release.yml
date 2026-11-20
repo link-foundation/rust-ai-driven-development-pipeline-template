@@ -143,23 +143,31 @@ jobs:
           MATRIX_LABEL: ${{ matrix.label }}
         run: |
           set -euo pipefail
+          mkdir -p desktop-checksums
           cd desktop-dist
+          fragment="../desktop-checksums/SHA256SUMS-$MATRIX_LABEL.partial"
           if command -v sha256sum >/dev/null; then
-            find . -type f -print0 | sort -z | xargs -0 sha256sum
+            hash=(sha256sum)
           else
-            find . -type f -exec shasum -a 256 {} +
-          fi | sed 's#  \./#  #' > "SHA256SUMS-$MATRIX_LABEL.partial"
+            hash=(shasum -a 256)
+          fi
+          find . -type f ! -name '*.partial' ! -name 'SHA256SUMS.txt' \
+            -exec "${hash[@]}" {} + | sed 's#  \./#  #' > "$fragment"
+          test -s "$fragment" || { echo '::error::No desktop assets to checksum'; exit 1; }
       - name: Upload packaged assets
         uses: actions/upload-artifact@v7
         with:
           name: desktop-assets-${{ matrix.label }}
-          path: desktop-dist
+          path: |
+            desktop-dist/
+            !desktop-dist/**/*.partial
+            !desktop-dist/**/SHA256SUMS.txt
           retention-days: 7
       - name: Upload checksum fragment
         uses: actions/upload-artifact@v7
         with:
           name: desktop-checksums-${{ matrix.label }}
-          path: desktop-dist/SHA256SUMS-${{ matrix.label }}.partial
+          path: desktop-checksums/SHA256SUMS-${{ matrix.label }}.partial
           retention-days: 7
 
   finalize:

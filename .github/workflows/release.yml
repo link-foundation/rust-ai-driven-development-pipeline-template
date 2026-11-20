@@ -1454,16 +1454,8 @@ jobs:
             3. The automated release workflow will publish to crates.io and create a GitHub release
 
   # === DEPLOY DOCUMENTATION ===
-  # Deploy Rust API documentation to GitHub Pages after a successful package build.
-  # Keep this independent from package/GitHub release publication so the website
-  # still updates when the release path fails. Use the official Pages artifact
-  # deployment path so repositories configured with "GitHub Actions" as their
-  # Pages source fail this job if Pages cannot deploy.
-  #
-  # One-time setup: in the repository's Settings -> Pages, set Source to
-  # "GitHub Actions". Without this, the first run fails on actions/deploy-pages
-  # with "Get Pages site failed" / "Failed to create deployment". This cannot be
-  # configured from a workflow. See README.md "Deploying API documentation".
+  # Pages deployment is opt-in. See README.md "Deploying API documentation".
+  # Keep it independent from package/GitHub release publication.
   deploy-docs:
     name: Deploy Rust Documentation
     needs: [javascript-first, build]
@@ -1472,6 +1464,7 @@ jobs:
       cancel-in-progress: false
       queue: max
     if: |
+      vars.DEPLOY_GITHUB_PAGES == 'true' &&
       needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha &&
       !cancelled() &&
       needs.build.result == 'success' && (
@@ -1492,6 +1485,10 @@ jobs:
         with:
           ref: ${{ needs.javascript-first.outputs.tested-sha == github.sha && github.sha }}
           persist-credentials: false
+
+      - name: Configure GitHub Pages
+        id: pages
+        uses: actions/configure-pages@v6
 
       - uses: ./.github/actions/setup-python # zizmor: ignore[self-repository]
 
@@ -1527,9 +1524,6 @@ jobs:
           sed "s#__REPOSITORY__#$REPOSITORY#g" \
             docs/download/index.html > target/doc/download/index.html
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v6
-
       - name: Verify site tree
         run: find target/doc -maxdepth 2 -print
 
@@ -1545,6 +1539,11 @@ jobs:
         # Remove when actions/deploy-pages#434 ships; retain every other warning.
         env:
           NODE_OPTIONS: --disable-warning=DEP0040
+
+      - name: Explain Pages deployment failure
+        if: failure() && (steps.pages.outcome == 'failure' || steps.deployment.outcome == 'failure')
+        run: |
+          echo '::error::GitHub Pages publishing failed. Verify that Settings → Pages → Source is GitHub Actions, and review the failed Pages step before rerunning.'
 
   # === PIPELINE STATUS ===
   # GitHub reports jobs killed by timeout-minutes as cancelled. Observe every
@@ -1586,6 +1585,11 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+
+      - name: Explain optional Pages deployment
+        if: vars.DEPLOY_GITHUB_PAGES != 'true'
+        run: |
+          echo '::notice::GitHub Pages deployment is disabled. Set Settings → Pages → Source to GitHub Actions, then set the repository variable DEPLOY_GITHUB_PAGES=true to enable it.'
 
       - name: Check aggregate pipeline status
         env:
