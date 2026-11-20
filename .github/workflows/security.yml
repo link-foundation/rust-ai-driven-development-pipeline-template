@@ -48,13 +48,30 @@ jobs:
       - name: Validate locked dependency graph
         run: cargo metadata --locked --format-version 1 > /dev/null
 
-      - name: Audit committed Cargo.lock
-        # `unmaintained`, `unsound` and `yanked` are *warnings*, and a warning
-        # does not move `cargo audit`'s exit status -- it prints
-        # "warning: N allowed warnings found" and exits 0. Without this flag the
-        # step reports a passing audit while displaying the findings; a yanked
-        # release ("we shipped a vulnerability") is exactly such a warning.
-        run: cargo audit --file Cargo.lock --deny warnings
+      - name: Audit committed Cargo.lock files
+        # Unmaintained, unsound and yanked findings must fail the audit.
+        run: |
+          set -euo pipefail
+          locks="$(mktemp)"
+          trap 'rm -f "$locks"' EXIT
+          git ls-files -z -- 'Cargo.lock' '*/Cargo.lock' > "$locks"
+          if [[ ! -s "$locks" ]]; then
+            echo '::error::No tracked Cargo.lock files to audit'
+            exit 1
+          fi
+
+          status=0
+          while IFS= read -r -d '' lock; do
+            if [[ ! -f "$lock" ]]; then
+              printf '::error::%q is committed but not checked out\n' "$lock"
+              status=1
+              continue
+            fi
+            printf '::group::Auditing %q\n' "$lock"
+            cargo audit --file "./$lock" --deny warnings || status=1
+            echo '::endgroup::'
+          done < "$locks"
+          exit "$status"
 
   codeql:
     if: needs.javascript-first.result == 'success' && needs.javascript-first.outputs.tested-sha == github.sha
