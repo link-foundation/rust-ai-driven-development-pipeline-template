@@ -59,8 +59,9 @@ class DependencyRegressions(unittest.TestCase):
 
     def test_audit_validates_the_locked_graph_before_presenting_advisories(self):
         workflow = (ROOT / '.github/workflows/security.yml').read_text()
-        self.assertLess(workflow.index('cargo metadata --locked'), workflow.index('run: cargo audit'))
-        self.assertIn('cargo audit --file Cargo.lock --deny warnings', workflow)
+        strict_audit = 'cargo audit --file "./$lock" --deny warnings'
+        self.assertIn(strict_audit, workflow)
+        self.assertLess(workflow.index('cargo metadata --locked'), workflow.index(strict_audit))
 
 
 if __name__ == '__main__':
