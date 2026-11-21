@@ -75,7 +75,7 @@ cargo test test_sum_positive_numbers
 cargo test -- --nocapture
 ```
 
-CI caps each test-matrix job at 10 minutes. `cargo test` does not provide a portable global per-test timeout, so long-running network, IO, or async tests should use explicit test-level timeouts. Repositories that adopt `cargo nextest` can configure runner deadlines with options such as `--slow-timeout` and `--leak-timeout`.
+CI gives each test-matrix job a 30-minute backstop and the test step a 900-second (15-minute) execution budget. `cargo test` does not provide a portable global per-test timeout, so long-running network, IO, or async tests should use explicit test-level timeouts. Repositories that adopt `cargo nextest` can configure runner deadlines with options such as `--slow-timeout` and `--leak-timeout`.
 
 ### Code Quality Checks
 

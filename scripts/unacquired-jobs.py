@@ -85,8 +85,13 @@ def fetch_unacquired(repository, run_id, attempt):
     annotations = {}
     for job in jobs:
         if never_started(job):
-            found = gh_json('api', f"repos/{repository}/check-runs/{job['id']}/annotations")
-            annotations[job['id']] = [item.get('message', '') for item in found or []]
+            annotation_pages = gh_json(
+                'api', '--paginate', '--slurp',
+                f"repos/{repository}/check-runs/{job['id']}/annotations?per_page=100",
+            )
+            annotations[job['id']] = [
+                item.get('message', '') for page in annotation_pages or [] for item in page
+            ]
             trace(f"{job['name']}: {annotations[job['id']]}")
     return unacquired(jobs, annotations)
 

@@ -38,7 +38,17 @@ FAKE_GH = textwrap.dedent('''\
     if '/attempts/' in path:
         out = [{'jobs': state['jobs']}] if '--slurp' in args else {'jobs': state['jobs']}
     elif path.startswith('repos/owner/repo/check-runs/'):
-        out = state['annotations'].get(path.split('/')[4], [])
+        annotations = state['annotations'].get(path.split('/')[4], [])
+        page_size = 100 if '?per_page=100' in path else 30
+        pages = [annotations[i:i + page_size] for i in range(0, len(annotations), page_size)] or [[]]
+        if '--paginate' in args:
+            if '--slurp' not in args:
+                for page in pages:
+                    print(json.dumps(page))
+                sys.exit(0)
+            out = pages
+        else:
+            out = [pages[0]] if '--slurp' in args else pages[0]
     elif '/actions/workflows/' in path:
         out = {'workflow_runs': [{'id': state.get('newest_run', %d)}]}
     else:
@@ -106,6 +116,16 @@ class UnacquiredJobs(unittest.TestCase):
         self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
         self.assertEqual(len(self.reruns()), 1)
 
+    def test_reruns_when_the_acquisition_annotation_is_beyond_the_first_page(self):
+        for preceding in (30, 100, 200):
+            with self.subTest(preceding=preceding):
+                self.log.write_text('')
+                annotations = [{'message': 'Unrelated diagnostic'}] * preceding
+                self.serve([UNACQUIRED], {'1': [*annotations, {'message': NOT_ACQUIRED}]})
+                p = self.unacquired_jobs('rerun', 1)
+                self.assertEqual(p.returncode, 0, p.stdout + p.stderr)
+                self.assertEqual(len(self.reruns()), 1, p.stdout)
+
     def test_third_attempt_gives_up_loudly_with_the_manual_command(self):
         self.serve([UNACQUIRED], {'1': [{'message': NOT_ACQUIRED}]})
         p = self.unacquired_jobs('rerun', 3)
@@ -115,18 +135,27 @@ class UnacquiredJobs(unittest.TestCase):
         self.assertIn(f'gh run rerun {RUN_ID} --failed --repo {REPO}', p.stdout)
         self.assertEqual(self.reruns(), [])
 
-    def test_a_job_that_ran_steps_and_failed_is_never_rerun(self):
-        self.serve([REAL_FAILURE], {'2': [{'message': NOT_ACQUIRED}]})
+    def test_jobs_with_steps_a_runner_or_success_are_never_rerun(self):
+        started_or_successful = [
+            REAL_FAILURE,
+            job(6, 'Steps only', 'failure', steps=1),
+            job(7, 'Runner only', 'failure', runner='GitHub Actions 2'),
+            job(8, 'Successful without steps', 'success'),
+        ]
+        self.serve(started_or_successful, {
+            str(entry['id']): [{'message': NOT_ACQUIRED}] for entry in started_or_successful
+        })
         p = self.unacquired_jobs('rerun', 1)
         self.assertEqual(p.returncode, 0, p.stdout)
         self.assertIn('leaving the run as it is', p.stdout)
         self.assertEqual(self.reruns(), [])
-        # Its annotations are not even fetched: it ran, so it was acquired.
+        # None meet all the structural requirements for an annotation lookup.
         self.assertFalse(any('check-runs' in ' '.join(c) for c in self.calls()))
 
     def test_a_queued_job_cancelled_without_the_annotation_is_not_rerun(self):
         # A supersede also cancels queued jobs that never got a runner.
-        self.serve([REAL_FAILURE, SUPERSEDED_QUEUED], {'3': [{'message': 'The operation was canceled.'}]})
+        annotations = [{'message': 'The operation was canceled.'}] * 101
+        self.serve([REAL_FAILURE, SUPERSEDED_QUEUED], {'3': annotations})
         p = self.unacquired_jobs('rerun', 1)
         self.assertEqual(p.returncode, 0, p.stdout)
         self.assertEqual(self.reruns(), [])
@@ -190,7 +219,9 @@ class UnacquiredJobs(unittest.TestCase):
         self.assertTrue(any('attempts/2/jobs' in ' '.join(c) for c in self.calls()))
 
     def test_gate_reports_unacquired_jobs_behind_a_failure_result_too(self):
-        self.serve([job(5, 'Build macos-x64', 'failure')], {'5': [{'message': NOT_ACQUIRED}]})
+        annotations = [{'message': 'Unrelated diagnostic'}] * 100
+        self.serve([job(5, 'Build macos-x64', 'failure')],
+                   {'5': [*annotations, {'message': NOT_ACQUIRED}]})
         p = self.gate({'build': {'result': 'failure'}}, GH_TOKEN='t', GITHUB_REPOSITORY=REPO,
                       GITHUB_RUN_ID=str(RUN_ID))
         self.assertEqual(p.returncode, 1, p.stdout)
