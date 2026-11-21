@@ -108,6 +108,30 @@ fn budget_seconds(body: &str) -> Vec<(String, u64)> {
 }
 
 #[test]
+fn readme_matches_the_ci_test_matrix_timeout_and_budget() {
+    let release = workflow("release.yml");
+    let test_job = jobs(&release)
+        .into_iter()
+        .find(|job| job.name == "test")
+        .expect("release workflow should define the test matrix");
+    let backstop = job_timeout_minutes(&test_job.body).expect("test matrix should have a backstop");
+    let (_, budget) = budget_seconds(&test_job.body)
+        .into_iter()
+        .find(|(key, _)| key == "TEST_BUDGET_SECONDS")
+        .expect("test matrix should have a test step budget");
+    let readme = fs::read_to_string(repo_path("README.md")).expect("README should exist");
+    let (minutes, remainder) = (budget / 60, budget % 60);
+    assert_eq!(remainder, 0, "README expresses the budget in whole minutes");
+    assert!(
+        readme.contains(&format!(
+            "CI gives each test-matrix job a {backstop}-minute backstop and the test step a \
+             {budget}-second ({minutes}-minute) execution budget."
+        )),
+        "README should document the test matrix's {backstop}-minute backstop and {budget}-second execution budget"
+    );
+}
+
+#[test]
 fn every_job_declares_a_timeout_backstop() {
     for name in workflow_names() {
         let content = workflow(&name);
