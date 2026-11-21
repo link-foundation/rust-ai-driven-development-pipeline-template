@@ -75,6 +75,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+## [0.22.6] - 2026-11-21
+
+### Fixed
+- Reject manual changelog fragment filename collisions and preserve existing fragments and symlink targets.
 ## [0.22.5] - 2026-11-20
 
 ### Fixed
