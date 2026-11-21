@@ -14,7 +14,8 @@
 
 use chrono::Utc;
 use std::env;
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io::{self, Write};
 use std::path::Path;
 use std::process::exit;
 
@@ -96,6 +97,14 @@ fn print_fragment_content(fragment_content: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn write_fragment(path: &Path, content: &[u8]) -> io::Result<()> {
+    OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)?
+        .write_all(content)
+}
+
 fn main() {
     let bump_type = get_arg("bump-type").unwrap_or_else(|| "patch".to_string());
     let description = get_arg("description");
@@ -133,9 +142,8 @@ fn main() {
         }
     }
 
-    // Write the fragment file
-    if let Err(e) = fs::write(&fragment_file, &fragment_content) {
-        eprintln!("Error writing fragment file: {}", e);
+    if let Err(e) = write_fragment(Path::new(&fragment_file), fragment_content.as_bytes()) {
+        eprintln!("Error writing fragment file {fragment_file}: {e}");
         exit(1);
     }
 
@@ -151,6 +159,102 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
+    use std::sync::Barrier;
+    use std::thread;
+
+    struct TestDirectory(PathBuf);
+
+    impl TestDirectory {
+        fn new() -> Self {
+            let suffix = getrandom::u64().unwrap();
+            let path = env::temp_dir().join(format!("manual-changelog-fragment-{suffix:016x}"));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+
+        fn fragment_path(&self) -> PathBuf {
+            self.0.join("20261121000000-manual-patch.md")
+        }
+    }
+
+    impl Drop for TestDirectory {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn existing_fragment_is_preserved_on_collision() {
+        let directory = TestDirectory::new();
+        let path = directory.fragment_path();
+        let original = "---\r\nbump: patch\r\n---\r\n\r\n### Fixed\r\n- Original λ\r\n";
+        fs::write(&path, original).unwrap();
+
+        let result = write_fragment(&path, b"replacement");
+
+        assert_eq!(fs::read(&path).unwrap(), original.as_bytes());
+        assert_eq!(result.unwrap_err().kind(), io::ErrorKind::AlreadyExists);
+    }
+
+    #[test]
+    fn concurrent_creators_leave_one_complete_fragment() {
+        let directory = TestDirectory::new();
+        let path = directory.fragment_path();
+        let start = Barrier::new(2);
+        let contents = [
+            "---\nbump: patch\n---\n\n### Fixed\n- First fragment\n",
+            "---\nbump: patch\n---\n\n### Fixed\n- Second fragment\n",
+        ];
+
+        let [first, second] = thread::scope(|scope| {
+            contents
+                .map(|content| {
+                    let path = &path;
+                    let start = &start;
+                    scope.spawn(move || {
+                        start.wait();
+                        write_fragment(path, content.as_bytes())
+                    })
+                })
+                .map(|writer| writer.join().unwrap())
+        });
+
+        let (winner, collision) = match (first, second) {
+            (Ok(()), Err(error)) => (contents[0], error),
+            (Err(error), Ok(())) => (contents[1], error),
+            results => panic!("expected one successful writer, got {results:?}"),
+        };
+        assert_eq!(collision.kind(), io::ErrorKind::AlreadyExists);
+        assert_eq!(fs::read(&path).unwrap(), winner.as_bytes());
+    }
+
+    #[test]
+    fn missing_parent_is_reported_without_creating_a_fragment() {
+        let directory = TestDirectory::new();
+        let path = directory.0.join("missing/20261121000000-manual-patch.md");
+
+        let error = write_fragment(&path, b"fragment").unwrap_err();
+
+        assert_eq!(error.kind(), io::ErrorKind::NotFound);
+        assert!(!path.exists());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn existing_symlink_and_its_target_are_preserved() {
+        let directory = TestDirectory::new();
+        let path = directory.fragment_path();
+        let target = directory.0.join("original.md");
+        fs::write(&target, b"original").unwrap();
+        std::os::unix::fs::symlink(&target, &path).unwrap();
+
+        let result = write_fragment(&path, b"replacement");
+
+        assert_eq!(fs::read(&target).unwrap(), b"original");
+        assert_eq!(fs::read_link(&path).unwrap(), target);
+        assert_eq!(result.unwrap_err().kind(), io::ErrorKind::AlreadyExists);
+    }
 
     #[test]
     fn stop_commands_tokens_are_random_128_bit_hex_values() {
