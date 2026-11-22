@@ -17,6 +17,7 @@ fn main() {}
 pub enum Failure {
     Transient(String),
     Permanent(String),
+    UnreadableBody(String),
 }
 
 pub fn with_retries<T>(
@@ -31,10 +32,12 @@ pub fn with_retries<T>(
         match operation() {
             Ok(value) => return Ok(value),
             Err(Failure::Permanent(error)) => return Err(error),
-            Err(Failure::Transient(error)) if attempt == attempts => {
+            Err(Failure::Transient(error) | Failure::UnreadableBody(error))
+                if attempt == attempts =>
+            {
                 return Err(format!("{error} (after {attempts} attempts)"));
             }
-            Err(Failure::Transient(error)) => {
+            Err(Failure::Transient(error) | Failure::UnreadableBody(error)) => {
                 eprintln!("Registry lookup retry {}/{attempts}: {error}", attempt + 1);
                 std::thread::sleep(delay * 2_u32.pow(attempt - 1));
             }
@@ -43,46 +46,66 @@ pub fn with_retries<T>(
     unreachable!()
 }
 
-fn get_body_with_policy(
-    url: &str,
-    headers: &[(&str, &str)],
-    attempts: u32,
-    delay: Duration,
-) -> Result<Option<String>, String> {
-    let agent: ureq::Agent = ureq::Agent::config_builder()
+fn bounded_agent() -> ureq::Agent {
+    ureq::Agent::config_builder()
         .timeout_connect(Some(Duration::from_secs(10)))
         .timeout_per_read(Some(Duration::from_secs(20)))
         .timeout_per_write(Some(Duration::from_secs(20)))
         .timeout_global(Some(Duration::from_secs(30)))
         .http_status_as_error(false)
         .build()
-        .into();
+        .into()
+}
+
+fn fetch_body(
+    agent: &ureq::Agent,
+    url: &str,
+    headers: &[(&str, &str)],
+    user_agent: &str,
+) -> Result<Option<String>, Failure> {
+    let mut request = agent.get(url).header("User-Agent", user_agent);
+    for (key, value) in headers {
+        request = request.header(*key, *value);
+    }
+    let mut response = request
+        .call()
+        .map_err(|error| Failure::Transient(format!("{url}: {error}")))?;
+    match response.status().as_u16() {
+        200 => {
+            let unreadable =
+                |error| Failure::UnreadableBody(format!("Unreadable response from {url}: {error}"));
+            // Keep ureq's size bound and require UTF-8 without replacement characters.
+            let bytes = response
+                .body_mut()
+                .read_to_vec()
+                .map_err(|error| unreadable(error.to_string()))?;
+            String::from_utf8(bytes)
+                .map(Some)
+                .map_err(|error| unreadable(error.to_string()))
+        }
+        404 => Ok(None),
+        status if status == 429 || status >= 500 => {
+            Err(Failure::Transient(format!("{url}: HTTP {status}")))
+        }
+        status => Err(Failure::Permanent(format!(
+            "{url}: unexpected HTTP {status}"
+        ))),
+    }
+}
+
+pub fn get_body_once(url: &str, user_agent: &str) -> Result<Option<String>, Failure> {
+    fetch_body(&bounded_agent(), url, &[], user_agent)
+}
+
+fn get_body_with_policy(
+    url: &str,
+    headers: &[(&str, &str)],
+    attempts: u32,
+    delay: Duration,
+) -> Result<Option<String>, String> {
+    let agent = bounded_agent();
     with_retries(attempts, delay, || {
-        let mut request = agent
-            .get(url)
-            .header("User-Agent", "rust-template-release-check/1.0");
-        for (key, value) in headers {
-            request = request.header(*key, *value);
-        }
-        match request.call() {
-            Ok(mut response) => match response.status().as_u16() {
-                200 => response
-                    .body_mut()
-                    .read_to_string()
-                    .map(Some)
-                    .map_err(|error| {
-                        Failure::Transient(format!("Unreadable response from {url}: {error}"))
-                    }),
-                404 => Ok(None),
-                status if status == 429 || status >= 500 => {
-                    Err(Failure::Transient(format!("{url}: HTTP {status}")))
-                }
-                status => Err(Failure::Permanent(format!(
-                    "{url}: unexpected HTTP {status}"
-                ))),
-            },
-            Err(error) => Err(Failure::Transient(format!("{url}: {error}"))),
-        }
+        fetch_body(&agent, url, headers, "rust-template-release-check/1.0")
     })
 }
 
@@ -158,19 +181,23 @@ pub fn version_exists(crate_name: &str, version: &str) -> Result<bool, String> {
     let Some(body) = get_body(&url, &[])? else {
         return Ok(false);
     };
+    validate_crate_version(&body, crate_name, version)?;
+    Ok(true)
+}
+
+pub fn validate_crate_version(body: &str, crate_name: &str, version: &str) -> Result<(), String> {
     let data: serde_json::Value =
-        serde_json::from_str(&body).map_err(|e| format!("Invalid crates.io JSON: {e}"))?;
-    if data
-        .get("version")
-        .and_then(|v| v.get("num"))
-        .and_then(serde_json::Value::as_str)
-        != Some(version)
-    {
+        serde_json::from_str(body).map_err(|e| format!("Invalid crates.io JSON: {e}"))?;
+    let record = &data["version"];
+    let name_matches = record
+        .get("crate")
+        .is_none_or(|name| name.as_str() == Some(crate_name));
+    if record["num"].as_str() != Some(version) || !name_matches {
         return Err(format!(
             "Invalid crates.io version response for {crate_name}@{version}"
         ));
     }
-    Ok(true)
+    Ok(())
 }
 
 pub fn artifact_exists(
@@ -197,6 +224,24 @@ mod tests {
     use super::*;
     use std::io::{Read, Write};
     use std::net::TcpListener;
+
+    #[test]
+    fn version_response_checks_crate_identity_when_present() {
+        for (record, valid) in [
+            (r#"{"num":"1.2.3","crate":"fixture"}"#, true),
+            (r#"{"num":"1.2.3","crate":"Fixture"}"#, false),
+            (r#"{"num":"1.2.3"}"#, true),
+            (r#"{"num":"1.2.3","crate":"other"}"#, false),
+            (r#"{"num":"1.2.3","crate":null}"#, false),
+            (r#"{"num":"1.2.30","crate":"fixture"}"#, false),
+        ] {
+            let body = format!(r#"{{"version":{record}}}"#);
+            assert_eq!(
+                validate_crate_version(&body, "fixture", "1.2.3").is_ok(),
+                valid
+            );
+        }
+    }
 
     #[test]
     fn retries_transient_errors_but_not_permanent_errors() {

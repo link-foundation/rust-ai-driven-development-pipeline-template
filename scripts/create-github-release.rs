@@ -334,15 +334,17 @@ fn main() {
         .spawn()
         .expect("Failed to execute gh command");
 
-    if let Some(ref mut stdin) = child.stdin {
-        stdin
-            .write_all(payload_json.as_bytes())
-            .expect("Failed to write to stdin");
-    }
-
-    let output = child
-        .wait_with_output()
-        .expect("Failed to wait on gh command");
+    let mut stdin = child.stdin.take().expect("Failed to open gh stdin");
+    let output = std::thread::scope(|scope| {
+        // Move stdin into the writer so it closes at EOF before we wait for gh.
+        let writer = scope.spawn(move || stdin.write_all(payload_json.as_bytes()));
+        let output = child.wait_with_output();
+        writer
+            .join()
+            .expect("gh stdin writer panicked")
+            .expect("Failed to write release payload to gh stdin");
+        output.expect("Failed to wait on gh command")
+    });
 
     if output.status.success() {
         println!("Created GitHub release: {tag}");

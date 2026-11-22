@@ -1,6 +1,6 @@
 #!/usr/bin/env rust-script
 //! Check source and documentation files for maximum and warning line-count
-//! thresholds. Exits with error code 1 if any files exceed the hard limit
+//! thresholds. Exits with code 1 for hard-limit violations or incomplete scans.
 //!
 //! Usage: rust-script scripts/check-file-size.rs
 //!
@@ -75,6 +75,7 @@ struct Finding {
 struct CheckResult {
     warnings: Vec<Finding>,
     violations: Vec<Finding>,
+    errors: Vec<String>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -108,24 +109,27 @@ fn check_directory(cwd: &Path) -> CheckResult {
     let mut result = CheckResult {
         warnings: Vec::new(),
         violations: Vec::new(),
+        errors: Vec::new(),
     };
 
-    for entry in WalkDir::new(cwd)
-        .into_iter()
-        .filter_entry(|entry| {
-            !should_exclude(
-                entry
-                    .path()
-                    .strip_prefix(cwd)
-                    .unwrap_or_else(|_| entry.path()),
-            )
-        })
-        .filter_map(std::result::Result::ok)
-        .filter(|e| e.file_type().is_file())
-    {
+    for entry in WalkDir::new(cwd).into_iter().filter_entry(|entry| {
+        !should_exclude(
+            entry
+                .path()
+                .strip_prefix(cwd)
+                .unwrap_or_else(|_| entry.path()),
+        )
+    }) {
+        let entry = match entry {
+            Ok(entry) => entry,
+            Err(error) => {
+                result.errors.push(format!("Could not scan: {error}"));
+                continue;
+            }
+        };
         let path = entry.path();
 
-        if !has_valid_extension(path) {
+        if !entry.file_type().is_file() || !has_valid_extension(path) {
             continue;
         }
 
@@ -145,7 +149,9 @@ fn check_directory(cwd: &Path) -> CheckResult {
                 }
             }
             Err(error) => {
-                eprintln!("Warning: Could not read {}: {error}", path.display());
+                result
+                    .errors
+                    .push(format!("Could not read {}: {error}", path.display()));
             }
         }
     }
@@ -267,11 +273,14 @@ fn main() {
     let changed = changed_files(raw_changed.as_deref());
     print_warnings(&result.warnings, changed.as_ref());
 
-    if result.violations.is_empty() {
+    if result.errors.is_empty() && result.violations.is_empty() {
         println!("All files are within the line limit\n");
         exit(0);
     } else {
         print_violations(&result.violations);
+        for error in result.errors {
+            eprintln!("Error: {error}");
+        }
         exit(1);
     }
 }
@@ -299,6 +308,16 @@ mod tests {
             writeln!(&mut content, "// line {line}").unwrap();
         }
         fs::write(path, content).unwrap();
+    }
+
+    #[test]
+    fn reports_an_unavailable_scan_root() {
+        let repo = temp_dir("unavailable");
+        let missing = repo.join("missing");
+        let result = check_directory(&missing);
+        assert_eq!(result.errors.len(), 1);
+        assert!(result.errors[0].contains(missing.to_str().unwrap()));
+        fs::remove_dir_all(repo).unwrap();
     }
 
     #[test]
