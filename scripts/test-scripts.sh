@@ -55,6 +55,9 @@ fi
 if ! python3 experiments/issue-218-registry-regressions.py -v; then
   status=1
 fi
+if ! python3 experiments/issue-266-regressions.py -v; then
+  status=1
+fi
 if ! python3 experiments/issue-224-regressions.py -v; then
   status=1
 fi

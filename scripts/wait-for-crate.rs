@@ -27,6 +27,8 @@
 //! ```cargo
 //! [dependencies]
 //! regex = "1.13.1"
+//! semver = "1.0.28"
+//! serde_json = "1.0.154"
 //! ureq = "3.5.2"
 //! ```
 
@@ -39,6 +41,10 @@ use std::env;
 use std::process::exit;
 use std::thread;
 use std::time::Duration;
+
+#[cfg(not(test))]
+#[path = "registry.rs"]
+mod registry;
 
 #[path = "rust-paths.rs"]
 mod rust_paths;
@@ -60,6 +66,8 @@ enum Visibility {
     NotPublishedYet,
     /// crates.io could not be consulted; this says nothing about the release.
     Unknown(String),
+    /// A 200 response whose contents could not be verified.
+    InvalidResponse(String),
 }
 
 fn get_arg(name: &str) -> Option<String> {
@@ -128,57 +136,57 @@ fn api_url(crate_name: &str, version: &str) -> String {
 /// The sparse index returns 200 for any existing crate, so the version has to be
 /// matched inside the newline-delimited JSON body rather than inferred from the
 /// status code.
-fn index_body_has_version(body: &str, version: &str) -> bool {
-    body.lines().any(|line| {
-        line.split("\"vers\"").skip(1).any(|rest| {
-            let rest = rest.trim_start();
-            let Some(rest) = rest.strip_prefix(':') else {
-                return false;
-            };
-            let rest = rest.trim_start();
-            rest.strip_prefix('"')
-                .and_then(|rest| rest.split('"').next())
-                .is_some_and(|found| found == version)
-        })
-    })
-}
+fn index_body_has_version(body: &str, crate_name: &str, version: &str) -> Result<bool, String> {
+    if body.is_empty() {
+        return Err("Empty sparse index response".into());
+    }
 
-/// Classify a sparse index response. A 404 there means the crate has never been
-/// published under that name; any other non-200 is an unusable answer.
-fn classify_index_response(status: u16, body: &str, version: &str) -> Visibility {
-    match status {
-        200 => {
-            if index_body_has_version(body, version) {
-                Visibility::Published
-            } else {
-                Visibility::NotPublishedYet
-            }
+    let mut found = false;
+    for (line_number, line) in body.lines().enumerate() {
+        let record: serde_json::Value = serde_json::from_str(line).map_err(|error| {
+            format!(
+                "Invalid sparse index JSON on line {}: {error}",
+                line_number + 1
+            )
+        })?;
+        let number = record["vers"]
+            .as_str()
+            .ok_or_else(|| format!("Missing sparse index version on line {}", line_number + 1))?;
+        if semver::Version::parse(number).is_err() {
+            return Err(format!(
+                "Invalid sparse index version on line {}",
+                line_number + 1
+            ));
         }
-        404 => Visibility::NotPublishedYet,
-        other => Visibility::Unknown(format!("index.crates.io responded HTTP {}", other)),
+        if record
+            .get("name")
+            .is_some_and(|name| name.as_str() != Some(crate_name))
+        {
+            return Err(format!(
+                "Unexpected crate name on sparse index line {}",
+                line_number + 1
+            ));
+        }
+        // Validate every record, including records after an exact match.
+        found |= number == version;
     }
+    Ok(found)
 }
 
-/// Classify a JSON API response for a specific version.
-fn classify_api_status(status: u16) -> Visibility {
-    match status {
-        200 => Visibility::Published,
-        404 => Visibility::NotPublishedYet,
-        other => Visibility::Unknown(format!("crates.io API responded HTTP {}", other)),
-    }
-}
-
-/// Prefer a definitive answer from either source; only report `Unknown` when
-/// neither source could be consulted.
+/// Prefer an exact match. A broken success response leaves availability
+/// unknown even when the other endpoint reported absence.
 fn combine(index: Visibility, api: Visibility) -> Visibility {
+    use Visibility::{InvalidResponse, NotPublishedYet, Published, Unknown};
     match (index, api) {
-        (Visibility::Published, _) | (_, Visibility::Published) => Visibility::Published,
-        (Visibility::NotPublishedYet, _) | (_, Visibility::NotPublishedYet) => {
-            Visibility::NotPublishedYet
+        (Published, _) | (_, Published) => Published,
+        (
+            InvalidResponse(index_reason) | Unknown(index_reason),
+            InvalidResponse(api_reason) | Unknown(api_reason),
+        ) => Unknown(format!("{index_reason}; {api_reason}")),
+        (InvalidResponse(reason), NotPublishedYet) | (NotPublishedYet, InvalidResponse(reason)) => {
+            Unknown(reason)
         }
-        (Visibility::Unknown(index_reason), Visibility::Unknown(api_reason)) => {
-            Visibility::Unknown(format!("{}; {}", index_reason, api_reason))
-        }
+        (NotPublishedYet, _) | (_, NotPublishedYet) => NotPublishedYet,
     }
 }
 
@@ -196,13 +204,12 @@ fn failure_message(
             "Error: could not determine whether {}@{} is on crates.io; \
              all {} attempts failed to get an answer, the last one with: {}. \
              This does NOT mean the publish failed. Check the sparse index before \
-             treating the release as broken: curl -s -A 'ci (+https://example.com)' {} | grep '\"vers\":\"{}\"'",
+             treating the release as broken: curl -s -A 'ci (+https://example.com)' {}",
             crate_name,
             version,
             max_attempts,
             reason,
-            index_url(crate_name),
-            version
+            index_url(crate_name)
         ),
         None => format!(
             "Error: {}@{} was not visible on crates.io after {} attempts",
@@ -212,50 +219,32 @@ fn failure_message(
 }
 
 #[cfg(not(test))]
-fn check_index(crate_name: &str, version: &str) -> Visibility {
-    match ureq::get(&index_url(crate_name))
-        .header("User-Agent", USER_AGENT)
-        .config()
-        .timeout_global(Some(Duration::from_secs(30)))
-        .timeout_connect(Some(Duration::from_secs(10)))
-        .build()
-        .call()
-    {
-        Ok(mut response) => {
-            let status = response.status().as_u16();
-            match response.body_mut().read_to_string() {
-                Ok(body) => classify_index_response(status, &body, version),
-                Err(error) => Visibility::Unknown(format!("index.crates.io body failed: {error}")),
-            }
-        }
-        Err(ureq::Error::StatusCode(status)) => classify_index_response(status, "", version),
-        Err(e) => Visibility::Unknown(format!("index.crates.io request failed: {}", e)),
-    }
-}
-
-#[cfg(not(test))]
-fn check_api(crate_name: &str, version: &str) -> Visibility {
-    match ureq::get(&api_url(crate_name, version))
-        .header("User-Agent", USER_AGENT)
-        .config()
-        .timeout_global(Some(Duration::from_secs(30)))
-        .timeout_connect(Some(Duration::from_secs(10)))
-        .build()
-        .call()
-    {
-        Ok(response) => classify_api_status(response.status().as_u16()),
-        Err(ureq::Error::StatusCode(status)) => classify_api_status(status),
-        Err(e) => Visibility::Unknown(format!("crates.io API request failed: {}", e)),
+fn check_registry(url: &str, validate: impl FnOnce(&str) -> Result<bool, String>) -> Visibility {
+    use registry::Failure::{Permanent, Transient, UnreadableBody};
+    match registry::get_body_once(url, USER_AGENT) {
+        Ok(Some(body)) => match validate(&body) {
+            Ok(true) => Visibility::Published,
+            Ok(false) => Visibility::NotPublishedYet,
+            Err(error) => Visibility::InvalidResponse(format!("{url}: {error}")),
+        },
+        Ok(None) => Visibility::NotPublishedYet,
+        Err(UnreadableBody(error)) => Visibility::InvalidResponse(error),
+        Err(Transient(error) | Permanent(error)) => Visibility::Unknown(error),
     }
 }
 
 #[cfg(not(test))]
 fn crate_version_visibility(crate_name: &str, version: &str) -> Visibility {
-    let index = check_index(crate_name, version);
+    let index = check_registry(&index_url(crate_name), |body| {
+        index_body_has_version(body, crate_name, version)
+    });
     if index == Visibility::Published {
         return index;
     }
-    combine(index, check_api(crate_name, version))
+    let api = check_registry(&api_url(crate_name, version), |body| {
+        registry::validate_crate_version(body, crate_name, version).map(|()| true)
+    });
+    combine(index, api)
 }
 
 fn should_skip_crate_wait(crate_name: &str) -> bool {
@@ -323,7 +312,7 @@ fn main() -> std::io::Result<()> {
                     );
                 }
             }
-            Visibility::Unknown(reason) => {
+            Visibility::Unknown(reason) | Visibility::InvalidResponse(reason) => {
                 eprintln!(
                     "Warning: could not check crates.io on attempt {}/{}: {}",
                     attempt, max_attempts, reason
@@ -359,8 +348,8 @@ fn main() -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::{
-        USER_AGENT, Visibility, api_url, classify_api_status, classify_index_response, combine,
-        failure_message, index_body_has_version, index_path, index_url, should_skip_crate_wait,
+        USER_AGENT, Visibility, api_url, combine, failure_message, index_body_has_version,
+        index_path, index_url, should_skip_crate_wait,
     };
 
     #[test]
@@ -417,58 +406,35 @@ mod tests {
             "\n"
         );
 
-        assert!(index_body_has_version(body, "0.16.0"));
-        assert!(index_body_has_version(body, "0.15.0"));
-        assert!(!index_body_has_version(body, "0.17.0"));
-        assert!(
-            !index_body_has_version(body, "0.16"),
-            "a prefix of a published version is not that version"
-        );
-    }
-
-    #[test]
-    fn index_body_tolerates_whitespace_around_the_version_field() {
-        let body = r#"{"name":"demo", "vers" : "1.2.3" }"#;
-        assert!(index_body_has_version(body, "1.2.3"));
-    }
-
-    /// The regression from issue #143: a throttled or forbidden probe must not
-    /// be classified as "not published".
-    #[test]
-    fn throttled_and_forbidden_probes_are_unknown_not_missing() {
-        for status in [403_u16, 429, 500, 502, 503] {
-            assert!(
-                matches!(
-                    classify_index_response(status, "", "1.0.0"),
-                    Visibility::Unknown(_)
-                ),
-                "index HTTP {} must not be reported as a missing version",
-                status
-            );
-            assert!(
-                matches!(classify_api_status(status), Visibility::Unknown(_)),
-                "API HTTP {} must not be reported as a missing version",
-                status
+        for (version, expected) in [
+            ("0.16.0", true),
+            ("0.15.0", true),
+            ("0.17.0", false),
+            ("0.16", false),
+        ] {
+            assert_eq!(
+                index_body_has_version(body, "links-notation", version),
+                Ok(expected)
             );
         }
     }
 
     #[test]
-    fn definitive_answers_are_classified_as_such() {
+    fn index_body_requires_complete_valid_records_and_the_requested_crate() {
+        let body = r#"{"name":"demo", "vers" : "1.2.3" }"#;
+        assert_eq!(index_body_has_version(body, "demo", "1.2.3"), Ok(true));
         assert_eq!(
-            classify_index_response(200, r#"{"vers":"1.0.0"}"#, "1.0.0"),
-            Visibility::Published
+            index_body_has_version(r#"{"vers":"1.2.3"}"#, "demo", "1.2.3"),
+            Ok(true)
         );
-        assert_eq!(
-            classify_index_response(200, r#"{"vers":"0.9.0"}"#, "1.0.0"),
-            Visibility::NotPublishedYet
-        );
-        assert_eq!(
-            classify_index_response(404, "", "1.0.0"),
-            Visibility::NotPublishedYet
-        );
-        assert_eq!(classify_api_status(200), Visibility::Published);
-        assert_eq!(classify_api_status(404), Visibility::NotPublishedYet);
+        assert!(index_body_has_version(body, "other", "1.2.3").is_err());
+        assert!(index_body_has_version(body, "Demo", "1.2.3").is_err());
+        for invalid in ["", "{}", r#"not-json "vers":"1.2.3""#, r#"{"vers":3}"#] {
+            assert!(index_body_has_version(invalid, "demo", "1.2.3").is_err());
+            assert!(
+                index_body_has_version(&format!("{body}\n{invalid}\n"), "demo", "1.2.3").is_err()
+            );
+        }
     }
 
     #[test]

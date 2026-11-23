@@ -27,7 +27,9 @@ pub fn release_headings(content: &str) -> Vec<Heading<'_>> {
             if let Some((opening, opening_length)) = fence {
                 if delimiter == opening
                     && length >= opening_length
-                    && text[length..].trim().is_empty()
+                    && text[length..]
+                        .bytes()
+                        .all(|byte| matches!(byte, b' ' | b'\t'))
                 {
                     fence = None;
                 }
@@ -90,6 +92,20 @@ mod tests {
             assert_eq!(extract_section(&content, "1.2.3").unwrap(), body);
             assert!(extract_section(&content, "9.9.9").is_err());
             assert_eq!(release_headings(&content).len(), 2);
+        }
+    }
+
+    #[test]
+    fn only_spaces_and_tabs_may_follow_a_closing_fence() {
+        for delimiter in ["```", "~~~"] {
+            for suffix in ["\u{a0}", "\u{2003}", "\u{202f}", "\u{b}", "\u{c}"] {
+                let body =
+                    format!("{delimiter}md\n{delimiter}{suffix}\n## [9.9.9]\n{delimiter} \t\n");
+                let content = format!("## [1.2.3]\n{body}## [1.2.2]\nold");
+                assert!(extract_section(&content, "9.9.9").is_err());
+                assert_eq!(extract_section(&content, "1.2.3").unwrap(), body);
+                assert_eq!(extract_section(&content, "1.2.2").unwrap(), "old");
+            }
         }
     }
 

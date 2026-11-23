@@ -251,8 +251,10 @@ fn resolve_workspace_member_manifest(
 
     for member in members {
         let manifest = base_dir.join(member).join("Cargo.toml");
-        let Ok(member_content) = fs::read_to_string(&manifest) else {
-            continue;
+        let member_content = match fs::read_to_string(&manifest) {
+            Ok(content) => content,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) => return Err(format!("Failed to read {}: {error}", manifest.display())),
         };
 
         if !has_package_section(&member_content) || is_publish_false(&member_content) {
