@@ -5,5 +5,5 @@ pre-commit==4.7.0
 pre-commit-hooks==6.0.0
 pyflakes==4.1.0
 shellcheck-py==0.11.0.1
-uv==0.13.8
+uv==0.13.9
 zizmor==1.32.0
